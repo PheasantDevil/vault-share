@@ -1,0 +1,11 @@
+{
+  "name": "extension",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Chrome extension (future)",
+  "scripts": {
+    "build": "echo 'Not implemented'",
+    "lint": "echo 'Not implemented'",
+    "test": "echo 'Not implemented'"
+  }
+}

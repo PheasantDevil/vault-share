@@ -1,0 +1,3 @@
+name: vault-share
+runtime: nodejs
+description: GCP infrastructure for Vault Share
