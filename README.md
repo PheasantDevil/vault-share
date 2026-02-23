@@ -49,10 +49,12 @@
 pnpm install
 pnpm dev          # Next.js (apps/web) を起動
 pnpm build        # 全パッケージビルド
-pnpm lint         # 全パッケージ lint
+pnpm lint         # 全パッケージ lint（CI では CI=true で next lint が非対話で実行）
 pnpm run format:check
 pnpm test
 ```
+
+環境変数（ローカル・Pulumi 用）: `GCP_PROJECT_ID`、Firestore 用の `GOOGLE_APPLICATION_CREDENTIALS`、暗号鍵用の Secret Manager 参照などを必要に応じて設定。リポジトリには `.env.example` を配置予定（未コミットの場合は README を参照）。
 
 ## ドキュメント
 
@@ -76,3 +78,12 @@ pnpm test
 ## ローカル格納場所
 
 リポジトリのクローンは `/Users/Work/vault-share/` を想定しています。
+
+## マージ手順（PR）
+
+作業は `feature/*` ブランチで行い、main へのマージは Pull Request で行う想定です。
+
+1. GitHub にリポジトリを作成し、`git remote add origin <URL>` でリモートを追加
+2. `git push -u origin feature/initial-setup` でブランチをプッシュ
+3. GitHub 上で `feature/initial-setup` から `main` への Pull Request を作成
+4. CI（lint / format check / build / test）が通ることを確認してマージ
