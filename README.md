@@ -43,6 +43,28 @@
   - 削除: 約 $0.01 / 10 万ドキュメント  
     少人数チームで 1 日 5 万読・2 万書程度までなら無料枠内です。それを超える利用が続く場合に、上記程度の追加費用を見込んでください。最新の料金は [Firestore の料金](https://cloud.google.com/firestore/pricing) を参照してください。
 
+## GitHub CLI コマンド一覧
+
+リポジトリの作成・設定・日常運用で使う **GitHub CLI (gh) のコマンド一覧**は以下にあります。
+
+- **詳細**: [docs/03-github-setup/01-github-cli-commands.md](docs/03-github-setup/01-github-cli-commands.md)
+
+**よく使うコマンドの抜粋:**
+
+```bash
+gh auth status                                    # 認証確認
+gh repo view                                      # リポジトリ情報
+gh repo edit --default-branch main                # デフォルトブランチを main に
+gh repo edit --description "..." --add-topic ...  # 説明・トピック設定
+gh pr create --base main --title "..." --body "..."  # PR 作成
+gh pr list && gh pr merge <番号>                  # PR 一覧・マージ
+```
+
+初回セットアップ（リポジトリが無い場合）: `gh repo create vault-share --private --source=. --remote=origin` のあと `git push -u origin main`。  
+既存リポジトリに紐づける場合: `git remote add origin <URL>` してから `git push -u origin main`。
+
+---
+
 ## 開発
 
 ```bash
@@ -83,7 +105,6 @@ pnpm test
 
 作業は `feature/*` ブランチで行い、main へのマージは Pull Request で行う想定です。
 
-1. GitHub にリポジトリを作成し、`git remote add origin <URL>` でリモートを追加
-2. `git push -u origin feature/initial-setup` でブランチをプッシュ
-3. GitHub 上で `feature/initial-setup` から `main` への Pull Request を作成
-4. CI（lint / format check / build / test）が通ることを確認してマージ
+1. 作業ブランチをプッシュ: `git push -u origin feature/<名前>`
+2. PR 作成: `gh pr create --base main --title "タイトル" --body "説明"`（詳細は [GitHub CLI コマンド一覧](docs/03-github-setup/01-github-cli-commands.md)）
+3. CI（lint / format check / build / test）が通ることを確認してマージ: `gh pr merge <番号>`
