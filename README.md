@@ -27,84 +27,120 @@
 
 データストアに **Firestore** を使用します。無料枠を超えると課金が発生します。
 
-- **無料枠（1 プロジェクトあたり、太平洋時間 0 時リセット）**
-  - 保存データ: 1 GiB
-  - ドキュメント読み取り: 50,000 回/日
-  - ドキュメント書き込み: 20,000 回/日
-  - ドキュメント削除: 20,000 回/日
-  - 送信データ: 10 GiB/月
+- **無料枠（1 プロジェクトあたり、太平洋時間 0 時リセット）**: 保存 1 GiB、読み取り 5万/日、書き込み 2万/日、削除 2万/日、送信 10 GiB/月
+- **超過時**: 読み取り 約 $0.03/10万ドキュメント、書き込み 約 $0.09/10万 等。詳細は [Firestore の料金](https://cloud.google.com/firestore/pricing) を参照。
 
-- **どの程度でコストがかかり始めるか**  
-  上記のいずれかを 1 日（または 1 月の送信）で超えると、課金対象になります。課金を有効にしていない場合は、超過後に利用が止まる場合があります。
+---
 
-- **超過時の追加コストの目安（リージョンにより変動）**
-  - 読み取り: 約 $0.03 / 10 万ドキュメント
-  - 書き込み: 約 $0.09 / 10 万ドキュメント
-  - 削除: 約 $0.01 / 10 万ドキュメント  
-    少人数チームで 1 日 5 万読・2 万書程度までなら無料枠内です。それを超える利用が続く場合に、上記程度の追加費用を見込んでください。最新の料金は [Firestore の料金](https://cloud.google.com/firestore/pricing) を参照してください。
+## 開発環境構築手順
 
-## GitHub CLI コマンド一覧
+作業者は任意のディレクトリにリポジトリをクローンして構築します。
 
-リポジトリの作成・設定・日常運用で使う **GitHub CLI (gh) のコマンド一覧**は以下にあります。
+### 1. 必要なツール
 
-- **詳細**: [docs/03-github-setup/01-github-cli-commands.md](docs/03-github-setup/01-github-cli-commands.md)
+- Node.js 20+
+- [pnpm](https://pnpm.io/)
+- git
+- [GitHub CLI (gh)](https://cli.github.com/)
+- [Google Cloud CLI (gcloud)](https://cloud.google.com/sdk/docs/install)
 
-**よく使うコマンドの抜粋:**
+### 2. リポジトリのクローン
 
 ```bash
-gh auth status                                    # 認証確認
-gh repo view                                      # リポジトリ情報
-gh repo edit --default-branch main                # デフォルトブランチを main に
-gh repo edit --description "..." --add-topic ...  # 説明・トピック設定
-gh pr create --base main --title "..." --body "..."  # PR 作成
-gh pr list && gh pr merge <番号>                  # PR 一覧・マージ
+git clone https://github.com/<OWNER>/vault-share.git
+cd vault-share
 ```
 
-初回セットアップ（リポジトリが無い場合）: `gh repo create vault-share --private --source=. --remote=origin` のあと `git push -u origin main`。  
-既存リポジトリに紐づける場合: `git remote add origin <URL>` してから `git push -u origin main`。
+（`<OWNER>` は組織またはユーザー名。すでに fork している場合はその URL を指定。）
+
+### 3. GitHub CLI と gcloud CLI の認証・初期設定
+
+開発環境構築時に、以下を**リポジトリルート**で実行します。
+
+**GitHub CLI（リポジトリへの push / PR に必要）**
+
+```bash
+gh auth login
+gh auth status   # 認証確認
+```
+
+既存リポジトリを新規作成して紐づける場合のみ:
+
+```bash
+gh repo create vault-share --private --source=. --remote=origin --description "機密情報を親しい間柄で安全に共有する Web サービス"
+git push -u origin main
+```
+
+**Google Cloud CLI（GCP 利用に必要）**
+
+```bash
+# 認証（ブラウザが開く）
+gcloud auth login
+gcloud auth application-default login   # ローカルアプリ・Pulumi 用
+
+# プロジェクトが未作成の場合のみ: 作成してデフォルトに設定
+gcloud projects create <PROJECT_ID> --name="vault-share"
+gcloud config set project <PROJECT_ID>
+
+# 利用する API の有効化（プロジェクトで課金リンク済みであること）
+gcloud services enable firestore.googleapis.com --project=<PROJECT_ID>
+gcloud services enable identitytoolkit.googleapis.com --project=<PROJECT_ID>
+gcloud services enable secretmanager.googleapis.com --project=<PROJECT_ID>
+```
+
+- `<PROJECT_ID>` は小文字・数字・ハイフンのみでグローバル一意（例: `vault-share-dev`）。
+- 課金の紐づけは [Google Cloud コンソール](https://console.cloud.google.com/) で行います（「お支払い」→「アカウントをリンク」）。
+- **コマンド一覧・実行記録の詳細**: [GitHub](docs/03-github-setup/01-github-cli-commands.md) / [GCP](docs/04-gcp-setup/01-gcloud-commands-and-initial-setup.md)
+
+### 4. 依存関係のインストールと起動
+
+```bash
+pnpm install
+pnpm dev          # Next.js (apps/web) を起動
+```
+
+その他: `pnpm build`（ビルド）、`pnpm lint`、`pnpm run format:check`、`pnpm test`。  
+環境変数（`GCP_PROJECT_ID`、`GOOGLE_APPLICATION_CREDENTIALS`、Secret Manager 参照など）は必要に応じて設定（`.env.example` を参照）。
 
 ---
 
 ## 開発
 
 ```bash
-pnpm install
-pnpm dev          # Next.js (apps/web) を起動
-pnpm build        # 全パッケージビルド
-pnpm lint         # 全パッケージ lint（CI では CI=true で next lint が非対話で実行）
+pnpm dev
+pnpm build
+pnpm lint
 pnpm run format:check
 pnpm test
 ```
 
-環境変数（ローカル・Pulumi 用）: `GCP_PROJECT_ID`、Firestore 用の `GOOGLE_APPLICATION_CREDENTIALS`、暗号鍵用の Secret Manager 参照などを必要に応じて設定。リポジトリには `.env.example` を配置予定（未コミットの場合は README を参照）。
+## 今後の作業と初期設定
+
+**この後の作業内容の概要**と、**初期設定で完了していない項目**は [docs/02-design/01-next-steps-and-initial-setup.md](docs/02-design/01-next-steps-and-initial-setup.md) で確認できます。未完了項目がある場合は、認証・DB・暗号化などの実装着手は保留することを推奨します。
 
 ## ドキュメント
 
-- `docs/01-research/`: 設計前調査（フレームワーク・IaC・リポジトリ・認証・1Password・暗号化）
-- `docs/02-design/`: アーキテクチャ・要件・コンポーネント・データ設計
+- `docs/01-research/`: 設計前調査
+- `docs/02-design/`: アーキテクチャ・要件・**今後の作業概要と初期設定**
+- `docs/03-github-setup/`: GitHub CLI コマンド一覧
+- `docs/04-gcp-setup/`: GCP 初期設定・gcloud コマンド一覧・実行したコマンドの記録
 
 ## リポジトリ構成
 
 ```
-├── apps/
-│   ├── web/           # Next.js
-│   └── extension/     # 将来: Chrome 拡張（現状は README のみ）
-├── packages/
-│   ├── api-client/   # 共有型・DTO
-│   ├── db/           # Firestore クライアント
-│   └── crypto/       # 暗号化ロジック
-├── infra/             # Pulumi（GCP）
-└── .github/workflows/ # CI
+├── apps/web/           # Next.js
+├── apps/extension/     # 将来: Chrome 拡張（現状は README のみ）
+├── packages/api-client/
+├── packages/db/
+├── packages/crypto/
+├── infra/               # Pulumi（GCP）
+└── .github/workflows/   # CI
 ```
-
-## ローカル格納場所
-
-リポジトリのクローンは `/Users/Work/vault-share/` を想定しています。
 
 ## マージ手順（PR）
 
-作業は `feature/*` ブランチで行い、main へのマージは Pull Request で行う想定です。
-
 1. 作業ブランチをプッシュ: `git push -u origin feature/<名前>`
-2. PR 作成: `gh pr create --base main --title "タイトル" --body "説明"`（詳細は [GitHub CLI コマンド一覧](docs/03-github-setup/01-github-cli-commands.md)）
-3. CI（lint / format check / build / test）が通ることを確認してマージ: `gh pr merge <番号>`
+2. PR 作成: `gh pr create --base main --title "タイトル" --body "説明"`
+3. CI 通過後マージ: `gh pr merge <番号>`
+
+詳細は [GitHub CLI コマンド一覧](docs/03-github-setup/01-github-cli-commands.md) を参照。
