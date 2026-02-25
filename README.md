@@ -127,7 +127,7 @@ pnpm test
 
 ## リポジトリ構成
 
-```
+```text
 ├── apps/web/           # Next.js
 ├── apps/extension/     # 将来: Chrome 拡張（現状は README のみ）
 ├── packages/api-client/

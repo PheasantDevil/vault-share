@@ -11,12 +11,12 @@
 
 以下の順で行うと、その後の実装（認証・Firestore・Secret Manager・Pulumi）がスムーズです。
 
-| 順番 | 項目 | 内容 |
-|------|------|------|
-| 1 | **GCP ログイン** | `gcloud auth login` で利用する Google アカウントでログインする。 |
-| 2 | **GCP プロジェクト作成** | 本サービス（vault-share）用のプロジェクトを 1 つ作成する。 |
-| 3 | **課金の有効化** | 作成したプロジェクトに課金アカウントを紐づける（コンソールで実施）。 |
-| 4 | **以降** | Firestore 作成、Identity Platform 設定、Pulumi 実行、Secret Manager 鍵登録（これらは 02-design/01-next-steps-and-initial-setup.md の「未完了項目」に記載）。 |
+| 順番 | 項目                     | 内容                                                                                                                                                         |
+| ---- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1    | **GCP ログイン**         | `gcloud auth login` で利用する Google アカウントでログインする。                                                                                             |
+| 2    | **GCP プロジェクト作成** | 本サービス（vault-share）用のプロジェクトを 1 つ作成する。                                                                                                   |
+| 3    | **課金の有効化**         | 作成したプロジェクトに課金アカウントを紐づける（コンソールで実施）。                                                                                         |
+| 4    | **以降**                 | Firestore 作成、Identity Platform 設定、Pulumi 実行、Secret Manager 鍵登録（これらは 02-design/01-next-steps-and-initial-setup.md の「未完了項目」に記載）。 |
 
 **GCP ログインとプロジェクト作成は初期設定で必要**です。このタイミングで構築しておくことを推奨します。
 
@@ -119,11 +119,11 @@ gcloud services enable firestore.googleapis.com --project=vault-share-dev
 # 5. Identity Platform（identitytoolkit）API 有効化
 gcloud services enable identitytoolkit.googleapis.com --project=vault-share-dev
 
-# 6. Secret Manager API 有効化（課金アカウントリンク後に実行すること）
-# gcloud services enable secretmanager.googleapis.com --project=vault-share-dev
+# 6. Secret Manager API 有効化（課金アカウントリンク後に実行）
+gcloud services enable secretmanager.googleapis.com --project=vault-share-dev
 ```
 
-**結果**: 1〜5 は実行済み。6 はプロジェクトに課金が未リンクのため未実行。コンソールで課金をリンクしたあと、上記 6 のコマンドを実行する。
+**結果**: 1〜6 はいずれも実行済み（プロジェクト vault-share-dev）。課金リンク後に 6 を実行した。
 
 **オプション（Pulumi やローカルアプリで GCP を使う場合）**:
 

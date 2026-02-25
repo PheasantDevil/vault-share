@@ -4,14 +4,14 @@
 
 ### 1.1 完了している項目
 
-| 項目 | 内容 |
-|------|------|
-| **GitHub リポジトリ** | 作成済み（`PheasantDevil/vault-share`）、private、origin 設定済み |
-| **GitHub 設定** | デフォルトブランチ `main`、説明文・トピック（typescript, nextjs, gcp, firestore, pulumi）設定済み |
-| **ブランチ** | `main` / `feature/initial-setup` をリモートにプッシュ済み |
+| 項目                   | 内容                                                                                                          |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------- |
+| **GitHub リポジトリ**  | 作成済み（`PheasantDevil/vault-share`）、private、origin 設定済み                                             |
+| **GitHub 設定**        | デフォルトブランチ `main`、説明文・トピック（typescript, nextjs, gcp, firestore, pulumi）設定済み             |
+| **ブランチ**           | `main` / `feature/initial-setup` をリモートにプッシュ済み                                                     |
 | **ローカル・モノレポ** | ルート package.json、pnpm workspace、apps/web（Next.js）、packages（api-client, db, crypto）、infra（Pulumi） |
-| **CI** | `.github/workflows/ci.yml` で lint / format:check / build / test 実行 |
-| **ドキュメント** | docs/01-research、02-design、03-github-setup（GitHub CLI コマンド一覧） |
+| **CI**                 | `.github/workflows/ci.yml` で lint / format:check / build / test 実行                                         |
+| **ドキュメント**       | docs/01-research、02-design、03-github-setup（GitHub CLI コマンド一覧）                                       |
 
 ### 1.2 未完了または手動が必要な項目（実装着手前の推奨）
 
@@ -21,14 +21,14 @@
 **GCP ログインとプロジェクト作成も初期設定に含め、このタイミングで構築しておくことを推奨します。**  
 コマンド一覧は [docs/04-gcp-setup/01-gcloud-commands-and-initial-setup.md](../04-gcp-setup/01-gcloud-commands-and-initial-setup.md) に記載しています。Google Cloud CLI (gcloud) はローカルにインストール済みであればそのまま利用できます。
 
-| 順番 | 項目 | 内容 | 実施方法 |
-|------|------|------|----------|
-| 1 | **GCP ログイン** | 利用する Google アカウントで gcloud にログインしていること | `gcloud auth login`（必要に応じて `gcloud auth application-default login`） |
-| 2 | **GCP プロジェクト作成** | 本サービス用の GCP プロジェクトが存在し、課金が有効であること | `gcloud projects create <PROJECT_ID>` のあと、コンソールで課金アカウントをリンク |
-| 3 | **Firestore** | Native モードのデータベースが 1 つ作成されていること | コンソールで Firestore 作成、または Pulumi 実行後にコンソールで DB 作成（Pulumi は API 有効化のみ） |
-| 4 | **Identity Platform** | メール/パスワード・Google 等のプロバイダが有効であること | GCP コンソール「Identity Platform」でプロバイダ設定（Pulumi は API 有効化のみ） |
-| 5 | **Secret Manager の鍵** | 項目暗号用の AES-256 鍵を Secret `vault-share-item-encryption-key` に登録していること | 先に Pulumi で Secret リソースを作成したうえで、コンソールまたは `gcloud` でバージョン（鍵値）を追加 |
-| 6 | **Pulumi の初回実行** | `infra/` で `pulumi up` を実行し、API 有効化と Secret リソース作成が済んでいること | `infra/` で `pulumi config set gcp:project <PROJECT_ID>` のあと `pulumi up`（要 Pulumi ログイン・GCP 認証） |
+| 順番 | 項目                     | 内容                                                                                  | 実施方法                                                                                                    |
+| ---- | ------------------------ | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| 1    | **GCP ログイン**         | 利用する Google アカウントで gcloud にログインしていること                            | `gcloud auth login`（必要に応じて `gcloud auth application-default login`）                                 |
+| 2    | **GCP プロジェクト作成** | 本サービス用の GCP プロジェクトが存在し、課金が有効であること                         | `gcloud projects create <PROJECT_ID>` のあと、コンソールで課金アカウントをリンク                            |
+| 3    | **Firestore**            | Native モードのデータベースが 1 つ作成されていること                                  | コンソールで Firestore 作成、または Pulumi 実行後にコンソールで DB 作成（Pulumi は API 有効化のみ）         |
+| 4    | **Identity Platform**    | メール/パスワード・Google 等のプロバイダが有効であること                              | GCP コンソール「Identity Platform」でプロバイダ設定（Pulumi は API 有効化のみ）                             |
+| 5    | **Secret Manager の鍵**  | 項目暗号用の AES-256 鍵を Secret `vault-share-item-encryption-key` に登録していること | 先に Pulumi で Secret リソースを作成したうえで、コンソールまたは `gcloud` でバージョン（鍵値）を追加        |
+| 6    | **Pulumi の初回実行**    | `infra/` で `pulumi up` を実行し、API 有効化と Secret リソース作成が済んでいること    | `infra/` で `pulumi config set gcp:project <PROJECT_ID>` のあと `pulumi up`（要 Pulumi ログイン・GCP 認証） |
 
 **確認の目安**: GCP にログイン済みで、プロジェクト ID が決まり、Firestore と Identity Platform が利用可能で、アプリから参照する暗号鍵が Secret Manager に存在すれば、次の実装に進んで問題ありません。
 
