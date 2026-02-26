@@ -86,6 +86,13 @@ gcloud config set project <PROJECT_ID>
 gcloud services enable firestore.googleapis.com --project=<PROJECT_ID>
 gcloud services enable identitytoolkit.googleapis.com --project=<PROJECT_ID>
 gcloud services enable secretmanager.googleapis.com --project=<PROJECT_ID>
+
+# Cloud Run デプロイ用（Next.js を Cloud Run に載せる場合）
+gcloud services enable run.googleapis.com --project=<PROJECT_ID>
+gcloud services enable artifactregistry.googleapis.com --project=<PROJECT_ID>
+
+# Cloud Run のデフォルトリージョン（無料枠対象・日本向けは asia-northeast1 推奨）
+gcloud config set run/region asia-northeast1
 ```
 
 - `<PROJECT_ID>` は小文字・数字・ハイフンのみでグローバル一意（例: `vault-share-dev`）。
@@ -124,6 +131,7 @@ pnpm test
 - `docs/02-design/`: アーキテクチャ・要件・**今後の作業概要と初期設定**
 - `docs/03-github-setup/`: GitHub CLI コマンド一覧
 - `docs/04-gcp-setup/`: GCP 初期設定・gcloud コマンド一覧・実行したコマンドの記録
+- `docs/05-deployment/`: フロントエンドのデプロイ先比較・提案（Vercel 推奨とメリット・デメリット）
 
 ## リポジトリ構成
 
