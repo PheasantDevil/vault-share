@@ -27,8 +27,8 @@
 | 2    | **GCP プロジェクト作成** | 本サービス用の GCP プロジェクトが存在し、課金が有効であること                         | `gcloud projects create <PROJECT_ID>` のあと、コンソールで課金アカウントをリンク                            |
 | 3    | **Firestore**            | Native モードのデータベースが 1 つ作成されていること                                  | コンソールで Firestore 作成、または Pulumi 実行後にコンソールで DB 作成（Pulumi は API 有効化のみ）         |
 | 4    | **Identity Platform**    | メール/パスワード・Google 等のプロバイダが有効であること                              | GCP コンソール「Identity Platform」でプロバイダ設定（Pulumi は API 有効化のみ）                             |
-| 5    | **Secret Manager の鍵**  | 項目暗号用の AES-256 鍵を Secret `vault-share-item-encryption-key` に登録していること | 先に Pulumi で Secret リソースを作成したうえで、コンソールまたは `gcloud` でバージョン（鍵値）を追加        |
-| 6    | **Pulumi の初回実行**    | `infra/` で `pulumi up` を実行し、API 有効化と Secret リソース作成が済んでいること    | `infra/` で `pulumi config set gcp:project <PROJECT_ID>` のあと `pulumi up`（要 Pulumi ログイン・GCP 認証） |
+| 5    | **Pulumi の初回実行**    | `infra/` で `pulumi up` を実行し、API 有効化と Secret リソース作成が済んでいること    | `infra/` で `pulumi config set gcp:project <PROJECT_ID>` のあと `pulumi up`（要 Pulumi ログイン・GCP 認証） |
+| 6    | **Secret Manager の鍵**  | 項目暗号用の AES-256 鍵を Secret `vault-share-item-encryption-key` に登録していること | Pulumi 実行後、コンソールまたは `gcloud` でバージョン（鍵値）を追加                                         |
 
 **確認の目安**: GCP にログイン済みで、プロジェクト ID が決まり、Firestore と Identity Platform が利用可能で、アプリから参照する暗号鍵が Secret Manager に存在すれば、次の実装に進んで問題ありません。
 
