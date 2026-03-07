@@ -131,3 +131,16 @@ gcloud services enable secretmanager.googleapis.com --project=vault-share-dev
 gcloud auth application-default login
 gcloud auth application-default set-quota-project vault-share-dev
 ```
+
+### 4.1 追加で実行したコマンド（Cloud Run / Artifact Registry / Firestore）
+
+```bash
+# Cloud Run と Artifact Registry API の有効化（デプロイ用）
+gcloud services enable run.googleapis.com artifactregistry.googleapis.com --project=vault-share-dev
+
+# Firestore データベース作成（Native モード・asia-northeast1・(default)）
+gcloud firestore databases create --location=asia-northeast1 --project=vault-share-dev
+```
+
+**結果**: いずれも実行済み。Firestore は `(default)` が asia-northeast1 で作成済み。  
+**残作業**: Pulumi 初回実行・Identity Platform プロバイダ設定・Secret 鍵の登録は [02-remaining-setup-and-manual-steps.md](./02-remaining-setup-and-manual-steps.md) を参照。

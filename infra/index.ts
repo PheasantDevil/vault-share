@@ -7,7 +7,11 @@ import * as gcp from '@pulumi/gcp';
 import * as pulumi from '@pulumi/pulumi';
 
 const config = new pulumi.Config();
-const project = config.require('gcp:project');
+const project =
+  config.get('gcp:project') ||
+  process.env.GOOGLE_PROJECT ||
+  process.env.GCLOUD_PROJECT ||
+  config.require('gcp:project');
 
 // Firestore (Native mode) - use default database
 // Note: Firestore is often created once via console; this ensures the API is enabled.
