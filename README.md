@@ -4,7 +4,7 @@
 
 ## 主な機能（予定）
 
-- **認証**: Google Cloud Identity Platform（メール/パスワード・ソーシャルログイン・MFA）
+- **認証**: Google Cloud Identity Platform（メール/パスワードのみ・許可メールアドレスでログイン・MFA）
 - **ログイン・セッション**: ログイン/ログアウト、パスワードリセット
 - **1Password 連携**: 1Password Connect（無料枠 3 vault）で vault 参照・アイテム登録。無料枠超過時は CSV インポートに切り替え。常に CSV/1PUX のインポート・エクスポートも利用可能
 - **データ登録**: 手動登録。グループ単位での共有

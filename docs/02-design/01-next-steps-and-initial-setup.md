@@ -26,7 +26,7 @@
 | 1    | **GCP ログイン**         | 利用する Google アカウントで gcloud にログインしていること                            | `gcloud auth login`（必要に応じて `gcloud auth application-default login`）                                 |
 | 2    | **GCP プロジェクト作成** | 本サービス用の GCP プロジェクトが存在し、課金が有効であること                         | `gcloud projects create <PROJECT_ID>` のあと、コンソールで課金アカウントをリンク                            |
 | 3    | **Firestore**            | Native モードのデータベースが 1 つ作成されていること                                  | コンソールで Firestore 作成、または Pulumi 実行後にコンソールで DB 作成（Pulumi は API 有効化のみ）         |
-| 4    | **Identity Platform**    | メール/パスワード・Google 等のプロバイダが有効であること                              | GCP コンソール「Identity Platform」でプロバイダ設定（Pulumi は API 有効化のみ）                             |
+| 4    | **Identity Platform**    | メール/パスワードのプロバイダのみ有効であること（Google は無効）。ログインは許可されたメールアドレスのみ | GCP コンソール「Identity Platform」でメール/パスワードのみ有効化（Pulumi は API 有効化のみ）                 |
 | 5    | **Pulumi の初回実行**    | `infra/` で `pulumi up` を実行し、API 有効化と Secret リソース作成が済んでいること    | `infra/` で `pulumi config set gcp:project <PROJECT_ID>` のあと `pulumi up`（要 Pulumi ログイン・GCP 認証） |
 | 6    | **Secret Manager の鍵**  | 項目暗号用の AES-256 鍵を Secret `vault-share-item-encryption-key` に登録していること | Pulumi 実行後、コンソールまたは `gcloud` でバージョン（鍵値）を追加                                         |
 
@@ -40,7 +40,7 @@
 
 ### 2.1 認証まわり（R1, R2, R3）
 
-- **Identity Platform 連携**: Next.js から Firebase Auth / Identity Platform SDK でメール・パスワード・Google ログインを実装。
+- **Identity Platform 連携**: Next.js から Firebase Auth / Identity Platform SDK でメール・パスワードログインのみ実装（Google は使用しない）。ログインは許可されたメールアドレスのみとする。
 - **セッション・ログアウト**: セッション Cookie または ID トークンの検証、ログアウト処理。
 - **MFA**: Identity Platform の TOTP・SMS を有効化し、登録・検証フローを UI に組み込む。
 - **パスワードリセット**: Identity Platform のパスワードリセットメールフローを利用。
