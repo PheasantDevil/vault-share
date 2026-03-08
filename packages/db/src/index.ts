@@ -32,3 +32,4 @@ export function setDb(db: Firestore): void {
 }
 
 export type { Firestore };
+export type { UserDoc, GroupDoc, GroupMemberDoc, InvitationDoc, ItemDoc } from './schema';
