@@ -1,0 +1,13 @@
+node_modules
+.next
+.git
+.env*
+!.env.example
+*.md
+.pnpm-store
+coverage
+.nyc_output
+*.log
+.DS_Store
+.vscode
+.idea

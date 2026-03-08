@@ -1,0 +1,106 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  REGION: asia-northeast1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    outputs:
+      service_url: ${{ steps.deploy.outputs.url }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker ${{ vars.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Build and push
+        id: build
+        run: |
+          PROJECT_ID=${{ vars.GCP_PROJECT_ID }}
+          REGION=${{ vars.GCP_REGION }}
+          REPO="$REGION-docker.pkg.dev/$PROJECT_ID/vault-share"
+          IMAGE="$REPO/web"
+
+          docker build -t "$IMAGE:${{ github.sha }}" .
+          docker push "$IMAGE:${{ github.sha }}"
+          echo "image=$IMAGE:${{ github.sha }}" >> $GITHUB_OUTPUT
+
+      - name: Deploy to Cloud Run
+        id: deploy
+        run: |
+          PROJECT_ID=${{ vars.GCP_PROJECT_ID }}
+          REGION=${{ vars.GCP_REGION }}
+          IMAGE=${{ steps.build.outputs.image }}
+          SERVICE="vault-share-web"
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            TAG="pr-${{ github.event.pull_request.number }}"
+            FLAGS="--tag=$TAG --no-traffic"
+          else
+            TAG=""
+            FLAGS=""
+          fi
+
+          gcloud run deploy "$SERVICE" \
+            --image="$IMAGE" \
+            --region="$REGION" \
+            --platform=managed \
+            --allow-unauthenticated \
+            --set-env-vars="NODE_ENV=production" \
+            $FLAGS \
+            --quiet
+
+          if [ -n "$TAG" ]; then
+            BASE_URL=$(gcloud run services describe "$SERVICE" --region="$REGION" --format='value(status.url)')
+            PREVIEW_URL=$(echo "$BASE_URL" | sed "s|https://|https://$TAG---|")
+            echo "url=$PREVIEW_URL" >> $GITHUB_OUTPUT
+          else
+            gcloud run services describe "$SERVICE" --region="$REGION" --format='value(status.url)' > url.txt
+            echo "url=$(cat url.txt)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Comment on PR (preview)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const url = `${{ steps.deploy.outputs.url }}`;
+            const body = `## プレビュー環境\n\nデプロイが完了しました。\n\n**URL**: ${url}`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
