@@ -31,12 +31,14 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
 
-      - name: Validate OIDC configuration
+      - name: Validate GCP configuration
         run: |
           WIP="${{ vars.WORKLOAD_IDENTITY_PROVIDER || secrets.WORKLOAD_IDENTITY_PROVIDER }}"
           SA="${{ vars.SERVICE_ACCOUNT || secrets.SERVICE_ACCOUNT }}"
-          if [ -z "$WIP" ] || [ -z "$SA" ]; then
-            echo "::error::WORKLOAD_IDENTITY_PROVIDER and SERVICE_ACCOUNT must be set."
+          PROJ="${{ vars.GCP_PROJECT_ID || secrets.GCP_PROJECT_ID }}"
+          REG="${{ vars.GCP_REGION || secrets.GCP_REGION }}"
+          if [ -z "$WIP" ] || [ -z "$SA" ] || [ -z "$PROJ" ] || [ -z "$REG" ]; then
+            echo "::error::WORKLOAD_IDENTITY_PROVIDER, SERVICE_ACCOUNT, GCP_PROJECT_ID, GCP_REGION must be set."
             echo "Configure in: Settings → Secrets and variables → Actions → Variables (or Secrets)"
             echo "See docs/05-deployment/03-cicd-setup-gcp-and-github.md"
             exit 1
@@ -54,13 +56,14 @@ jobs:
 
       - name: Configure Docker for Artifact Registry
         run: |
-          gcloud auth configure-docker ${{ vars.GCP_REGION }}-docker.pkg.dev --quiet
+          REGION="${{ vars.GCP_REGION || secrets.GCP_REGION }}"
+          gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
 
       - name: Build and push
         id: build
         run: |
-          PROJECT_ID=${{ vars.GCP_PROJECT_ID }}
-          REGION=${{ vars.GCP_REGION }}
+          PROJECT_ID="${{ vars.GCP_PROJECT_ID || secrets.GCP_PROJECT_ID }}"
+          REGION="${{ vars.GCP_REGION || secrets.GCP_REGION }}"
           REPO="$REGION-docker.pkg.dev/$PROJECT_ID/vault-share"
           IMAGE="$REPO/web"
 
@@ -71,8 +74,8 @@ jobs:
       - name: Deploy to Cloud Run
         id: deploy
         run: |
-          PROJECT_ID=${{ vars.GCP_PROJECT_ID }}
-          REGION=${{ vars.GCP_REGION }}
+          PROJECT_ID="${{ vars.GCP_PROJECT_ID || secrets.GCP_PROJECT_ID }}"
+          REGION="${{ vars.GCP_REGION || secrets.GCP_REGION }}"
           IMAGE=${{ steps.build.outputs.image }}
           SERVICE="vault-share-web"
 
