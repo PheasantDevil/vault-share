@@ -6,7 +6,8 @@ export default function HomePage() {
         機密情報を親しい間柄で安全に共有
       </p>
       <p>
-        <a href="/login">ログイン</a> / <a href="/signup">新規登録</a> / <a href="/dashboard">ダッシュボード</a>
+        <a href="/login">ログイン</a> / <a href="/signup">新規登録</a> /{' '}
+        <a href="/dashboard">ダッシュボード</a>
       </p>
     </main>
   );

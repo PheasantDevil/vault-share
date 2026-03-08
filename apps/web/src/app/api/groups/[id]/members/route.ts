@@ -6,7 +6,11 @@ import { getDb, COLLECTIONS } from '@vault-share/db';
 import type { GroupMemberDoc } from '@vault-share/db';
 import { getSessionFromRequest } from '@/lib/auth/get-session';
 
-async function ensureMember(db: Awaited<ReturnType<typeof getDb>>, groupId: string, userId: string) {
+async function ensureMember(
+  db: Awaited<ReturnType<typeof getDb>>,
+  groupId: string,
+  userId: string
+) {
   const memberSnap = await db
     .collection(COLLECTIONS.groupMembers)
     .where('groupId', '==', groupId)
@@ -16,10 +20,7 @@ async function ensureMember(db: Awaited<ReturnType<typeof getDb>>, groupId: stri
   return memberSnap.empty ? null : (memberSnap.docs[0].data() as GroupMemberDoc);
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSessionFromRequest(request);
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -32,7 +33,10 @@ export async function GET(
   }
   const member = await ensureMember(db, params.id, session.uid);
   if (!member) {
-    return NextResponse.json({ error: 'このグループにアクセスする権限がありません' }, { status: 403 });
+    return NextResponse.json(
+      { error: 'このグループにアクセスする権限がありません' },
+      { status: 403 }
+    );
   }
   const membersSnap = await db
     .collection(COLLECTIONS.groupMembers)

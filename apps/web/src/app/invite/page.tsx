@@ -62,19 +62,24 @@ function InviteContent() {
       <p style={{ marginBottom: '1rem' }}>
         この招待リンクでグループに参加します。ログインしている必要があります。
       </p>
-      {result === 'success' && (
-        <p style={{ color: 'green', marginBottom: '1rem' }}>{message}</p>
-      )}
+      {result === 'success' && <p style={{ color: 'green', marginBottom: '1rem' }}>{message}</p>}
       {result === 'error' && (
         <p style={{ color: 'var(--error, #c00)', marginBottom: '1rem' }}>{message}</p>
       )}
-      <button type="button" onClick={handleAccept} disabled={loading} style={{ padding: '0.5rem 1rem', marginRight: '0.5rem' }}>
+      <button
+        type="button"
+        onClick={handleAccept}
+        disabled={loading}
+        style={{ padding: '0.5rem 1rem', marginRight: '0.5rem' }}
+      >
         {loading ? '参加中...' : '参加する'}
       </button>
       <Link href="/login">ログイン</Link>
       <p style={{ marginTop: '1.5rem' }}>
         <Link href="/">トップへ</Link>
-        <Link href="/dashboard" style={{ marginLeft: '1rem' }}>ダッシュボード</Link>
+        <Link href="/dashboard" style={{ marginLeft: '1rem' }}>
+          ダッシュボード
+        </Link>
       </p>
     </main>
   );
@@ -82,12 +87,14 @@ function InviteContent() {
 
 export default function InvitePage() {
   return (
-    <Suspense fallback={
-      <main style={{ padding: '2rem', maxWidth: 400, margin: '0 auto' }}>
-        <h1>招待</h1>
-        <p>読み込み中...</p>
-      </main>
-    }>
+    <Suspense
+      fallback={
+        <main style={{ padding: '2rem', maxWidth: 400, margin: '0 auto' }}>
+          <h1>招待</h1>
+          <p>読み込み中...</p>
+        </main>
+      }
+    >
       <InviteContent />
     </Suspense>
   );

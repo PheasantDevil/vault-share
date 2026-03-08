@@ -42,7 +42,10 @@ export async function POST(request: NextRequest) {
     .limit(1)
     .get();
   if (!existingSnap.empty) {
-    await db.collection(COLLECTIONS.invitations).doc(invDoc.id).update({ usedAt: now.toISOString() });
+    await db
+      .collection(COLLECTIONS.invitations)
+      .doc(invDoc.id)
+      .update({ usedAt: now.toISOString() });
     return NextResponse.json({ groupId, message: '既に参加済みです' });
   }
   const memberRef = db.collection(COLLECTIONS.groupMembers).doc();

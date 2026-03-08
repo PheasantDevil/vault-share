@@ -8,12 +8,20 @@ GitHub Actions から Cloud Run にデプロイするため、以下の手動設
 
 GitHub の **Settings** → **Secrets and variables** → **Actions** → **Variables** で、**New repository variable** を押し、以下 4 つを追加する。
 
-| 変数名 | 値 |
-|--------|-----|
-| `GCP_PROJECT_ID` | `vault-share-dev` |
-| `GCP_REGION` | `asia-northeast1` |
-| `WORKLOAD_IDENTITY_PROVIDER` | `projects/vault-share-dev/locations/global/workloadIdentityPools/github-pool/providers/github-provider` |
-| `SERVICE_ACCOUNT` | `github-actions@vault-share-dev.iam.gserviceaccount.com` |
+| 変数名                       | 値                                                                                                       |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `GCP_PROJECT_ID`             | `vault-share-dev`                                                                                        |
+| `GCP_REGION`                 | `asia-northeast1`                                                                                        |
+| `WORKLOAD_IDENTITY_PROVIDER` | `projects/プロジェクト番号/locations/global/workloadIdentityPools/github-pool/providers/github-provider` |
+| `SERVICE_ACCOUNT`            | `github-actions@vault-share-dev.iam.gserviceaccount.com`                                                 |
+
+**重要**: `WORKLOAD_IDENTITY_PROVIDER` は `projects/` の後に**プロジェクト ID ではなくプロジェクト番号（数字）**を指定します。プロジェクト番号の取得コマンド:
+
+```bash
+gcloud projects describe vault-share-dev --format='value(projectNumber)'
+```
+
+例（vault-share-dev）: プロジェクト番号 `1013607433269` の場合 → `projects/1013607433269/locations/global/workloadIdentityPools/github-pool/providers/github-provider`
 
 **手順**:
 
@@ -58,7 +66,15 @@ gcloud run services update vault-share-web \
 
 ---
 
-## 4. 実行済み GCP 設定（参考）
+## 4. 事前に有効化が必要な API
+
+Workload Identity Federation 利用には **IAM Service Account Credentials API** の有効化が必要です:
+
+```bash
+gcloud services enable iamcredentials.googleapis.com --project=vault-share-dev
+```
+
+## 5. 実行済み GCP 設定（参考）
 
 以下はすでにコマンドで実行済みです。再実行不要。
 

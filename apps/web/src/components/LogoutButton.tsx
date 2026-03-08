@@ -23,7 +23,12 @@ export function LogoutButton() {
   }
 
   return (
-    <button type="button" onClick={handleLogout} disabled={loading} style={{ padding: '0.5rem 1rem' }}>
+    <button
+      type="button"
+      onClick={handleLogout}
+      disabled={loading}
+      style={{ padding: '0.5rem 1rem' }}
+    >
       {loading ? 'ログアウト中...' : 'ログアウト'}
     </button>
   );

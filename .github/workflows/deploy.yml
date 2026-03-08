@@ -31,25 +31,39 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
 
+      - name: Validate GCP configuration
+        run: |
+          WIP="${{ vars.WORKLOAD_IDENTITY_PROVIDER || secrets.WORKLOAD_IDENTITY_PROVIDER }}"
+          SA="${{ vars.SERVICE_ACCOUNT || secrets.SERVICE_ACCOUNT }}"
+          PROJ="${{ vars.GCP_PROJECT_ID || secrets.GCP_PROJECT_ID }}"
+          REG="${{ vars.GCP_REGION || secrets.GCP_REGION }}"
+          if [ -z "$WIP" ] || [ -z "$SA" ] || [ -z "$PROJ" ] || [ -z "$REG" ]; then
+            echo "::error::WORKLOAD_IDENTITY_PROVIDER, SERVICE_ACCOUNT, GCP_PROJECT_ID, GCP_REGION must be set."
+            echo "Configure in: Settings → Secrets and variables → Actions → Variables (or Secrets)"
+            echo "See docs/05-deployment/03-cicd-setup-gcp-and-github.md"
+            exit 1
+          fi
+
       - name: Authenticate to Google Cloud
         id: auth
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ vars.WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ vars.SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ vars.WORKLOAD_IDENTITY_PROVIDER || secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.SERVICE_ACCOUNT || secrets.SERVICE_ACCOUNT }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Configure Docker for Artifact Registry
         run: |
-          gcloud auth configure-docker ${{ vars.GCP_REGION }}-docker.pkg.dev --quiet
+          REGION="${{ vars.GCP_REGION || secrets.GCP_REGION }}"
+          gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
 
       - name: Build and push
         id: build
         run: |
-          PROJECT_ID=${{ vars.GCP_PROJECT_ID }}
-          REGION=${{ vars.GCP_REGION }}
+          PROJECT_ID="${{ vars.GCP_PROJECT_ID || secrets.GCP_PROJECT_ID }}"
+          REGION="${{ vars.GCP_REGION || secrets.GCP_REGION }}"
           REPO="$REGION-docker.pkg.dev/$PROJECT_ID/vault-share"
           IMAGE="$REPO/web"
 
@@ -60,14 +74,19 @@ jobs:
       - name: Deploy to Cloud Run
         id: deploy
         run: |
-          PROJECT_ID=${{ vars.GCP_PROJECT_ID }}
-          REGION=${{ vars.GCP_REGION }}
+          PROJECT_ID="${{ vars.GCP_PROJECT_ID || secrets.GCP_PROJECT_ID }}"
+          REGION="${{ vars.GCP_REGION || secrets.GCP_REGION }}"
           IMAGE=${{ steps.build.outputs.image }}
           SERVICE="vault-share-web"
 
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             TAG="pr-${{ github.event.pull_request.number }}"
-            FLAGS="--tag=$TAG --no-traffic"
+            # --no-traffic は既存サービスへのデプロイ時のみ使用可能（初回作成時は不可）
+            if gcloud run services describe "$SERVICE" --region="$REGION" --project="$PROJECT_ID" &>/dev/null; then
+              FLAGS="--tag=$TAG --no-traffic"
+            else
+              FLAGS="--tag=$TAG"
+            fi
           else
             TAG=""
             FLAGS=""
@@ -76,6 +95,7 @@ jobs:
           gcloud run deploy "$SERVICE" \
             --image="$IMAGE" \
             --region="$REGION" \
+            --project="$PROJECT_ID" \
             --platform=managed \
             --allow-unauthenticated \
             --set-env-vars="NODE_ENV=production" \
@@ -83,11 +103,11 @@ jobs:
             --quiet
 
           if [ -n "$TAG" ]; then
-            BASE_URL=$(gcloud run services describe "$SERVICE" --region="$REGION" --format='value(status.url)')
+            BASE_URL=$(gcloud run services describe "$SERVICE" --region="$REGION" --project="$PROJECT_ID" --format='value(status.url)')
             PREVIEW_URL=$(echo "$BASE_URL" | sed "s|https://|https://$TAG---|")
             echo "url=$PREVIEW_URL" >> $GITHUB_OUTPUT
           else
-            gcloud run services describe "$SERVICE" --region="$REGION" --format='value(status.url)' > url.txt
+            gcloud run services describe "$SERVICE" --region="$REGION" --project="$PROJECT_ID" --format='value(status.url)' > url.txt
             echo "url=$(cat url.txt)" >> $GITHUB_OUTPUT
           fi
 

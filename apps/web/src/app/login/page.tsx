@@ -77,9 +77,7 @@ export default function LoginPage() {
             style={{ width: '100%', padding: 0.5 }}
           />
         </div>
-        {error && (
-          <p style={{ color: 'var(--error, #c00)', marginBottom: '1rem' }}>{error}</p>
-        )}
+        {error && <p style={{ color: 'var(--error, #c00)', marginBottom: '1rem' }}>{error}</p>}
         <button type="submit" disabled={loading} style={{ padding: '0.5rem 1rem' }}>
           {loading ? 'ログイン中...' : 'ログイン'}
         </button>
