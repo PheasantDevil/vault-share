@@ -4,12 +4,12 @@
 
 以下は **コマンドで実行済み** です。再実行の必要はありません。
 
-| 項目 | 実行内容 | 結果 |
-|------|----------|------|
-| **Cloud Run / Artifact Registry API** | `gcloud services enable run.googleapis.com artifactregistry.googleapis.com --project=vault-share-dev` | 有効化済み |
-| **Firestore データベース** | `gcloud firestore databases create --location=asia-northeast1 --project=vault-share-dev` | `(default)` データベース作成済み（Native モード・asia-northeast1） |
-| **Pulumi の初回実行** | `infra/` で `pulumi login --local` → `pulumi stack init dev` → `GOOGLE_PROJECT=vault-share-dev pulumi up --yes` | Secret リソース・API 有効化済み |
-| **Secret Manager の鍵** | `openssl rand -base64 32 \| gcloud secrets versions add vault-share-item-encryption-key --project=vault-share-dev --data-file=-` | バージョン 1 を登録済み |
+| 項目                                  | 実行内容                                                                                                                         | 結果                                                               |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| **Cloud Run / Artifact Registry API** | `gcloud services enable run.googleapis.com artifactregistry.googleapis.com --project=vault-share-dev`                            | 有効化済み                                                         |
+| **Firestore データベース**            | `gcloud firestore databases create --location=asia-northeast1 --project=vault-share-dev`                                         | `(default)` データベース作成済み（Native モード・asia-northeast1） |
+| **Pulumi の初回実行**                 | `infra/` で `pulumi login --local` → `pulumi stack init dev` → `GOOGLE_PROJECT=vault-share-dev pulumi up --yes`                  | Secret リソース・API 有効化済み                                    |
+| **Secret Manager の鍵**               | `openssl rand -base64 32 \| gcloud secrets versions add vault-share-item-encryption-key --project=vault-share-dev --data-file=-` | バージョン 1 を登録済み                                            |
 
 ---
 
@@ -33,19 +33,23 @@
    - 確認: `pulumi version`
 
 2. **Pulumi にログイン**
+
    ```bash
    pulumi login
    ```
+
    - ブラウザが開くので、Pulumi アカウントでサインイン。
    - 非対話環境やローカルのみでよい場合: `pulumi login --local`（ステートはローカルに保存）。
 
 3. **GCP のアプリケーション default 認証（未実施の場合）**
+
    ```bash
    gcloud auth application-default login
    gcloud auth application-default set-quota-project vault-share-dev
    ```
 
 4. **infra でスタック作成・初回デプロイ**
+
    ```bash
    cd /Users/Work/vault-share/infra
    npm install
@@ -56,6 +60,7 @@
    # プロジェクトは config または環境変数 GOOGLE_PROJECT で指定
    GOOGLE_PROJECT=vault-share-dev pulumi up --yes
    ```
+
    - 完了後、GCP コンソールの Secret Manager に `vault-share-item-encryption-key` が作成されていることを確認。
 
 ---
@@ -72,7 +77,7 @@
    - [Google Cloud Console](https://console.cloud.google.com/) にログインし、プロジェクト **vault-share-dev** を選択。
 
 2. **Identity Platform を開く**
-   - 左上メニュー（ハンバーガー）→ **ビルド** → **Identity Platform**。  
+   - 左上メニュー（ハンバーガー）→ **ビルド** → **Identity Platform**。
    - または検索バーで「Identity Platform」を検索。
 
 3. **メール/パスワードのみ有効化**
@@ -97,18 +102,22 @@
 #### 手順（コマンドで実行可能）
 
 1. **32 バイトの鍵を生成し、Secret にバージョンとして追加**
+
    ```bash
    # 鍵を生成して Secret に追加（Base64 で 1 行）
    openssl rand -base64 32 | gcloud secrets versions add vault-share-item-encryption-key \
      --project=vault-share-dev \
      --data-file=-
    ```
+
    - 本番では、生成した鍵を **安全に保管** し、同じ鍵を再登録する場合は `--data-file=-` でその内容を渡す。
 
 2. **確認**
+
    ```bash
    gcloud secrets versions list vault-share-item-encryption-key --project=vault-share-dev
    ```
+
    - バージョン 1 が表示されれば完了。
 
 **注意**: 鍵の値はアプリから **参照** するだけで、コンソールで「値の表示」はしない運用を推奨します。再生成した場合は新しいバージョンを追加し、アプリ側でバージョン指定するか、常に `latest` を参照するように実装してください。

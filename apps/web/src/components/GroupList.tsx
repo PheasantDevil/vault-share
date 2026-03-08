@@ -26,7 +26,9 @@ export function GroupList() {
   if (loading) return <p>読み込み中...</p>;
   if (error) return <p style={{ color: 'var(--error, #c00)' }}>{error}</p>;
   if (groups.length === 0) {
-    return <p>参加中のグループはありません。グループを作成するか、招待リンクで参加してください。</p>;
+    return (
+      <p>参加中のグループはありません。グループを作成するか、招待リンクで参加してください。</p>
+    );
   }
   return (
     <ul style={{ listStyle: 'none', padding: 0 }}>

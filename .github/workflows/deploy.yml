@@ -31,12 +31,23 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
 
+      - name: Validate OIDC configuration
+        run: |
+          WIP="${{ vars.WORKLOAD_IDENTITY_PROVIDER || secrets.WORKLOAD_IDENTITY_PROVIDER }}"
+          SA="${{ vars.SERVICE_ACCOUNT || secrets.SERVICE_ACCOUNT }}"
+          if [ -z "$WIP" ] || [ -z "$SA" ]; then
+            echo "::error::WORKLOAD_IDENTITY_PROVIDER and SERVICE_ACCOUNT must be set."
+            echo "Configure in: Settings → Secrets and variables → Actions → Variables (or Secrets)"
+            echo "See docs/05-deployment/03-cicd-setup-gcp-and-github.md"
+            exit 1
+          fi
+
       - name: Authenticate to Google Cloud
         id: auth
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ vars.WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ vars.SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ vars.WORKLOAD_IDENTITY_PROVIDER || secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.SERVICE_ACCOUNT || secrets.SERVICE_ACCOUNT }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2

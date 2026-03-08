@@ -17,10 +17,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const idToken = typeof body.idToken === 'string' ? body.idToken : null;
     if (!idToken) {
-      return NextResponse.json(
-        { error: 'idToken is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'idToken is required' }, { status: 400 });
     }
 
     const auth = getAdminAuth();
@@ -29,10 +26,7 @@ export async function POST(request: NextRequest) {
     const uid = decoded.uid;
 
     if (!email || !isEmailAllowed(email)) {
-      return NextResponse.json(
-        { error: 'このメールアドレスは利用できません。' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'このメールアドレスは利用できません。' }, { status: 403 });
     }
 
     const now = new Date().toISOString();
@@ -64,9 +58,6 @@ export async function POST(request: NextRequest) {
     return res;
   } catch (err) {
     console.error('Session creation error:', err);
-    return NextResponse.json(
-      { error: 'ログインに失敗しました。' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'ログインに失敗しました。' }, { status: 500 });
   }
 }

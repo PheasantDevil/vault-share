@@ -19,10 +19,7 @@ async function ensureMember(db: Firestore, groupId: string, userId: string) {
   return memberSnap.empty ? null : (memberSnap.docs[0].data() as GroupMemberDoc);
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSessionFromRequest(request);
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -35,15 +32,15 @@ export async function GET(
   }
   const member = await ensureMember(db, params.id, session.uid);
   if (!member) {
-    return NextResponse.json({ error: 'このグループにアクセスする権限がありません' }, { status: 403 });
+    return NextResponse.json(
+      { error: 'このグループにアクセスする権限がありません' },
+      { status: 403 }
+    );
   }
   return NextResponse.json({ id: groupSnap.id, ...groupSnap.data() });
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSessionFromRequest(request);
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -63,10 +60,7 @@ export async function PATCH(
   return NextResponse.json({ id: params.id, name, updatedAt: now });
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSessionFromRequest(request);
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

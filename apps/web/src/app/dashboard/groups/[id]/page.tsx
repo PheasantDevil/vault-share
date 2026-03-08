@@ -103,13 +103,21 @@ export default function GroupDetailPage() {
             required
             style={{ padding: 0.5, marginRight: 0.5 }}
           />
-          <button type="submit" style={{ marginRight: 0.5 }}>保存</button>
-          <button type="button" onClick={() => setEditing(false)}>キャンセル</button>
+          <button type="submit" style={{ marginRight: 0.5 }}>
+            保存
+          </button>
+          <button type="button" onClick={() => setEditing(false)}>
+            キャンセル
+          </button>
         </form>
       ) : (
         <p style={{ marginBottom: '1rem' }}>
-          <button type="button" onClick={() => setEditing(true)}>編集</button>
-          <button type="button" onClick={deleteGroup} style={{ marginLeft: 0.5 }}>削除</button>
+          <button type="button" onClick={() => setEditing(true)}>
+            編集
+          </button>
+          <button type="button" onClick={deleteGroup} style={{ marginLeft: 0.5 }}>
+            削除
+          </button>
         </p>
       )}
       <h2 style={{ marginTop: '1.5rem', marginBottom: 0.5 }}>メンバー</h2>
@@ -124,12 +132,18 @@ export default function GroupDetailPage() {
       {inviteLink ? (
         <p>
           招待リンク: <a href={inviteLink}>{inviteLink}</a>
-          <button type="button" onClick={() => navigator.clipboard.writeText(inviteLink)} style={{ marginLeft: 0.5 }}>
+          <button
+            type="button"
+            onClick={() => navigator.clipboard.writeText(inviteLink)}
+            style={{ marginLeft: 0.5 }}
+          >
             コピー
           </button>
         </p>
       ) : (
-        <button type="button" onClick={createInvite}>招待リンクを発行</button>
+        <button type="button" onClick={createInvite}>
+          招待リンクを発行
+        </button>
       )}
     </main>
   );

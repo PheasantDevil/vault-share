@@ -51,10 +51,12 @@ export default function NewGroupPage() {
             style={{ width: '100%', padding: 0.5 }}
           />
         </div>
-        {error && (
-          <p style={{ color: 'var(--error, #c00)', marginBottom: '1rem' }}>{error}</p>
-        )}
-        <button type="submit" disabled={loading} style={{ padding: '0.5rem 1rem', marginRight: '0.5rem' }}>
+        {error && <p style={{ color: 'var(--error, #c00)', marginBottom: '1rem' }}>{error}</p>}
+        <button
+          type="submit"
+          disabled={loading}
+          style={{ padding: '0.5rem 1rem', marginRight: '0.5rem' }}
+        >
           {loading ? '作成中...' : '作成'}
         </button>
         <Link href="/dashboard">キャンセル</Link>
