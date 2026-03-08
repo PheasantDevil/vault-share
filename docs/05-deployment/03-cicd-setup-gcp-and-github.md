@@ -66,7 +66,15 @@ gcloud run services update vault-share-web \
 
 ---
 
-## 4. 実行済み GCP 設定（参考）
+## 4. 事前に有効化が必要な API
+
+Workload Identity Federation 利用には **IAM Service Account Credentials API** の有効化が必要です:
+
+```bash
+gcloud services enable iamcredentials.googleapis.com --project=vault-share-dev
+```
+
+## 5. 実行済み GCP 設定（参考）
 
 以下はすでにコマンドで実行済みです。再実行不要。
 

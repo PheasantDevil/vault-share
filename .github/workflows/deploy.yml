@@ -81,7 +81,12 @@ jobs:
 
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             TAG="pr-${{ github.event.pull_request.number }}"
-            FLAGS="--tag=$TAG --no-traffic"
+            # --no-traffic は既存サービスへのデプロイ時のみ使用可能（初回作成時は不可）
+            if gcloud run services describe "$SERVICE" --region="$REGION" --project="$PROJECT_ID" &>/dev/null; then
+              FLAGS="--tag=$TAG --no-traffic"
+            else
+              FLAGS="--tag=$TAG"
+            fi
           else
             TAG=""
             FLAGS=""
@@ -90,6 +95,7 @@ jobs:
           gcloud run deploy "$SERVICE" \
             --image="$IMAGE" \
             --region="$REGION" \
+            --project="$PROJECT_ID" \
             --platform=managed \
             --allow-unauthenticated \
             --set-env-vars="NODE_ENV=production" \
@@ -97,11 +103,11 @@ jobs:
             --quiet
 
           if [ -n "$TAG" ]; then
-            BASE_URL=$(gcloud run services describe "$SERVICE" --region="$REGION" --format='value(status.url)')
+            BASE_URL=$(gcloud run services describe "$SERVICE" --region="$REGION" --project="$PROJECT_ID" --format='value(status.url)')
             PREVIEW_URL=$(echo "$BASE_URL" | sed "s|https://|https://$TAG---|")
             echo "url=$PREVIEW_URL" >> $GITHUB_OUTPUT
           else
-            gcloud run services describe "$SERVICE" --region="$REGION" --format='value(status.url)' > url.txt
+            gcloud run services describe "$SERVICE" --region="$REGION" --project="$PROJECT_ID" --format='value(status.url)' > url.txt
             echo "url=$(cat url.txt)" >> $GITHUB_OUTPUT
           fi
 
