@@ -12,8 +12,16 @@ GitHub の **Settings** → **Secrets and variables** → **Actions** → **Vari
 | ---------------------------- | ------------------------------------------------------------------------------------------------------- |
 | `GCP_PROJECT_ID`             | `vault-share-dev`                                                                                       |
 | `GCP_REGION`                 | `asia-northeast1`                                                                                       |
-| `WORKLOAD_IDENTITY_PROVIDER` | `projects/vault-share-dev/locations/global/workloadIdentityPools/github-pool/providers/github-provider` |
+| `WORKLOAD_IDENTITY_PROVIDER` | `projects/プロジェクト番号/locations/global/workloadIdentityPools/github-pool/providers/github-provider` |
 | `SERVICE_ACCOUNT`            | `github-actions@vault-share-dev.iam.gserviceaccount.com`                                                |
+
+**重要**: `WORKLOAD_IDENTITY_PROVIDER` は `projects/` の後に**プロジェクト ID ではなくプロジェクト番号（数字）**を指定します。プロジェクト番号の取得コマンド:
+
+```bash
+gcloud projects describe vault-share-dev --format='value(projectNumber)'
+```
+
+例（vault-share-dev）: プロジェクト番号 `1013607433269` の場合 → `projects/1013607433269/locations/global/workloadIdentityPools/github-pool/providers/github-provider`
 
 **手順**:
 
