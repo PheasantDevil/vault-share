@@ -89,7 +89,6 @@ jobs:
             --project="$PROJECT_ID" \
             --platform=managed \
             --allow-unauthenticated \
-            --set-env-vars="NODE_ENV=production" \
             $FLAGS \
             --quiet
 
