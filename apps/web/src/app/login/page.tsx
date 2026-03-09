@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { getFirebaseAuth } from '@/lib/firebase/client';
+import { getFirebaseAuthAsync } from '@/lib/firebase/client';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 
 export default function LoginPage() {
@@ -16,7 +16,7 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const auth = getFirebaseAuth();
+      const auth = await getFirebaseAuthAsync();
       const cred = await signInWithEmailAndPassword(auth, email.trim(), password);
       const idToken = await cred.user.getIdToken();
       const res = await fetch('/api/auth/session', {
@@ -31,11 +31,25 @@ export default function LoginPage() {
       }
       window.location.href = '/dashboard';
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'ログインに失敗しました。';
-      if (typeof message === 'string' && message.includes('auth/')) {
+      const code =
+        typeof err === 'object' &&
+        err !== null &&
+        'code' in err &&
+        typeof (err as { code: string }).code === 'string'
+          ? (err as { code: string }).code
+          : err instanceof Error
+            ? err.message
+            : '';
+      if (code.includes('auth/unauthorized-domain')) {
+        setError(
+          'このドメインは Firebase の承認済みドメインに含まれていません。管理者に連絡してください。'
+        );
+      } else if (code.includes('auth/invalid-api-key') || code.includes('auth/api-key-not-valid')) {
+        setError('Firebase の設定が正しくありません。管理者に連絡してください。');
+      } else if (typeof code === 'string' && code.includes('auth/')) {
         setError('メールアドレスまたはパスワードが正しくありません。');
       } else {
-        setError(message);
+        setError(err instanceof Error ? err.message : 'ログインに失敗しました。');
       }
     } finally {
       setLoading(false);
