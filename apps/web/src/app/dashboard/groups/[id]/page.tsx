@@ -6,6 +6,17 @@ import Link from 'next/link';
 
 type Group = { id: string; name: string };
 type Member = { userId: string; role: string; displayName?: string; email?: string };
+type ItemSummary = { id: string; title: string; type: string; updatedAt: string };
+type ItemDetail = {
+  id: string;
+  payload: {
+    title: string;
+    type: string;
+    value: string;
+    note?: string;
+  };
+  updatedAt: string;
+};
 
 export default function GroupDetailPage() {
   const params = useParams();
@@ -14,26 +25,47 @@ export default function GroupDetailPage() {
   const [group, setGroup] = useState<Group | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const [items, setItems] = useState<ItemSummary[]>([]);
+  const [selectedItem, setSelectedItem] = useState<ItemDetail | null>(null);
+  const [itemLoading, setItemLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editing, setEditing] = useState(false);
+  const [itemFormOpen, setItemFormOpen] = useState(false);
+  const [itemTitle, setItemTitle] = useState('');
+  const [itemType, setItemType] = useState<'password' | 'note' | 'key' | 'other'>('password');
+  const [itemValue, setItemValue] = useState('');
+  const [itemNote, setItemNote] = useState('');
 
   useEffect(() => {
     if (!id) return;
     Promise.all([
       fetch(`/api/groups/${id}`).then((r) => r.json()),
       fetch(`/api/groups/${id}/members`).then((r) => r.json()),
+      fetch(`/api/groups/${id}/items`).then((r) => r.json()),
     ])
-      .then(([gRes, mRes]) => {
+      .then(([gRes, mRes, iRes]) => {
         if (gRes.error) throw new Error(gRes.error);
         setGroup(gRes);
         setEditName(gRes.name);
         setMembers(mRes.members ?? []);
+        setItems(iRes.items ?? []);
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'エラー'))
       .finally(() => setLoading(false));
   }, [id]);
+
+  async function reloadItems() {
+    try {
+      const res = await fetch(`/api/groups/${id}/items`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'アイテムの取得に失敗しました');
+      setItems(data.items ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'エラー');
+    }
+  }
 
   async function createInvite() {
     try {
@@ -75,6 +107,51 @@ export default function GroupDetailPage() {
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'エラー');
+    }
+  }
+
+  async function submitItem(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      const res = await fetch(`/api/groups/${id}/items`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: itemTitle.trim(),
+          type: itemType,
+          value: itemValue,
+          note: itemNote.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'アイテムの作成に失敗しました');
+      setItemTitle('');
+      setItemType('password');
+      setItemValue('');
+      setItemNote('');
+      setItemFormOpen(false);
+      await reloadItems();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'エラー');
+    }
+  }
+
+  async function loadItemDetail(itemId: string) {
+    setItemLoading(true);
+    setSelectedItem(null);
+    try {
+      const res = await fetch(`/api/groups/${id}/items/${itemId}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'アイテムの取得に失敗しました');
+      setSelectedItem({
+        id: data.id,
+        payload: data.payload,
+        updatedAt: data.updatedAt,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'エラー');
+    } finally {
+      setItemLoading(false);
     }
   }
 
@@ -144,6 +221,125 @@ export default function GroupDetailPage() {
         <button type="button" onClick={createInvite}>
           招待リンクを発行
         </button>
+      )}
+      <h2 style={{ marginTop: '1.5rem', marginBottom: 0.5 }}>アイテム</h2>
+      <p style={{ marginBottom: '0.5rem' }}>
+        <button type="button" onClick={() => setItemFormOpen((v) => !v)}>
+          {itemFormOpen ? 'アイテム作成フォームを閉じる' : '新しいアイテムを追加'}
+        </button>
+      </p>
+      {itemFormOpen && (
+        <form onSubmit={submitItem} style={{ marginBottom: '1rem' }}>
+          <div style={{ marginBottom: '0.5rem' }}>
+            <label>
+              タイトル
+              <input
+                type="text"
+                value={itemTitle}
+                onChange={(e) => setItemTitle(e.target.value)}
+                required
+                style={{ display: 'block', width: '100%', padding: 0.5 }}
+              />
+            </label>
+          </div>
+          <div style={{ marginBottom: '0.5rem' }}>
+            <label>
+              種別
+              <select
+                value={itemType}
+                onChange={(e) =>
+                  setItemType(e.target.value as 'password' | 'note' | 'key' | 'other')
+                }
+                style={{ display: 'block', padding: 0.5 }}
+              >
+                <option value="password">パスワード</option>
+                <option value="note">メモ</option>
+                <option value="key">キー</option>
+                <option value="other">その他</option>
+              </select>
+            </label>
+          </div>
+          <div style={{ marginBottom: '0.5rem' }}>
+            <label>
+              内容
+              <textarea
+                value={itemValue}
+                onChange={(e) => setItemValue(e.target.value)}
+                required
+                rows={4}
+                style={{ display: 'block', width: '100%', padding: 0.5 }}
+              />
+            </label>
+          </div>
+          <div style={{ marginBottom: '0.5rem' }}>
+            <label>
+              補足メモ（任意）
+              <textarea
+                value={itemNote}
+                onChange={(e) => setItemNote(e.target.value)}
+                rows={3}
+                style={{ display: 'block', width: '100%', padding: 0.5 }}
+              />
+            </label>
+          </div>
+          <button type="submit" style={{ marginRight: 0.5 }}>
+            保存
+          </button>
+          <button type="button" onClick={() => setItemFormOpen(false)} style={{ marginLeft: 0.5 }}>
+            キャンセル
+          </button>
+        </form>
+      )}
+      {items.length === 0 ? (
+        <p>まだアイテムはありません。</p>
+      ) : (
+        <ul style={{ listStyle: 'none', padding: 0, marginBottom: '1rem' }}>
+          {items.map((it) => (
+            <li key={it.id} style={{ marginBottom: '0.25rem' }}>
+              <button
+                type="button"
+                onClick={() => loadItemDetail(it.id)}
+                style={{ textAlign: 'left', width: '100%', padding: 0.5 }}
+              >
+                <strong>{it.title}</strong> <span style={{ marginLeft: 4 }}>({it.type})</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {itemLoading && <p>アイテムを読み込み中...</p>}
+      {selectedItem && (
+        <section
+          aria-label="選択中のアイテム"
+          style={{
+            padding: '0.75rem',
+            border: '1px solid #ddd',
+            borderRadius: 4,
+            marginBottom: '1rem',
+          }}
+        >
+          <h3 style={{ marginTop: 0, marginBottom: '0.5rem' }}>{selectedItem.payload.title}</h3>
+          <p style={{ marginBottom: '0.5rem' }}>
+            種別: <code>{selectedItem.payload.type}</code>
+          </p>
+          <p style={{ marginBottom: '0.5rem' }}>
+            値:
+            <span
+              style={{
+                display: 'inline-block',
+                marginLeft: 4,
+                padding: '0.25rem 0.5rem',
+                background: '#f5f5f5',
+                wordBreak: 'break-all',
+              }}
+            >
+              {selectedItem.payload.value}
+            </span>
+          </p>
+          {selectedItem.payload.note && (
+            <p style={{ whiteSpace: 'pre-wrap' }}>{selectedItem.payload.note}</p>
+          )}
+        </section>
       )}
     </main>
   );
