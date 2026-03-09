@@ -2,8 +2,39 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { getFirebaseAuth } from '@/lib/firebase/client';
+import { getFirebaseAuthAsync } from '@/lib/firebase/client';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+
+function getAuthErrorMessage(err: unknown): string {
+  const code =
+    typeof err === 'object' &&
+    err !== null &&
+    'code' in err &&
+    typeof (err as { code: string }).code === 'string'
+      ? (err as { code: string }).code
+      : err instanceof Error
+        ? err.message
+        : '';
+  if (code.includes('auth/email-already-in-use')) {
+    return 'このメールアドレスは既に登録されています。ログインしてください。';
+  }
+  if (code.includes('auth/unauthorized-domain')) {
+    return 'このドメインは Firebase の承認済みドメインに含まれていません。管理者に連絡するか、Firebase コンソールの「認証」→「設定」→「承認済みドメイン」にこのサイトのドメインを追加してください。';
+  }
+  if (code.includes('auth/invalid-api-key') || code.includes('auth/api-key-not-valid')) {
+    return 'Firebase の設定が正しくありません。管理者に連絡してください。';
+  }
+  if (code.includes('auth/weak-password')) {
+    return 'パスワードは6文字以上にしてください。';
+  }
+  if (code.includes('auth/invalid-email')) {
+    return 'メールアドレスの形式が正しくありません。';
+  }
+  if (typeof code === 'string' && code.includes('auth/')) {
+    return `入力内容を確認してください。（${code}）`;
+  }
+  return err instanceof Error ? err.message : '登録に失敗しました。';
+}
 
 export default function SignUpPage() {
   const [email, setEmail] = useState('');
@@ -17,7 +48,7 @@ export default function SignUpPage() {
     setError(null);
     setLoading(true);
     try {
-      const auth = getFirebaseAuth();
+      const auth = await getFirebaseAuthAsync();
       const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
       if (displayName.trim()) {
         await updateProfile(cred.user, { displayName: displayName.trim() });
@@ -35,14 +66,7 @@ export default function SignUpPage() {
       }
       window.location.href = '/dashboard';
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : '登録に失敗しました。';
-      if (typeof message === 'string' && message.includes('auth/email-already-in-use')) {
-        setError('このメールアドレスは既に登録されています。ログインしてください。');
-      } else if (typeof message === 'string' && message.includes('auth/')) {
-        setError('入力内容を確認してください。');
-      } else {
-        setError(message);
-      }
+      setError(getAuthErrorMessage(err));
     } finally {
       setLoading(false);
     }
