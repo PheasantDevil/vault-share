@@ -28,9 +28,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (err) {
     console.error('MFA enroll error:', err);
-    return NextResponse.json(
-      { error: 'MFA登録の開始に失敗しました' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'MFA登録の開始に失敗しました' }, { status: 500 });
   }
 }

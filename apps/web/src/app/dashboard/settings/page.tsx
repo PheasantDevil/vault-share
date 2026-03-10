@@ -248,7 +248,9 @@ function SettingsContent() {
             <button type="button" onClick={verifyEnrollment} style={{ marginRight: '0.5rem' }}>
               検証
             </button>
-            <button type="button" onClick={() => setEnrolling(false)}>キャンセル</button>
+            <button type="button" onClick={() => setEnrolling(false)}>
+              キャンセル
+            </button>
           </div>
         </div>
       )}
@@ -272,7 +274,9 @@ function SettingsContent() {
             <button type="button" onClick={startEnrollSms} style={{ marginRight: '0.5rem' }}>
               送信
             </button>
-            <button type="button" onClick={() => setEnrolling(false)}>キャンセル</button>
+            <button type="button" onClick={() => setEnrolling(false)}>
+              キャンセル
+            </button>
           </div>
         </div>
       )}

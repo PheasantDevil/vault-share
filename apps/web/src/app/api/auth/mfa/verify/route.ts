@@ -17,10 +17,7 @@ export async function POST(request: NextRequest) {
     const code = typeof body.code === 'string' ? body.code.trim() : '';
 
     if (!sessionId || !code) {
-      return NextResponse.json(
-        { error: 'sessionIdとcodeが必要です' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'sessionIdとcodeが必要です' }, { status: 400 });
     }
 
     const auth = getAdminAuth();
