@@ -4,6 +4,7 @@ import type { GroupMemberDoc, ItemDoc } from '@vault-share/db';
 import { getSessionFromRequest } from '@/lib/auth/get-session';
 import { decryptItemPayload, encryptItemPayload } from '@/lib/items/encryption';
 import type { ItemPayload } from '@/lib/items/types';
+import { writeAuditLog } from '@/lib/audit/log';
 
 async function ensureMember(groupId: string, userId: string): Promise<GroupMemberDoc | null> {
   const db = getDb();
@@ -106,6 +107,13 @@ export async function PATCH(
     iv,
     updatedAt: now,
   });
+  await writeAuditLog({
+    groupId: params.id,
+    actorUid: session.uid,
+    action: 'item.update',
+    itemId: params.itemId,
+    details: { title, type },
+  });
 
   return NextResponse.json({ id: params.itemId, updatedAt: now });
 }
@@ -139,6 +147,12 @@ export async function DELETE(
 
   const now = new Date().toISOString();
   await db.collection(COLLECTIONS.items).doc(params.itemId).update({ deletedAt: now });
+  await writeAuditLog({
+    groupId: params.id,
+    actorUid: session.uid,
+    action: 'item.delete',
+    itemId: params.itemId,
+  });
 
   return NextResponse.json({ id: params.itemId, deletedAt: now });
 }

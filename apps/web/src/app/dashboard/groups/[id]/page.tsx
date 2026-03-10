@@ -37,6 +37,9 @@ export default function GroupDetailPage() {
   const [itemType, setItemType] = useState<'password' | 'note' | 'key' | 'other'>('password');
   const [itemValue, setItemValue] = useState('');
   const [itemNote, setItemNote] = useState('');
+  const [itemFilter, setItemFilter] = useState<'all' | 'password' | 'note' | 'key' | 'other'>(
+    'all'
+  );
 
   useEffect(() => {
     if (!id) return;
@@ -302,11 +305,27 @@ export default function GroupDetailPage() {
         </button>
       )}
       <h2 style={{ marginTop: '1.5rem', marginBottom: 0.5 }}>アイテム</h2>
-      <p style={{ marginBottom: '0.5rem' }}>
+      <div style={{ marginBottom: '0.5rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+        <label>
+          フィルタ:
+          <select
+            value={itemFilter}
+            onChange={(e) =>
+              setItemFilter(e.target.value as 'all' | 'password' | 'note' | 'key' | 'other')
+            }
+            style={{ marginLeft: '0.25rem', padding: '0.25rem' }}
+          >
+            <option value="all">すべて</option>
+            <option value="password">パスワード</option>
+            <option value="note">メモ</option>
+            <option value="key">キー</option>
+            <option value="other">その他</option>
+          </select>
+        </label>
         <button type="button" onClick={() => setItemFormOpen((v) => !v)}>
           {itemFormOpen ? 'アイテム作成フォームを閉じる' : '新しいアイテムを追加'}
         </button>
-      </p>
+      </div>
       {itemFormOpen && (
         <form onSubmit={submitItem} style={{ marginBottom: '1rem' }}>
           <div style={{ marginBottom: '0.5rem' }}>
@@ -369,23 +388,34 @@ export default function GroupDetailPage() {
           </button>
         </form>
       )}
-      {items.length === 0 ? (
-        <p>まだアイテムはありません。</p>
-      ) : (
-        <ul style={{ listStyle: 'none', padding: 0, marginBottom: '1rem' }}>
-          {items.map((it) => (
-            <li key={it.id} style={{ marginBottom: '0.25rem' }}>
-              <button
-                type="button"
-                onClick={() => loadItemDetail(it.id)}
-                style={{ textAlign: 'left', width: '100%', padding: 0.5 }}
-              >
-                <strong>{it.title}</strong> <span style={{ marginLeft: 4 }}>({it.type})</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+      {(() => {
+        const filteredItems =
+          itemFilter === 'all' ? items : items.filter((it) => it.type === itemFilter);
+        if (filteredItems.length === 0) {
+          return (
+            <p>
+              {items.length === 0
+                ? 'まだアイテムはありません。'
+                : 'フィルタに一致するアイテムがありません。'}
+            </p>
+          );
+        }
+        return (
+          <ul style={{ listStyle: 'none', padding: 0, marginBottom: '1rem' }}>
+            {filteredItems.map((it) => (
+              <li key={it.id} style={{ marginBottom: '0.25rem' }}>
+                <button
+                  type="button"
+                  onClick={() => loadItemDetail(it.id)}
+                  style={{ textAlign: 'left', width: '100%', padding: 0.5 }}
+                >
+                  <strong>{it.title}</strong> <span style={{ marginLeft: 4 }}>({it.type})</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        );
+      })()}
       {itemLoading && <p>アイテムを読み込み中...</p>}
       {selectedItem && (
         <section

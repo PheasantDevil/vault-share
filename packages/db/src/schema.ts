@@ -52,3 +52,13 @@ export interface ItemDoc {
   /** Optional: key version for rotation */
   keyVersion?: number;
 }
+
+export interface AuditLogDoc {
+  id: string;
+  groupId: string;
+  itemId?: string | null;
+  actorUid: string;
+  action: string;
+  details?: Record<string, unknown>;
+  createdAt: string;
+}

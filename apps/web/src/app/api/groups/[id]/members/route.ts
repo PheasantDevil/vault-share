@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb, COLLECTIONS } from '@vault-share/db';
 import type { GroupMemberDoc } from '@vault-share/db';
 import { getSessionFromRequest } from '@/lib/auth/get-session';
+import { writeAuditLog } from '@/lib/audit/log';
 
 async function ensureMember(
   db: Awaited<ReturnType<typeof getDb>>,
@@ -81,6 +82,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     return NextResponse.json({ error: 'userId と role は必須です' }, { status: 400 });
   }
 
+  let oldRole: GroupMemberDoc['role'] | null = null;
   try {
     await db.runTransaction(async (tx) => {
       const membersSnap = await tx.get(
@@ -94,6 +96,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         throw new Error('メンバーが見つかりません');
       }
       const target = targetDoc.data() as GroupMemberDoc;
+      oldRole = target.role;
 
       if (target.role === role) {
         return;
@@ -107,6 +110,14 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 
       tx.update(targetDoc.ref, { role });
     });
+    if (oldRole !== null && oldRole !== role) {
+      await writeAuditLog({
+        groupId: params.id,
+        actorUid: session.uid,
+        action: 'member.changeRole',
+        details: { userId, oldRole, newRole: role },
+      });
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'ロールの更新に失敗しました';
     const status = message.includes('オーナーが必要')
@@ -145,6 +156,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     );
   }
 
+  let removedRole: GroupMemberDoc['role'] | null = null;
   try {
     await db.runTransaction(async (tx) => {
       const membersSnap = await tx.get(
@@ -158,6 +170,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
         throw new Error('メンバーが見つかりません');
       }
       const target = targetDoc.data() as GroupMemberDoc;
+      removedRole = target.role;
 
       const ownerCount = members.filter((m) => m.role === 'owner').length;
       // 最後のオーナーを削除するのは NG
@@ -167,6 +180,14 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
 
       tx.delete(targetDoc.ref);
     });
+    if (removedRole !== null) {
+      await writeAuditLog({
+        groupId: params.id,
+        actorUid: session.uid,
+        action: 'member.remove',
+        details: { userId, role: removedRole },
+      });
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'メンバーの削除に失敗しました';
     const status = message.includes('オーナーが必要')
