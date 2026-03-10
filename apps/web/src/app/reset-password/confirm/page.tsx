@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getFirebaseAuthAsync } from '@/lib/firebase/client';
 import { confirmPasswordReset } from 'firebase/auth';
 
-export default function ResetPasswordConfirmPage() {
+function ResetPasswordConfirmContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [password, setPassword] = useState('');
@@ -148,5 +148,13 @@ export default function ResetPasswordConfirmPage() {
         <Link href="/login">ログインページへ戻る</Link>
       </p>
     </main>
+  );
+}
+
+export default function ResetPasswordConfirmPage() {
+  return (
+    <Suspense fallback={<div>読み込み中...</div>}>
+      <ResetPasswordConfirmContent />
+    </Suspense>
   );
 }
