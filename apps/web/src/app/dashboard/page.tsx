@@ -11,9 +11,6 @@ export default function DashboardPage() {
         <Link href="/dashboard/groups/new" style={{ marginRight: '1rem' }}>
           グループを作成
         </Link>
-        <Link href="/dashboard/settings" style={{ marginRight: '1rem' }}>
-          設定
-        </Link>
         <LogoutButton />
         <Link href="/" style={{ marginLeft: '1rem' }}>
           トップへ
