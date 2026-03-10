@@ -40,6 +40,7 @@ export default function GroupDetailPage() {
   const [itemFilter, setItemFilter] = useState<'all' | 'password' | 'note' | 'key' | 'other'>(
     'all'
   );
+  const [itemSearchQuery, setItemSearchQuery] = useState('');
 
   useEffect(() => {
     if (!id) return;
@@ -305,7 +306,25 @@ export default function GroupDetailPage() {
         </button>
       )}
       <h2 style={{ marginTop: '1.5rem', marginBottom: 0.5 }}>アイテム</h2>
-      <div style={{ marginBottom: '0.5rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+      <div
+        style={{
+          marginBottom: '0.5rem',
+          display: 'flex',
+          gap: '0.5rem',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+        }}
+      >
+        <label>
+          検索:
+          <input
+            type="text"
+            value={itemSearchQuery}
+            onChange={(e) => setItemSearchQuery(e.target.value)}
+            placeholder="タイトルで検索"
+            style={{ marginLeft: '0.25rem', padding: '0.25rem', width: '200px' }}
+          />
+        </label>
         <label>
           フィルタ:
           <select
@@ -389,14 +408,22 @@ export default function GroupDetailPage() {
         </form>
       )}
       {(() => {
-        const filteredItems =
-          itemFilter === 'all' ? items : items.filter((it) => it.type === itemFilter);
+        let filteredItems = items;
+        // タイプフィルタを適用
+        if (itemFilter !== 'all') {
+          filteredItems = filteredItems.filter((it) => it.type === itemFilter);
+        }
+        // 検索クエリを適用
+        if (itemSearchQuery.trim()) {
+          const query = itemSearchQuery.trim().toLowerCase();
+          filteredItems = filteredItems.filter((it) => it.title.toLowerCase().includes(query));
+        }
         if (filteredItems.length === 0) {
           return (
             <p>
               {items.length === 0
                 ? 'まだアイテムはありません。'
-                : 'フィルタに一致するアイテムがありません。'}
+                : '検索条件・フィルタに一致するアイテムがありません。'}
             </p>
           );
         }
