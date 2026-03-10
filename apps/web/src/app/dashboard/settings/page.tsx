@@ -48,7 +48,7 @@ function SettingsContent() {
         enabled: enrolledFactors.length > 0,
         enrolledFactors: enrolledFactors.map((f) => ({
           uid: f.uid,
-          displayName: f.displayName,
+          displayName: f.displayName ?? undefined,
           factorId: f.factorId,
         })),
       });
