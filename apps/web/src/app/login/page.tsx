@@ -97,7 +97,7 @@ export default function LoginPage() {
         </button>
       </form>
       <p style={{ marginTop: '1.5rem' }}>
-        <Link href="/signup">新規登録</Link> / <Link href="/">トップへ</Link>
+        <Link href="/signup">新規登録</Link> / <Link href="/reset-password">パスワードを忘れた場合</Link> / <Link href="/">トップへ</Link>
       </p>
     </main>
   );
