@@ -36,4 +36,3 @@ export async function writeAuditLog(params: AuditLogParams): Promise<void> {
   };
   await docRef.set(doc);
 }
-

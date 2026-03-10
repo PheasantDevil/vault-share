@@ -37,7 +37,9 @@ export default function GroupDetailPage() {
   const [itemType, setItemType] = useState<'password' | 'note' | 'key' | 'other'>('password');
   const [itemValue, setItemValue] = useState('');
   const [itemNote, setItemNote] = useState('');
-  const [itemFilter, setItemFilter] = useState<'all' | 'password' | 'note' | 'key' | 'other'>('all');
+  const [itemFilter, setItemFilter] = useState<'all' | 'password' | 'note' | 'key' | 'other'>(
+    'all'
+  );
 
   useEffect(() => {
     if (!id) return;
@@ -390,7 +392,13 @@ export default function GroupDetailPage() {
         const filteredItems =
           itemFilter === 'all' ? items : items.filter((it) => it.type === itemFilter);
         if (filteredItems.length === 0) {
-          return <p>{items.length === 0 ? 'まだアイテムはありません。' : 'フィルタに一致するアイテムがありません。'}</p>;
+          return (
+            <p>
+              {items.length === 0
+                ? 'まだアイテムはありません。'
+                : 'フィルタに一致するアイテムがありません。'}
+            </p>
+          );
         }
         return (
           <ul style={{ listStyle: 'none', padding: 0, marginBottom: '1rem' }}>
