@@ -36,7 +36,9 @@ export default function ResetPasswordPage() {
       } else if (code.includes('auth/invalid-email')) {
         setError('メールアドレスの形式が正しくありません。');
       } else {
-        setError(err instanceof Error ? err.message : 'パスワードリセットメールの送信に失敗しました。');
+        setError(
+          err instanceof Error ? err.message : 'パスワードリセットメールの送信に失敗しました。'
+        );
       }
     } finally {
       setLoading(false);

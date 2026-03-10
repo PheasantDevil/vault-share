@@ -31,6 +31,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('Password reset request error:', err);
-    return NextResponse.json({ error: 'パスワードリセットメールの送信に失敗しました' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'パスワードリセットメールの送信に失敗しました' },
+      { status: 500 }
+    );
   }
 }

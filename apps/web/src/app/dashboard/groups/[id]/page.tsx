@@ -306,7 +306,15 @@ export default function GroupDetailPage() {
         </button>
       )}
       <h2 style={{ marginTop: '1.5rem', marginBottom: 0.5 }}>アイテム</h2>
-      <div style={{ marginBottom: '0.5rem', display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+      <div
+        style={{
+          marginBottom: '0.5rem',
+          display: 'flex',
+          gap: '0.5rem',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+        }}
+      >
         <label>
           検索:
           <input

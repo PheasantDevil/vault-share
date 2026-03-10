@@ -61,7 +61,9 @@ export default function ResetPasswordConfirmPage() {
           ? (err as { code: string }).code
           : '';
       if (code.includes('auth/expired-action-code')) {
-        setError('リセットリンクの有効期限が切れています。再度パスワードリセットをリクエストしてください。');
+        setError(
+          'リセットリンクの有効期限が切れています。再度パスワードリセットをリクエストしてください。'
+        );
       } else if (code.includes('auth/invalid-action-code')) {
         setError('無効なリセットリンクです。');
       } else if (code.includes('auth/weak-password')) {
@@ -78,7 +80,9 @@ export default function ResetPasswordConfirmPage() {
     return (
       <main style={{ padding: '2rem', maxWidth: 400, margin: '0 auto' }}>
         <h1 style={{ marginBottom: '1rem' }}>パスワードをリセットしました</h1>
-        <p style={{ marginBottom: '1.5rem' }}>新しいパスワードが設定されました。ログインページにリダイレクトします...</p>
+        <p style={{ marginBottom: '1.5rem' }}>
+          新しいパスワードが設定されました。ログインページにリダイレクトします...
+        </p>
         <p>
           <Link href="/login">ログインページへ</Link>
         </p>
