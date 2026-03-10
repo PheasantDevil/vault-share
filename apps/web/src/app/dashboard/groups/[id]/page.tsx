@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 type Group = { id: string; name: string };
-type Member = { userId: string; role: string; displayName?: string; email?: string };
+type Member = { userId: string; role: 'owner' | 'member'; displayName?: string; email?: string };
 type ItemSummary = { id: string; title: string; type: string; updatedAt: string };
 type ItemDetail = {
   id: string;
@@ -200,8 +200,87 @@ export default function GroupDetailPage() {
       <h2 style={{ marginTop: '1.5rem', marginBottom: 0.5 }}>メンバー</h2>
       <ul style={{ listStyle: 'none', padding: 0 }}>
         {members.map((m) => (
-          <li key={m.userId}>
-            {m.displayName || m.email || m.userId} {m.role === 'owner' ? '(オーナー)' : ''}
+          <li key={m.userId} style={{ marginBottom: '0.25rem' }}>
+            <span>
+              {m.displayName || m.email || m.userId}{' '}
+              {m.role === 'owner' ? '(オーナー)' : '(メンバー)'}
+            </span>
+            {/* メンバー管理: とりあえず全員にボタンを表示し、権限はサーバー側でチェック */}
+            <span style={{ marginLeft: '0.5rem' }}>
+              {m.role === 'owner' ? (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const res = await fetch(`/api/groups/${id}/members`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId: m.userId, role: 'member' }),
+                      });
+                      const data = await res.json().catch(() => ({}));
+                      if (!res.ok) {
+                        throw new Error(data.error ?? 'ロールの更新に失敗しました');
+                      }
+                      setMembers((prev) =>
+                        prev.map((x) => (x.userId === m.userId ? { ...x, role: 'member' } : x))
+                      );
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : 'エラー');
+                    }
+                  }}
+                  style={{ marginRight: 4 }}
+                >
+                  メンバーにする
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const res = await fetch(`/api/groups/${id}/members`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId: m.userId, role: 'owner' }),
+                      });
+                      const data = await res.json().catch(() => ({}));
+                      if (!res.ok) {
+                        throw new Error(data.error ?? 'ロールの更新に失敗しました');
+                      }
+                      setMembers((prev) =>
+                        prev.map((x) => (x.userId === m.userId ? { ...x, role: 'owner' } : x))
+                      );
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : 'エラー');
+                    }
+                  }}
+                  style={{ marginRight: 4 }}
+                >
+                  オーナーにする
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!confirm('このメンバーをグループから削除しますか？')) return;
+                  try {
+                    const res = await fetch(`/api/groups/${id}/members`, {
+                      method: 'DELETE',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ userId: m.userId }),
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok) {
+                      throw new Error(data.error ?? 'メンバーの削除に失敗しました');
+                    }
+                    setMembers((prev) => prev.filter((x) => x.userId !== m.userId));
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : 'エラー');
+                  }
+                }}
+              >
+                削除
+              </button>
+            </span>
           </li>
         ))}
       </ul>
