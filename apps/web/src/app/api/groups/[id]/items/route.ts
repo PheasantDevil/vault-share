@@ -4,6 +4,7 @@ import type { GroupMemberDoc, ItemDoc } from '@vault-share/db';
 import { getSessionFromRequest } from '@/lib/auth/get-session';
 import { encryptItemPayload, decryptItemPayload } from '@/lib/items/encryption';
 import type { ItemPayload } from '@/lib/items/types';
+import { writeAuditLog } from '@/lib/audit/log';
 
 async function ensureMember(groupId: string, userId: string): Promise<GroupMemberDoc | null> {
   const db = getDb();
@@ -105,6 +106,13 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   };
 
   await docRef.set(item);
+  await writeAuditLog({
+    groupId: params.id,
+    actorUid: session.uid,
+    action: 'item.create',
+    itemId: item.id,
+    details: { title: payload.title, type: payload.type },
+  });
 
   return NextResponse.json(
     {

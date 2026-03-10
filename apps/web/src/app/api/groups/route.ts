@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb, COLLECTIONS } from '@vault-share/db';
 import type { GroupDoc, GroupMemberDoc } from '@vault-share/db';
 import { getSessionFromRequest } from '@/lib/auth/get-session';
+import { writeAuditLog } from '@/lib/audit/log';
 
 export async function GET(request: NextRequest) {
   const session = await getSessionFromRequest(request);
@@ -57,5 +58,11 @@ export async function POST(request: NextRequest) {
     joinedAt: now,
   };
   await memberRef.set({ ...memberDoc });
+  await writeAuditLog({
+    groupId: groupRef.id,
+    actorUid: session.uid,
+    action: 'group.create',
+    details: { name },
+  });
   return NextResponse.json(groupDoc);
 }

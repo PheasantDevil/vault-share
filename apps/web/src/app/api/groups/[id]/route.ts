@@ -8,6 +8,7 @@ import type { Firestore } from '@vault-share/db';
 import { getDb, COLLECTIONS } from '@vault-share/db';
 import type { GroupMemberDoc } from '@vault-share/db';
 import { getSessionFromRequest } from '@/lib/auth/get-session';
+import { writeAuditLog } from '@/lib/audit/log';
 
 async function ensureMember(db: Firestore, groupId: string, userId: string) {
   const memberSnap = await db
@@ -57,6 +58,12 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   }
   const now = new Date().toISOString();
   await db.collection(COLLECTIONS.groups).doc(params.id).update({ name, updatedAt: now });
+  await writeAuditLog({
+    groupId: params.id,
+    actorUid: session.uid,
+    action: 'group.updateName',
+    details: { name },
+  });
   return NextResponse.json({ id: params.id, name, updatedAt: now });
 }
 
@@ -78,5 +85,10 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   membersSnap.docs.forEach((d) => batch.delete(d.ref));
   batch.delete(db.collection(COLLECTIONS.groups).doc(params.id));
   await batch.commit();
+  await writeAuditLog({
+    groupId: params.id,
+    actorUid: session.uid,
+    action: 'group.delete',
+  });
   return NextResponse.json({ ok: true });
 }

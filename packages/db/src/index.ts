@@ -12,6 +12,7 @@ export const COLLECTIONS = {
   groupMembers: 'groupMembers',
   invitations: 'invitations',
   items: 'items',
+  auditLogs: 'auditLogs',
 } as const;
 
 let _db: Firestore | null = null;
@@ -32,4 +33,11 @@ export function setDb(db: Firestore): void {
 }
 
 export type { Firestore };
-export type { UserDoc, GroupDoc, GroupMemberDoc, InvitationDoc, ItemDoc } from './schema';
+export type {
+  UserDoc,
+  GroupDoc,
+  GroupMemberDoc,
+  InvitationDoc,
+  ItemDoc,
+  AuditLogDoc,
+} from './schema';

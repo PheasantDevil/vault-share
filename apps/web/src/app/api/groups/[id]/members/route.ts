@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb, COLLECTIONS } from '@vault-share/db';
 import type { GroupMemberDoc } from '@vault-share/db';
 import { getSessionFromRequest } from '@/lib/auth/get-session';
+import { writeAuditLog } from '@/lib/audit/log';
 
 async function ensureMember(
   db: Awaited<ReturnType<typeof getDb>>,
@@ -107,6 +108,12 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 
       tx.update(targetDoc.ref, { role });
     });
+    await writeAuditLog({
+      groupId: params.id,
+      actorUid: session.uid,
+      action: 'member.changeRole',
+      details: { userId, oldRole: target.role, newRole: role },
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'ロールの更新に失敗しました';
     const status = message.includes('オーナーが必要')
@@ -166,6 +173,12 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       }
 
       tx.delete(targetDoc.ref);
+    });
+    await writeAuditLog({
+      groupId: params.id,
+      actorUid: session.uid,
+      action: 'member.remove',
+      details: { userId, role: target.role },
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'メンバーの削除に失敗しました';
