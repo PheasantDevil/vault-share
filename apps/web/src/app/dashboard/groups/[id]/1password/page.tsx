@@ -217,9 +217,7 @@ function OnePasswordImportContent() {
       {loading && <p>読み込み中...</p>}
 
       {!loading && vaults.length === 0 && (
-        <p>
-          1Password Connect設定がありません。管理者に連絡してください。
-        </p>
+        <p>1Password Connect設定がありません。管理者に連絡してください。</p>
       )}
 
       {!loading && vaults.length > 0 && (

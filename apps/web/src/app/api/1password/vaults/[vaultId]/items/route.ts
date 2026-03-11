@@ -5,10 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSessionFromRequest } from '@/lib/auth/get-session';
 import { OnePasswordConnectClient } from '@/lib/1password/client';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { vaultId: string } }
-) {
+export async function GET(request: NextRequest, { params }: { params: { vaultId: string } }) {
   try {
     const session = await getSessionFromRequest(request);
     if (!session) {
