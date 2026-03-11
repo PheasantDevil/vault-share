@@ -1,5 +1,4 @@
-import { getDb, COLLECTIONS } from '@vault-share/db';
-import type { AuditLogDoc } from '@vault-share/db';
+import { getDb } from '@vault-share/db';
 
 type AuditAction =
   | 'group.create'
@@ -20,9 +19,19 @@ interface AuditLogParams {
   details?: Record<string, unknown>;
 }
 
+interface AuditLogDoc {
+  id: string;
+  groupId: string;
+  itemId?: string | null;
+  actorUid: string;
+  action: string;
+  details?: Record<string, unknown>;
+  createdAt: string;
+}
+
 export async function writeAuditLog(params: AuditLogParams): Promise<void> {
   const db = getDb();
-  const col = db.collection(COLLECTIONS.auditLogs);
+  const col = db.collection('auditLogs');
   const docRef = col.doc();
   const now = new Date().toISOString();
   const doc: AuditLogDoc = {
