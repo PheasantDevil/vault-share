@@ -202,7 +202,7 @@ function SettingsContent() {
       const credential = PhoneAuthProvider.credential(phoneAuthCredential, verificationCode.trim());
 
       // PhoneMultiFactorGeneratorを使用してアサーションを作成
-      const phoneAssertion = PhoneMultiFactorGenerator.assertionForEnrollment(credential);
+      const phoneAssertion = PhoneMultiFactorGenerator.assertion(credential);
 
       // MFAを登録
       await mfa.enroll(phoneAssertion, phoneNumber.trim());
