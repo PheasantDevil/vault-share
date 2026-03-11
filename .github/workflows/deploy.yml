@@ -18,6 +18,7 @@ jobs:
       pull-requests: write
     outputs:
       service_url: ${{ steps.deploy.outputs.url }}
+      revision_name: ${{ steps.deploy.outputs.revision_name }}
 
     steps:
       - uses: actions/checkout@v4
@@ -62,13 +63,50 @@ jobs:
           docker push "$IMAGE:${{ github.sha }}"
           echo "image=$IMAGE:${{ github.sha }}" >> $GITHUB_OUTPUT
 
+      - name: Get current revision (for rollback)
+        id: current_revision
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          PROJECT_ID="${{ vars.GCP_PROJECT_ID || secrets.GCP_PROJECT_ID }}"
+          REGION="${{ vars.GCP_REGION || secrets.GCP_REGION }}"
+          SERVICE="vault-share-web"
+          
+          # 現在のリビジョンを取得（ロールバック用）
+          CURRENT_REVISION=$(gcloud run services describe "$SERVICE" \
+            --region="$REGION" \
+            --project="$PROJECT_ID" \
+            --format='value(status.latestReadyRevisionName)' 2>/dev/null || echo "")
+          
+          if [ -n "$CURRENT_REVISION" ]; then
+            echo "revision=$CURRENT_REVISION" >> $GITHUB_OUTPUT
+            echo "Current revision: $CURRENT_REVISION"
+          fi
+
       - name: Deploy to Cloud Run
         id: deploy
         run: |
+          set -e
           PROJECT_ID="${{ vars.GCP_PROJECT_ID || secrets.GCP_PROJECT_ID }}"
           REGION="${{ vars.GCP_REGION || secrets.GCP_REGION }}"
           IMAGE=${{ steps.build.outputs.image }}
           SERVICE="vault-share-web"
+
+          # 環境変数とシークレットの設定
+          ENV_VARS="NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=vault-share-dev.firebaseapp.com,NEXT_PUBLIC_FIREBASE_PROJECT_ID=$PROJECT_ID,GOOGLE_CLOUD_PROJECT=$PROJECT_ID"
+          
+          # Secret Managerからシークレットを読み込む（存在する場合）
+          SECRETS=""
+          if gcloud secrets describe vault-share-session-secret --project="$PROJECT_ID" &>/dev/null; then
+            SECRETS="SESSION_SECRET=vault-share-session-secret:latest"
+          fi
+          
+          # GitHub Secretsから環境変数を設定（存在する場合）
+          if [ -n "${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}" ]; then
+            ENV_VARS="$ENV_VARS,NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}"
+          fi
+          if [ -n "${{ secrets.ALLOWED_EMAILS }}" ]; then
+            ENV_VARS="$ENV_VARS,ALLOWED_EMAILS=${{ secrets.ALLOWED_EMAILS }}"
+          fi
 
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             TAG="pr-${{ github.event.pull_request.number }}"
@@ -83,14 +121,33 @@ jobs:
             FLAGS=""
           fi
 
-          gcloud run deploy "$SERVICE" \
-            --image="$IMAGE" \
-            --region="$REGION" \
-            --project="$PROJECT_ID" \
+          # デプロイコマンドの構築
+          DEPLOY_CMD="gcloud run deploy \"$SERVICE\" \
+            --image=\"$IMAGE\" \
+            --region=\"$REGION\" \
+            --project=\"$PROJECT_ID\" \
             --platform=managed \
             --allow-unauthenticated \
-            $FLAGS \
-            --quiet
+            --set-env-vars=\"$ENV_VARS\""
+          
+          if [ -n "$SECRETS" ]; then
+            DEPLOY_CMD="$DEPLOY_CMD --set-secrets=\"$SECRETS\""
+          fi
+          
+          DEPLOY_CMD="$DEPLOY_CMD $FLAGS --quiet"
+
+          # デプロイ実行
+          if ! eval "$DEPLOY_CMD"; then
+            echo "::error::Deployment failed"
+            exit 1
+          fi
+
+          # リビジョン名を取得
+          REVISION_NAME=$(gcloud run services describe "$SERVICE" \
+            --region="$REGION" \
+            --project="$PROJECT_ID" \
+            --format='value(status.latestReadyRevisionName)')
+          echo "revision_name=$REVISION_NAME" >> $GITHUB_OUTPUT
 
           if [ -n "$TAG" ]; then
             BASE_URL=$(gcloud run services describe "$SERVICE" --region="$REGION" --project="$PROJECT_ID" --format='value(status.url)')
@@ -101,13 +158,32 @@ jobs:
             echo "url=$(cat url.txt)" >> $GITHUB_OUTPUT
           fi
 
+      - name: Rollback on failure
+        if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.current_revision.outputs.revision != ''
+        run: |
+          PROJECT_ID="${{ vars.GCP_PROJECT_ID || secrets.GCP_PROJECT_ID }}"
+          REGION="${{ vars.GCP_REGION || secrets.GCP_REGION }}"
+          SERVICE="vault-share-web"
+          PREVIOUS_REVISION="${{ steps.current_revision.outputs.revision }}"
+          
+          echo "::warning::Deployment failed. Rolling back to previous revision: $PREVIOUS_REVISION"
+          
+          gcloud run services update-traffic "$SERVICE" \
+            --region="$REGION" \
+            --project="$PROJECT_ID" \
+            --to-revisions="$PREVIOUS_REVISION=100" \
+            --quiet
+          
+          echo "::notice::Rolled back to revision: $PREVIOUS_REVISION"
+
       - name: Comment on PR (preview)
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
             const url = `${{ steps.deploy.outputs.url }}`;
-            const body = `## プレビュー環境\n\nデプロイが完了しました。\n\n**URL**: ${url}`;
+            const revision = `${{ steps.deploy.outputs.revision_name }}`;
+            const body = `## プレビュー環境\n\nデプロイが完了しました。\n\n**URL**: ${url}\n**リビジョン**: ${revision}`;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,

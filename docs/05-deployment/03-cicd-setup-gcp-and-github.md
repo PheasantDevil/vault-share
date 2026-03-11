@@ -33,9 +33,44 @@ gcloud projects describe vault-share-dev --format='value(projectNumber)'
 
 ---
 
-## 2. Cloud Run の環境変数（初回デプロイ後に実施）
+## 2. Cloud Run の環境変数（自動設定）
 
-初回デプロイで Cloud Run サービス `vault-share-web` が作成されたあと、本番用の環境変数を設定する。
+**デプロイワークフローが自動的に環境変数を設定します。** 以下の設定方法から選択してください。
+
+### 2.1 推奨: GitHub Secrets + Secret Manager（自動設定）
+
+デプロイワークフローは以下の順序で環境変数を設定します：
+
+1. **固定値**: `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `GOOGLE_CLOUD_PROJECT` は自動設定
+2. **GitHub Secrets**: `NEXT_PUBLIC_FIREBASE_API_KEY`, `ALLOWED_EMAILS` が設定されている場合は自動設定
+3. **Secret Manager**: `vault-share-session-secret` が存在する場合は `SESSION_SECRET` として自動設定
+
+**設定手順:**
+
+1. **GitHub Secrets の設定**（推奨）
+   - GitHub の **Settings** → **Secrets and variables** → **Actions** → **Secrets**
+   - 以下のシークレットを追加:
+     - `NEXT_PUBLIC_FIREBASE_API_KEY`: Firebase API Key
+     - `ALLOWED_EMAILS`: 許可するメールアドレス（カンマ区切り）
+
+2. **Secret Manager の設定**（推奨）
+   ```bash
+   # SESSION_SECRET を Secret Manager に保存
+   echo -n "YOUR_SESSION_SECRET" | gcloud secrets create vault-share-session-secret \
+     --data-file=- \
+     --project=vault-share-dev \
+     --replication-policy="automatic"
+   
+   # サービスアカウントに Secret Manager の読み取り権限を付与
+   gcloud secrets add-iam-policy-binding vault-share-session-secret \
+     --member="serviceAccount:github-actions@vault-share-dev.iam.gserviceaccount.com" \
+     --role="roles/secretmanager.secretAccessor" \
+     --project=vault-share-dev
+   ```
+
+### 2.2 手動設定（従来の方法）
+
+自動設定を使用しない場合は、以下の方法で手動設定できます。
 
 **方法 A: gcloud コマンド**
 
@@ -46,20 +81,13 @@ gcloud run services update vault-share-web \
   --set-env-vars="NEXT_PUBLIC_FIREBASE_API_KEY=xxx,NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=vault-share-dev.firebaseapp.com,NEXT_PUBLIC_FIREBASE_PROJECT_ID=vault-share-dev,ALLOWED_EMAILS=admin@example.com,SESSION_SECRET=YOUR_SESSION_SECRET,GOOGLE_CLOUD_PROJECT=vault-share-dev"
 ```
 
-`xxx` と `YOUR_SESSION_SECRET` は実際の値に置き換える。
-
 **方法 B: コンソールから設定**
 
 1. [Cloud Run コンソール](https://console.cloud.google.com/run) を開く
 2. プロジェクト **vault-share-dev** を選択し、サービス一覧から **vault-share-web** の**サービス名（リンク）**をクリックして、サービス詳細を開く
-3. **編集ボタンを押して編集画面を開く**  
-   サービス詳細画面の**画面上部**にある、次のいずれかのボタンをクリックする。
-   - **「編集と新しいリビジョンをデプロイ」**（日本語）
-   - **「Edit & deploy new revision」**（英語）
-   - または **「編集」** / **「EDIT」**  
-     見つからない場合は、画面上部のタブ（概要・リビジョン・ログなど）の右側、またはサービス名の右隣のボタン群を確認する。
-4. 編集画面で **「コンテナ」** タブ（または **「Container」**）を開き、その中の **「変数とシークレット」**（**「Variables & Secrets」**）セクションを開く
-5. **「変数を追加」**（**「Add Variable」**）で、以下の名前と値を 1 件ずつ追加する（値は `apps/web/.env.local` および固定値を参照）
+3. **編集ボタンを押して編集画面を開く**
+4. 編集画面で **「コンテナ」** タブを開き、**「変数とシークレット」**セクションを開く
+5. **「変数を追加」**で、以下の名前と値を追加
 
 | 名前                               | 値（例・参照元）                                                                         |
 | ---------------------------------- | ---------------------------------------------------------------------------------------- |
@@ -70,9 +98,7 @@ gcloud run services update vault-share-web \
 | `SESSION_SECRET`                   | `.env.local` の同項目の値（シングルクォートは含めない）                                  |
 | `GOOGLE_CLOUD_PROJECT`             | `vault-share-dev`                                                                        |
 
-6. 必要な変数をすべて追加したら、画面下部の **「デプロイ」** をクリックして新しいリビジョンをデプロイする
-
-**機密値（SESSION_SECRET）について**: Secret Manager の参照を使う場合は、先に Secret を作成し、`--set-secrets="SESSION_SECRET=vault-share-session-secret:latest"` のように指定する。詳細は [02-remaining-setup-and-manual-steps.md](../04-gcp-setup/02-remaining-setup-and-manual-steps.md) を参照。
+**注意**: デプロイワークフローが自動設定する環境変数と手動設定が競合する場合は、デプロイワークフローの設定が優先されます。
 
 **Firebase の `NEXT_PUBLIC_*` 変数**: 本アプリは `/api/config` からランタイムで読み込むため、Cloud Run の環境変数に設定すればビルドし直さずに反映されます。
 
@@ -94,8 +120,13 @@ Cloud Run の URL でログイン・サインアップするには、**Firebase 
 
 ## 3. デプロイの流れ
 
-- **main への push**: ビルド → Artifact Registry に push → Cloud Run にデプロイ（本番トラフィック 100%）
-- **PR の push**: プレビュー用リビジョンをデプロイ（タグ `pr-N`、トラフィック 0%）→ PR に URL をコメント
+- **main への push**: 
+  - ビルド → Artifact Registry に push → Cloud Run にデプロイ（本番トラフィック 100%）
+  - デプロイ失敗時は自動的に前のリビジョンにロールバック
+- **PR の push**: 
+  - プレビュー用リビジョンをデプロイ（タグ `pr-N`、トラフィック 0%）→ PR に URL をコメント
+- **PR のクローズ**: 
+  - プレビュー用リビジョンを自動削除（`.github/workflows/cleanup-preview.yml`）
 
 ---
 
