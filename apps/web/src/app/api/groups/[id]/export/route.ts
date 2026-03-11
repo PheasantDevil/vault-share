@@ -17,10 +17,7 @@ async function ensureMember(groupId: string, userId: string) {
   return snap.empty ? null : snap.docs[0].data();
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = await getSessionFromRequest(request);
     if (!session) {
@@ -77,9 +74,6 @@ export async function GET(
     });
   } catch (error) {
     console.error('CSV export error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -364,7 +364,14 @@ export default function GroupDetailPage() {
               setError(err instanceof Error ? err.message : 'エラー');
             }
           }}
-          style={{ background: 'none', border: 'none', textDecoration: 'underline', color: 'blue', cursor: 'pointer', padding: 0 }}
+          style={{
+            background: 'none',
+            border: 'none',
+            textDecoration: 'underline',
+            color: 'blue',
+            cursor: 'pointer',
+            padding: 0,
+          }}
         >
           CSVにエクスポート
         </button>

@@ -17,10 +17,7 @@ async function ensureMember(groupId: string, userId: string) {
   return snap.empty ? null : snap.docs[0].data();
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = await getSessionFromRequest(request);
     if (!session) {
@@ -51,10 +48,7 @@ export async function POST(
     // ファイルサイズチェック（10MB制限）
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-      return NextResponse.json(
-        { error: 'File size exceeds 10MB limit' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'File size exceeds 10MB limit' }, { status: 400 });
     }
 
     // CSVファイルを読み込み
@@ -72,10 +66,7 @@ export async function POST(
     }
 
     if (parsedItems.length === 0) {
-      return NextResponse.json(
-        { error: 'No items found in CSV' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'No items found in CSV' }, { status: 400 });
     }
 
     // アイテムを登録
@@ -124,9 +115,6 @@ export async function POST(
     });
   } catch (error) {
     console.error('CSV import error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
