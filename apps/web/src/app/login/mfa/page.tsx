@@ -100,7 +100,12 @@ function MFALoginContent() {
         // Phone認証
         if (!smsSent) {
           // SMSをまだ送信していない場合は、SMS送信フローを開始
-          const phoneHint = resolver.hints[0];
+          const hint = resolver.hints[0];
+          if (!hint || hint.factorId !== 'phone') {
+            setError('電話番号が見つかりません');
+            return;
+          }
+          const phoneHint = hint as PhoneMultiFactorInfo;
           if (!phoneHint.phoneNumber) {
             setError('電話番号が見つかりません');
             return;
