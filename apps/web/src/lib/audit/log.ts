@@ -22,7 +22,7 @@ interface AuditLogParams {
 
 export async function writeAuditLog(params: AuditLogParams): Promise<void> {
   const db = getDb();
-  const col = db.collection(COLLECTIONS.auditLogs);
+  const col = db.collection('auditLogs');
   const docRef = col.doc();
   const now = new Date().toISOString();
   const doc: AuditLogDoc = {
