@@ -150,7 +150,7 @@ function MFALoginContent() {
             phoneAuthCredential,
             verificationCode.trim()
           );
-          const phoneAssertion = PhoneMultiFactorGenerator.assertionForSignIn(credential);
+          const phoneAssertion = PhoneMultiFactorGenerator.assertion(credential);
           userCredential = await resolver.resolveSignIn(phoneAssertion);
 
           // クリーンアップ
