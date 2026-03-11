@@ -79,7 +79,7 @@ function SettingsContent() {
 
       const mfa = multiFactor(user);
       const session = await mfa.getSession();
-      const totpSecret = TotpMultiFactorGenerator.generateSecret(session);
+      const totpSecret = await TotpMultiFactorGenerator.generateSecret(session);
 
       // QRコードURLを生成（otpauth://形式）
       const email = user.email || 'user';
