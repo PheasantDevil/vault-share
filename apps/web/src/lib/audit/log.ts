@@ -1,5 +1,4 @@
-import { getDb, COLLECTIONS } from '@vault-share/db';
-import type { AuditLogDoc } from '@vault-share/db';
+import { getDb } from '@vault-share/db';
 
 type AuditAction =
   | 'group.create'
@@ -18,6 +17,16 @@ interface AuditLogParams {
   action: AuditAction;
   itemId?: string;
   details?: Record<string, unknown>;
+}
+
+interface AuditLogDoc {
+  id: string;
+  groupId: string;
+  itemId?: string | null;
+  actorUid: string;
+  action: string;
+  details?: Record<string, unknown>;
+  createdAt: string;
 }
 
 export async function writeAuditLog(params: AuditLogParams): Promise<void> {
