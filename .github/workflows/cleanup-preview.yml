@@ -42,7 +42,7 @@ jobs:
           REGION="${{ vars.GCP_REGION || secrets.GCP_REGION }}"
           SERVICE="vault-share-web"
           TAG="pr-${{ github.event.pull_request.number }}"
-          
+
           # タグ付きリビジョンを検索
           REVISIONS=$(gcloud run revisions list \
             --service="$SERVICE" \
@@ -50,12 +50,12 @@ jobs:
             --project="$PROJECT_ID" \
             --filter="metadata.labels.cloud.googleapis.com/location=$REGION AND metadata.labels.run.googleapis.com/tag=$TAG" \
             --format="value(metadata.name)" 2>/dev/null || echo "")
-          
+
           if [ -z "$REVISIONS" ]; then
             echo "No preview revisions found for tag: $TAG"
             exit 0
           fi
-          
+
           # 各リビジョンを削除
           for REVISION in $REVISIONS; do
             echo "Deleting revision: $REVISION"
@@ -64,5 +64,5 @@ jobs:
               --project="$PROJECT_ID" \
               --quiet || echo "Failed to delete $REVISION (may already be deleted)"
           done
-          
+
           echo "Cleanup completed for PR #${{ github.event.pull_request.number }}"
