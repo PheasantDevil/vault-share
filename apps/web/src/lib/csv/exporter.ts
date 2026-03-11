@@ -1,6 +1,6 @@
 /**
  * 1Password CSV形式のエクスポーター
- * 
+ *
  * アイテムデータを1Password CSV形式に変換します。
  */
 
@@ -79,7 +79,9 @@ export function exportItemsToCSV(items: ItemPayload[]): string {
   // データ行
   const rows = items.map((item) => {
     const csvRow = convertToCSVRow(item);
-    return headers.map((header) => escapeCSVValue(csvRow[header as keyof OnePasswordCSVRow] || '')).join(',');
+    return headers
+      .map((header) => escapeCSVValue(csvRow[header as keyof OnePasswordCSVRow] || ''))
+      .join(',');
   });
 
   return [headerRow, ...rows].join('\n');

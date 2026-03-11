@@ -1,6 +1,6 @@
 /**
  * 1Password CSV形式のパーサー
- * 
+ *
  * 1PasswordのCSVエクスポート形式を解析し、アイテムデータに変換します。
  * 標準的な列: Title, Website, Username, Password, Notes, Type 等
  */
@@ -36,7 +36,9 @@ export function parseCSV(csvText: string): OnePasswordCSVRow[] {
   // ヘッダー行を取得
   const headers = parseCSVLine(lines[0]);
   if (!headers.includes('Title')) {
-    throw new Error('CSVファイルにTitle列が見つかりません。1Passwordの標準形式である必要があります。');
+    throw new Error(
+      'CSVファイルにTitle列が見つかりません。1Passwordの標準形式である必要があります。'
+    );
   }
 
   // データ行をパース
@@ -44,11 +46,11 @@ export function parseCSV(csvText: string): OnePasswordCSVRow[] {
   for (let i = 1; i < lines.length; i++) {
     const values = parseCSVLine(lines[i]);
     const row: OnePasswordCSVRow = {} as OnePasswordCSVRow;
-    
+
     headers.forEach((header, index) => {
       row[header] = values[index] || '';
     });
-    
+
     // Titleが空の行はスキップ
     if (row.Title && row.Title.trim()) {
       rows.push(row);
@@ -99,7 +101,7 @@ function parseCSVLine(line: string): string[] {
  */
 export function convertToItemPayload(row: OnePasswordCSVRow): ParsedItem {
   const title = row.Title || 'Untitled';
-  
+
   // Typeに基づいてItemTypeを決定
   let type: ItemType = 'other';
   const rowType = (row.Type || '').toLowerCase();
@@ -127,7 +129,7 @@ export function convertToItemPayload(row: OnePasswordCSVRow): ParsedItem {
   }
 
   // noteを構築（passwordタイプの場合はNotesをnoteに、それ以外は空）
-  const note = type === 'password' ? (row.Notes || '') : '';
+  const note = type === 'password' ? row.Notes || '' : '';
 
   return {
     title,
