@@ -2,10 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { getFirebaseAuthAsync } from '@/lib/firebase/client';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, getMultiFactorResolver } from 'firebase/auth';
+import type { MultiFactorError } from 'firebase/auth';
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +34,19 @@ export default function LoginPage() {
       }
       window.location.href = '/dashboard';
     } catch (err: unknown) {
+      // MFAエラーの場合、MFAログインページにリダイレクト
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        'code' in err &&
+        typeof (err as { code: string }).code === 'string' &&
+        (err as { code: string }).code.includes('auth/multi-factor-auth-required')
+      ) {
+        // MFAエラーを一時的に保存
+        (window as any).__mfaError = err;
+        router.push('/login/mfa');
+        return;
+      }
       const code =
         typeof err === 'object' &&
         err !== null &&

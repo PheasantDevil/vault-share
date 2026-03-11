@@ -29,11 +29,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'このメールアドレスは利用できません。' }, { status: 403 });
     }
 
+    // MFA状態を取得
+    const user = await auth.getUser(uid);
+    const mfaSettings = user.multiFactor;
+    const mfaEnabled = (mfaSettings?.enrolledFactors?.length ?? 0) > 0;
+
     const now = new Date().toISOString();
     const userDoc: UserDoc = {
       uid,
       email: decoded.email ?? undefined,
       displayName: (decoded.name as string) ?? undefined,
+      mfaEnabled,
       createdAt: now,
       updatedAt: now,
     };
@@ -45,6 +51,7 @@ export async function POST(request: NextRequest) {
       await userRef.update({
         email: userDoc.email,
         displayName: userDoc.displayName,
+        mfaEnabled: userDoc.mfaEnabled,
         updatedAt: now,
       });
     } else {
