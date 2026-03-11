@@ -5,17 +5,12 @@
  */
 
 import { ItemPayload, ItemType } from '../items/types';
-import type {
-  OnePuxDocument,
-  OnePuxVault,
-  OnePuxItem,
-  OnePuxField,
-} from './parser';
+import type { OnePuxDocument, OnePuxVault, OnePuxItem, OnePuxField } from './parser';
 
 /**
  * ItemPayloadを1PUXアイテムに変換
  */
-function convertPayloadTo1PuxItem(item: ItemPayload, index: number): OnePuxItem {
+function convertPayloadTo1PuxItem(item: ItemPayload): OnePuxItem {
   const uuid = generateUuid();
   const fields: OnePuxField[] = [];
   let category = 'Secure Note';
@@ -104,9 +99,7 @@ export function exportItemsTo1Pux(items: ItemPayload[]): string {
   const vaultUuid = generateUuid();
   const vaultName = 'Vault Share Export';
 
-  const onePuxItems: OnePuxItem[] = items.map((item, index) =>
-    convertPayloadTo1PuxItem(item, index)
-  );
+  const onePuxItems: OnePuxItem[] = items.map((item) => convertPayloadTo1PuxItem(item));
 
   const vault: OnePuxVault = {
     uuid: vaultUuid,
