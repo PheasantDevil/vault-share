@@ -161,7 +161,14 @@ function SettingsContent() {
       }
 
       const mfa = multiFactor(user);
-      await mfa.unenroll({ uid: factorUid });
+      const enrolledFactors = mfa.enrolledFactors;
+      const factor = enrolledFactors.find((f) => f.uid === factorUid);
+      if (!factor) {
+        setError('MFA要素が見つかりません');
+        return;
+      }
+
+      await mfa.unenroll(factor);
       await loadMFAStatus();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'MFAの無効化に失敗しました');
