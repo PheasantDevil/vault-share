@@ -306,9 +306,69 @@ export default function GroupDetailPage() {
         </button>
       )}
       <h2 style={{ marginTop: '1.5rem', marginBottom: 0.5 }}>アイテム</h2>
-      <p style={{ marginBottom: '0.5rem' }}>
+      <div style={{ marginBottom: '0.5rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
         <Link href={`/dashboard/groups/${id}/1password`}>1Passwordからインポート</Link>
-      </p>
+        <span>|</span>
+        <label style={{ cursor: 'pointer' }}>
+          <input
+            type="file"
+            accept=".csv"
+            style={{ display: 'none' }}
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              try {
+                setError(null);
+                const formData = new FormData();
+                formData.append('file', file);
+                const res = await fetch(`/api/groups/${id}/import`, {
+                  method: 'POST',
+                  body: formData,
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                  throw new Error(data.error ?? 'CSVインポートに失敗しました');
+                }
+                await reloadItems();
+                alert(`${data.count}件のアイテムをインポートしました`);
+                // ファイル入力のリセット
+                e.target.value = '';
+              } catch (err) {
+                setError(err instanceof Error ? err.message : 'エラー');
+              }
+            }}
+          />
+          <span style={{ textDecoration: 'underline', color: 'blue' }}>CSVからインポート</span>
+        </label>
+        <span>|</span>
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              setError(null);
+              const res = await fetch(`/api/groups/${id}/export`);
+              if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error ?? 'CSVエクスポートに失敗しました');
+              }
+              const blob = await res.blob();
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `vault-share-export-${id}-${new Date().toISOString().split('T')[0]}.csv`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              window.URL.revokeObjectURL(url);
+            } catch (err) {
+              setError(err instanceof Error ? err.message : 'エラー');
+            }
+          }}
+          style={{ background: 'none', border: 'none', textDecoration: 'underline', color: 'blue', cursor: 'pointer', padding: 0 }}
+        >
+          CSVにエクスポート
+        </button>
+      </div>
       <div
         style={{
           marginBottom: '0.5rem',
