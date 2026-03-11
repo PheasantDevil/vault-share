@@ -170,7 +170,10 @@ function SettingsContent() {
       }
 
       const mfa = multiFactor(user);
-      const totpCredential = TotpMultiFactorGenerator.assertionForEnrollment(totpSecret, verificationCode.trim());
+      const totpCredential = TotpMultiFactorGenerator.assertionForEnrollment(
+        totpSecret,
+        verificationCode.trim()
+      );
       await mfa.enroll(totpCredential, 'Authenticator App');
 
       // クリーンアップ
@@ -301,14 +304,12 @@ function SettingsContent() {
             </label>
           </div>
           <div>
-            <button
-              type="button"
-              onClick={verifyEnrollment}
-              style={{ marginRight: '0.5rem' }}
-            >
+            <button type="button" onClick={verifyEnrollment} style={{ marginRight: '0.5rem' }}>
               検証
             </button>
-            <button type="button" onClick={() => setEnrolling(false)}>キャンセル</button>
+            <button type="button" onClick={() => setEnrolling(false)}>
+              キャンセル
+            </button>
           </div>
         </div>
       )}
@@ -344,11 +345,7 @@ function SettingsContent() {
             </div>
           )}
           <div>
-            <button
-              type="button"
-              onClick={startEnrollSms}
-              style={{ marginRight: '0.5rem' }}
-            >
+            <button type="button" onClick={startEnrollSms} style={{ marginRight: '0.5rem' }}>
               {error && error.includes('SMSが送信') ? '検証' : '送信'}
             </button>
             <button
