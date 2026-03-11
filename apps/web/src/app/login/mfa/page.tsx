@@ -11,7 +11,7 @@ import {
   PhoneMultiFactorGenerator,
   RecaptchaVerifier,
 } from 'firebase/auth';
-import type { MultiFactorError } from 'firebase/auth';
+import type { MultiFactorError, PhoneMultiFactorInfo } from 'firebase/auth';
 
 export default function MFALoginPage() {
   return (
@@ -45,9 +45,11 @@ function MFALoginContent() {
         try {
           const auth = await getFirebaseAuthAsync();
           const resolver = getMultiFactorResolver(auth, mfaError);
-          if (resolver.hints[0]?.factorId === 'phone') {
+          const hint = resolver.hints[0];
+          if (hint?.factorId === 'phone') {
             setMfaType('phone');
-            setPhoneNumber(resolver.hints[0].phoneNumber || null);
+            const phoneHint = hint as PhoneMultiFactorInfo;
+            setPhoneNumber(phoneHint.phoneNumber || null);
           }
         } catch (err) {
           console.error('Failed to check MFA type:', err);
