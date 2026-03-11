@@ -55,7 +55,7 @@ function MFALoginContent() {
       }
 
       const resolver = getMultiFactorResolver(auth, error);
-      let credential;
+      let userCredential;
 
       if (resolver.hints[0].factorId === 'totp') {
         // TOTP認証
@@ -63,20 +63,15 @@ function MFALoginContent() {
           resolver.hints[0].uid,
           verificationCode.trim()
         );
-        credential = resolver.resolver.signInWithTotp(totpAssertion);
+        userCredential = await resolver.resolveSignIn(totpAssertion);
       } else if (resolver.hints[0].factorId === 'phone') {
-        // Phone認証
-        const phoneCredential = PhoneAuthProvider.credential(
-          resolver.hints[0].verificationId,
-          verificationCode.trim()
-        );
-        credential = resolver.resolver.signInWithPhoneCredential(phoneCredential);
+        // Phone認証（実装は後続で対応予定）
+        setError('Phone認証は現在サポートされていません。TOTP認証をご利用ください。');
+        return;
       } else {
         setError('サポートされていないMFAタイプです');
         return;
       }
-
-      const userCredential = await credential;
       const idToken = await userCredential.user.getIdToken();
 
       // セッション発行APIを呼び出し
