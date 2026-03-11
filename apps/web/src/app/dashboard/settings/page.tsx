@@ -3,7 +3,14 @@
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { getFirebaseAuthAsync } from '@/lib/firebase/client';
-import { multiFactor } from 'firebase/auth';
+import {
+  multiFactor,
+  TotpMultiFactorGenerator,
+  PhoneMultiFactorGenerator,
+  getMultiFactorResolver,
+  PhoneAuthProvider,
+  RecaptchaVerifier,
+} from 'firebase/auth';
 
 type MFAStatus = {
   enabled: boolean;
@@ -22,6 +29,12 @@ function SettingsContent() {
   const [mfaStatus, setMfaStatus] = useState<MFAStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [enrolling, setEnrolling] = useState(false);
+  const [mfaType, setMfaType] = useState<'totp' | 'sms' | null>(null);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [recaptchaVerifier, setRecaptchaVerifier] = useState<RecaptchaVerifier | null>(null);
 
   useEffect(() => {
     loadMFAStatus();
