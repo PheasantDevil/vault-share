@@ -8,6 +8,9 @@ import { FormField } from '@/components/ui/FormField';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import { SectionHeader } from '@/components/ui/SectionHeader';
+import { Pagination } from '@/components/ui/Pagination';
+import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
+import { useToast } from '@/components/ui/Toast';
 
 type Group = { id: string; name: string };
 type Member = { userId: string; role: 'owner' | 'member'; displayName?: string; email?: string };
@@ -46,34 +49,81 @@ export default function GroupDetailPage() {
     'all'
   );
   const [itemSearchQuery, setItemSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage] = useState(20);
+  const [itemsLoading, setItemsLoading] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     if (!id) return;
     Promise.all([
       fetch(`/api/groups/${id}`).then((r) => r.json()),
       fetch(`/api/groups/${id}/members`).then((r) => r.json()),
-      fetch(`/api/groups/${id}/items`).then((r) => r.json()),
+      loadItemsPage(1),
     ])
       .then(([gRes, mRes, iRes]) => {
         if (gRes.error) throw new Error(gRes.error);
         setGroup(gRes);
         setEditName(gRes.name);
         setMembers(mRes.members ?? []);
-        setItems(iRes.items ?? []);
+        if (iRes.items) {
+          setItems(iRes.items);
+          setTotalItems(iRes.pagination?.total ?? 0);
+        }
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'エラー'))
       .finally(() => setLoading(false));
   }, [id]);
 
-  async function reloadItems() {
+  async function loadItemsPage(page: number) {
+    if (!id) return { items: [], pagination: { total: 0, limit: 20, offset: 0, hasMore: false } };
+    setItemsLoading(true);
     try {
-      const res = await fetch(`/api/groups/${id}/items`);
+      const offset = (page - 1) * itemsPerPage;
+      const params = new URLSearchParams({
+        limit: itemsPerPage.toString(),
+        offset: offset.toString(),
+      });
+      if (itemSearchQuery.trim()) {
+        params.append('search', itemSearchQuery.trim());
+      }
+      if (itemFilter !== 'all') {
+        params.append('type', itemFilter);
+      }
+      const res = await fetch(`/api/groups/${id}/items?${params.toString()}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'アイテムの取得に失敗しました');
+      if (!res.ok) {
+        throw new Error(data.error?.message ?? 'アイテムの取得に失敗しました');
+      }
       setItems(data.items ?? []);
+      setTotalItems(data.pagination?.total ?? 0);
+      return data;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'エラー');
+      const errorMessage = err instanceof Error ? err.message : 'エラー';
+      setError(errorMessage);
+      toast.showToast('error', errorMessage);
+      return { items: [], pagination: { total: 0, limit: 20, offset: 0, hasMore: false } };
+    } finally {
+      setItemsLoading(false);
     }
+  }
+
+  useEffect(() => {
+    if (!id) return;
+    setCurrentPage(1); // 検索・フィルタ変更時は最初のページに戻す
+    loadItemsPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [itemSearchQuery, itemFilter, id]);
+
+  useEffect(() => {
+    if (!id) return;
+    loadItemsPage(currentPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, id]);
+
+  async function reloadItems() {
+    await loadItemsPage(currentPage);
   }
 
   async function createInvite() {
@@ -133,15 +183,20 @@ export default function GroupDetailPage() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'アイテムの作成に失敗しました');
+      if (!res.ok) {
+        throw new Error(data.error?.message ?? 'アイテムの作成に失敗しました');
+      }
       setItemTitle('');
       setItemType('password');
       setItemValue('');
       setItemNote('');
       setItemFormOpen(false);
+      toast.showToast('success', 'アイテムを作成しました');
       await reloadItems();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'エラー');
+      const errorMessage = err instanceof Error ? err.message : 'エラー';
+      setError(errorMessage);
+      toast.showToast('error', errorMessage);
     }
   }
 
@@ -557,29 +612,18 @@ export default function GroupDetailPage() {
           </button>
         </form>
       )}
-      {(() => {
-        let filteredItems = items;
-        // タイプフィルタを適用
-        if (itemFilter !== 'all') {
-          filteredItems = filteredItems.filter((it) => it.type === itemFilter);
-        }
-        // 検索クエリを適用
-        if (itemSearchQuery.trim()) {
-          const query = itemSearchQuery.trim().toLowerCase();
-          filteredItems = filteredItems.filter((it) => it.title.toLowerCase().includes(query));
-        }
-        if (filteredItems.length === 0) {
-          return (
-            <p>
-              {items.length === 0
-                ? 'まだアイテムはありません。'
-                : '検索条件・フィルタに一致するアイテムがありません。'}
-            </p>
-          );
-        }
-        return (
+      {itemsLoading ? (
+        <SkeletonLoader rows={5} height="2rem" />
+      ) : items.length === 0 ? (
+        <p>
+          {totalItems === 0
+            ? 'まだアイテムはありません。'
+            : '検索条件・フィルタに一致するアイテムがありません。'}
+        </p>
+      ) : (
+        <>
           <ul style={{ listStyle: 'none', padding: 0, marginBottom: '1rem' }}>
-            {filteredItems.map((it) => (
+            {items.map((it) => (
               <li key={it.id} style={{ marginBottom: '0.25rem' }}>
                 <button
                   type="button"
@@ -591,8 +635,18 @@ export default function GroupDetailPage() {
               </li>
             ))}
           </ul>
-        );
-      })()}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={Math.ceil(totalItems / itemsPerPage)}
+            onPageChange={(page) => {
+              setCurrentPage(page);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+          />
+        </>
+      )}
       {itemLoading && <p>アイテムを読み込み中...</p>}
       {selectedItem && (
         <section
