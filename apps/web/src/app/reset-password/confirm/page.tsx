@@ -5,6 +5,10 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getFirebaseAuthAsync } from '@/lib/firebase/client';
 import { confirmPasswordReset } from 'firebase/auth';
+import { PageLayout } from '@/components/ui/PageLayout';
+import { FormField } from '@/components/ui/FormField';
+import { Button } from '@/components/ui/Button';
+import { Alert } from '@/components/ui/Alert';
 
 function ResetPasswordConfirmContent() {
   const searchParams = useSearchParams();
@@ -78,76 +82,79 @@ function ResetPasswordConfirmContent() {
 
   if (success) {
     return (
-      <main style={{ padding: '2rem', maxWidth: 400, margin: '0 auto' }}>
-        <h1 style={{ marginBottom: '1rem' }}>パスワードをリセットしました</h1>
-        <p style={{ marginBottom: '1.5rem' }}>
+      <PageLayout title="パスワードをリセットしました">
+        <Alert type="success">
           新しいパスワードが設定されました。ログインページにリダイレクトします...
+        </Alert>
+        <p style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+          <Link href="/login" style={{ color: 'var(--link, #0070f3)', textDecoration: 'none' }}>
+            ログインページへ
+          </Link>
         </p>
-        <p>
-          <Link href="/login">ログインページへ</Link>
-        </p>
-      </main>
+      </PageLayout>
     );
   }
 
   if (!oobCode) {
     return (
-      <main style={{ padding: '2rem', maxWidth: 400, margin: '0 auto' }}>
-        <h1 style={{ marginBottom: '1rem' }}>エラー</h1>
-        {error && <p style={{ color: 'var(--error, #c00)', marginBottom: '1rem' }}>{error}</p>}
-        <p>
-          <Link href="/reset-password">パスワードリセットページへ戻る</Link>
+      <PageLayout title="エラー">
+        {error && <Alert type="error">{error}</Alert>}
+        <p style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+          <Link
+            href="/reset-password"
+            style={{ color: 'var(--link, #0070f3)', textDecoration: 'none' }}
+          >
+            パスワードリセットページへ戻る
+          </Link>
         </p>
-      </main>
+      </PageLayout>
     );
   }
 
   return (
-    <main style={{ padding: '2rem', maxWidth: 400, margin: '0 auto' }}>
-      <h1 style={{ marginBottom: '1rem' }}>新しいパスワードを設定</h1>
-      <p style={{ color: 'var(--muted)', marginBottom: '1.5rem' }}>
-        新しいパスワードを入力してください。
-      </p>
+    <PageLayout title="新しいパスワードを設定" description="新しいパスワードを入力してください。">
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="password" style={{ display: 'block', marginBottom: 0.25 }}>
-            新しいパスワード
-          </label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="new-password"
-            minLength={6}
-            style={{ width: '100%', padding: 0.5 }}
-          />
-        </div>
-        <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="confirmPassword" style={{ display: 'block', marginBottom: 0.25 }}>
-            パスワード（確認）
-          </label>
-          <input
-            id="confirmPassword"
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            autoComplete="new-password"
-            minLength={6}
-            style={{ width: '100%', padding: 0.5 }}
-          />
-        </div>
-        {error && <p style={{ color: 'var(--error, #c00)', marginBottom: '1rem' }}>{error}</p>}
-        <button type="submit" disabled={loading} style={{ padding: '0.5rem 1rem' }}>
-          {loading ? '設定中...' : 'パスワードを設定'}
-        </button>
+        <FormField
+          label="新しいパスワード"
+          id="password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          autoComplete="new-password"
+          minLength={6}
+          helperText="6文字以上"
+          error={
+            error && (error.includes('パスワード') || error.includes('弱すぎ'))
+              ? error
+              : undefined
+          }
+        />
+        <FormField
+          label="パスワード（確認）"
+          id="confirmPassword"
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          required
+          autoComplete="new-password"
+          minLength={6}
+          error={error && error.includes('一致しません') ? error : undefined}
+        />
+        {error &&
+          !error.includes('パスワード') &&
+          !error.includes('一致しません') &&
+          !error.includes('弱すぎ') && <Alert type="error">{error}</Alert>}
+        <Button type="submit" loading={loading} variant="primary" style={{ width: '100%' }}>
+          パスワードを設定
+        </Button>
       </form>
-      <p style={{ marginTop: '1.5rem' }}>
-        <Link href="/login">ログインページへ戻る</Link>
+      <p style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.875rem' }}>
+        <Link href="/login" style={{ color: 'var(--link, #0070f3)', textDecoration: 'none' }}>
+          ログインページへ戻る
+        </Link>
       </p>
-    </main>
+    </PageLayout>
   );
 }
 

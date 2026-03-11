@@ -11,6 +11,10 @@ import {
   PhoneAuthProvider,
   RecaptchaVerifier,
 } from 'firebase/auth';
+import { PageLayout } from '@/components/ui/PageLayout';
+import { FormField } from '@/components/ui/FormField';
+import { Button } from '@/components/ui/Button';
+import { Alert } from '@/components/ui/Alert';
 
 type MFAStatus = {
   enabled: boolean;
@@ -310,21 +314,18 @@ function SettingsContent() {
 
   if (loading) {
     return (
-      <main style={{ padding: '2rem', maxWidth: 720, margin: '0 auto' }}>
+      <PageLayout title="設定" maxWidth={720} backLink={{ href: '/dashboard', label: 'ダッシュボード' }}>
         <p>読み込み中...</p>
-      </main>
+      </PageLayout>
     );
   }
 
   return (
-    <main style={{ padding: '2rem', maxWidth: 720, margin: '0 auto' }}>
-      <h1 style={{ marginBottom: '1rem' }}>設定</h1>
-      <p style={{ marginBottom: '1.5rem' }}>
-        <Link href="/dashboard">← ダッシュボード</Link>
-      </p>
-
-      <h2 style={{ marginTop: '1.5rem', marginBottom: 0.5 }}>多要素認証（MFA）</h2>
-      {error && <p style={{ color: 'var(--error, #c00)', marginBottom: '1rem' }}>{error}</p>}
+    <PageLayout title="設定" maxWidth={720} backLink={{ href: '/dashboard', label: 'ダッシュボード' }}>
+      <h2 style={{ marginTop: '1.5rem', marginBottom: '0.5rem', fontSize: '1.25rem', fontWeight: 600 }}>
+        多要素認証（MFA）
+      </h2>
+      {error && <Alert type="error">{error}</Alert>}
 
       {mfaStatus && (
         <div style={{ marginBottom: '1rem' }}>
@@ -356,31 +357,42 @@ function SettingsContent() {
       {!mfaStatus?.enabled && (
         <div style={{ marginBottom: '1rem' }}>
           <p style={{ marginBottom: '0.5rem' }}>MFAを有効化する:</p>
-          <button
-            type="button"
-            onClick={() => {
-              setMfaType('totp');
-              setEnrolling(true);
-              startEnrollTotp();
-            }}
-            style={{ marginRight: '0.5rem' }}
-          >
-            TOTP（認証アプリ）で登録
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setMfaType('sms');
-              setEnrolling(true);
-            }}
-          >
-            SMSで登録
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <Button
+              type="button"
+              onClick={() => {
+                setMfaType('totp');
+                setEnrolling(true);
+                startEnrollTotp();
+              }}
+              variant="secondary"
+            >
+              TOTP（認証アプリ）で登録
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                setMfaType('sms');
+                setEnrolling(true);
+              }}
+              variant="secondary"
+            >
+              SMSで登録
+            </Button>
+          </div>
         </div>
       )}
 
       {enrolling && mfaType === 'totp' && (
-        <div style={{ marginBottom: '1rem', padding: '1rem', border: '1px solid #ddd' }}>
+        <div
+          style={{
+            marginBottom: '1rem',
+            padding: '1rem',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            backgroundColor: '#f9f9f9',
+          }}
+        >
           <p style={{ marginBottom: '0.5rem' }}>
             QRコードをスキャンするか、以下のシークレットキーを認証アプリに入力してください:
           </p>
@@ -389,68 +401,71 @@ function SettingsContent() {
               <img src={qrCodeUrl} alt="QR Code" style={{ maxWidth: '200px' }} />
             </div>
           )}
-          <div style={{ marginBottom: '0.5rem' }}>
-            <label>
-              検証コード:
-              <input
-                type="text"
-                value={verificationCode}
-                onChange={(e) => setVerificationCode(e.target.value)}
-                placeholder="6桁のコード"
-                style={{ marginLeft: '0.25rem', padding: '0.25rem' }}
-              />
-            </label>
-          </div>
-          <div>
-            <button type="button" onClick={verifyEnrollment} style={{ marginRight: '0.5rem' }}>
+          <FormField
+            label="検証コード"
+            id="totp-code"
+            type="text"
+            value={verificationCode}
+            onChange={(e) => setVerificationCode(e.target.value)}
+            placeholder="6桁のコード"
+          />
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <Button type="button" onClick={verifyEnrollment} variant="primary">
               検証
-            </button>
-            <button type="button" onClick={() => setEnrolling(false)}>
+            </Button>
+            <Button type="button" onClick={() => setEnrolling(false)} variant="secondary">
               キャンセル
-            </button>
+            </Button>
           </div>
         </div>
       )}
 
       {enrolling && mfaType === 'sms' && (
-        <div style={{ marginBottom: '1rem', padding: '1rem', border: '1px solid #ddd' }}>
+        <div
+          style={{
+            marginBottom: '1rem',
+            padding: '1rem',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            backgroundColor: '#f9f9f9',
+          }}
+        >
           <p style={{ marginBottom: '0.5rem' }}>電話番号を入力してください:</p>
           <div id="recaptcha-container" style={{ marginBottom: '0.5rem' }}></div>
-          <div style={{ marginBottom: '0.5rem' }}>
-            <label>
-              電話番号:
-              <input
-                type="tel"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                placeholder="+81-90-1234-5678"
-                style={{ marginLeft: '0.25rem', padding: '0.25rem' }}
-              />
-            </label>
-          </div>
+          <FormField
+            label="電話番号"
+            id="phone"
+            type="tel"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
+            placeholder="+81-90-1234-5678"
+            helperText="E.164形式（例: +819012345678）"
+            error={
+              error && !error.includes('SMSが送信') && error.includes('電話番号') ? error : undefined
+            }
+          />
           {error && error.includes('SMSが送信') && (
-            <div style={{ marginBottom: '0.5rem' }}>
-              <label>
-                検証コード:
-                <input
-                  type="text"
-                  value={verificationCode}
-                  onChange={(e) => setVerificationCode(e.target.value)}
-                  placeholder="6桁のコード"
-                  style={{ marginLeft: '0.25rem', padding: '0.25rem' }}
-                />
-              </label>
-            </div>
+            <FormField
+              label="検証コード"
+              id="sms-code"
+              type="text"
+              value={verificationCode}
+              onChange={(e) => setVerificationCode(e.target.value)}
+              placeholder="6桁のコード"
+            />
           )}
-          <div>
-            <button
+          {error && error.includes('SMSが送信') && (
+            <Alert type="success">SMSが送信されました。コードを入力してください。</Alert>
+          )}
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <Button
               type="button"
               onClick={error && error.includes('SMSが送信') ? verifySmsEnrollment : startEnrollSms}
-              style={{ marginRight: '0.5rem' }}
+              variant="primary"
             >
               {error && error.includes('SMSが送信') ? '検証' : '送信'}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               onClick={() => {
                 setEnrolling(false);
@@ -460,12 +475,13 @@ function SettingsContent() {
                   setRecaptchaVerifier(null);
                 }
               }}
+              variant="secondary"
             >
               キャンセル
-            </button>
+            </Button>
           </div>
         </div>
       )}
-    </main>
+    </PageLayout>
   );
 }

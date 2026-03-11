@@ -3,6 +3,10 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { PageLayout } from '@/components/ui/PageLayout';
+import { FormField } from '@/components/ui/FormField';
+import { Button } from '@/components/ui/Button';
+import { Alert } from '@/components/ui/Alert';
 
 type OnePasswordVault = {
   id: string;
@@ -206,48 +210,74 @@ function OnePasswordImportContent() {
   }
 
   return (
-    <main style={{ padding: '2rem', maxWidth: 720, margin: '0 auto' }}>
-      <h1 style={{ marginBottom: '1rem' }}>1Passwordからインポート</h1>
-      <p style={{ marginBottom: '1.5rem' }}>
-        <Link href={`/dashboard/groups/${groupId}`}>← グループ詳細</Link>
-      </p>
-
-      {error && <p style={{ color: 'var(--error, #c00)', marginBottom: '1rem' }}>{error}</p>}
+    <PageLayout
+      title="1Passwordからインポート"
+      description="1Password Connectからアイテムをインポートします"
+      maxWidth={720}
+      backLink={{ href: `/dashboard/groups/${groupId}`, label: 'グループ詳細' }}
+    >
+      {error && <Alert type="error">{error}</Alert>}
 
       {loading && <p>読み込み中...</p>}
 
       {!loading && vaults.length === 0 && (
-        <p>1Password Connect設定がありません。管理者に連絡してください。</p>
+        <Alert type="warning">1Password Connect設定がありません。管理者に連絡してください。</Alert>
       )}
 
       {!loading && vaults.length > 0 && (
         <>
           <div style={{ marginBottom: '1rem' }}>
-            <label>
-              Vaultを選択:
-              <select
-                value={selectedVaultId || ''}
-                onChange={(e) => setSelectedVaultId(e.target.value || null)}
-                style={{ marginLeft: '0.5rem', padding: '0.25rem' }}
-              >
-                <option value="">選択してください</option>
-                {vaults.map((vault) => (
-                  <option key={vault.id} value={vault.id}>
-                    {vault.name}
-                  </option>
-                ))}
-              </select>
+            <label
+              htmlFor="vault-select"
+              style={{
+                display: 'block',
+                marginBottom: '0.25rem',
+                fontWeight: 500,
+                fontSize: '0.875rem',
+              }}
+            >
+              Vaultを選択
             </label>
+            <select
+              id="vault-select"
+              value={selectedVaultId || ''}
+              onChange={(e) => setSelectedVaultId(e.target.value || null)}
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                fontSize: '1rem',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                fontFamily: 'inherit',
+              }}
+            >
+              <option value="">選択してください</option>
+              {vaults.map((vault) => (
+                <option key={vault.id} value={vault.id}>
+                  {vault.name}
+                </option>
+              ))}
+            </select>
+            <p
+              style={{
+                color: 'var(--muted, #666)',
+                fontSize: '0.875rem',
+                marginTop: '0.25rem',
+                marginBottom: 0,
+              }}
+            >
+              インポート元のVaultを選択してください
+            </p>
           </div>
 
           {selectedVaultId && items.length > 0 && (
             <>
               <div style={{ marginBottom: '1rem' }}>
-                <p>インポートするアイテムを選択してください:</p>
-                <ul style={{ listStyle: 'none', padding: 0 }}>
+                <p style={{ marginBottom: '0.5rem', fontWeight: 500 }}>インポートするアイテムを選択してください:</p>
+                <ul style={{ listStyle: 'none', padding: 0, maxHeight: '400px', overflowY: 'auto', border: '1px solid #ddd', borderRadius: '4px', padding: '0.5rem' }}>
                   {items.map((item) => (
                     <li key={item.id} style={{ marginBottom: '0.5rem' }}>
-                      <label style={{ display: 'flex', alignItems: 'center' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                         <input
                           type="checkbox"
                           checked={selectedItems.has(item.id)}
@@ -265,24 +295,24 @@ function OnePasswordImportContent() {
 
               {selectedItems.size > 0 && (
                 <div>
-                  <button
+                  <Button
                     type="button"
                     onClick={handleImport}
-                    disabled={importing}
-                    style={{ padding: '0.5rem 1rem' }}
+                    loading={importing}
+                    variant="primary"
                   >
-                    {importing ? 'インポート中...' : `${selectedItems.size}件をインポート`}
-                  </button>
+                    {selectedItems.size}件をインポート
+                  </Button>
                 </div>
               )}
             </>
           )}
 
           {selectedVaultId && items.length === 0 && !loading && (
-            <p>このVaultにはアイテムがありません。</p>
+            <Alert type="info">このVaultにはアイテムがありません。</Alert>
           )}
         </>
       )}
-    </main>
+    </PageLayout>
   );
 }

@@ -6,6 +6,10 @@ import { useRouter } from 'next/navigation';
 import { getFirebaseAuthAsync } from '@/lib/firebase/client';
 import { signInWithEmailAndPassword, getMultiFactorResolver } from 'firebase/auth';
 import type { MultiFactorError } from 'firebase/auth';
+import { PageLayout } from '@/components/ui/PageLayout';
+import { FormField } from '@/components/ui/FormField';
+import { Button } from '@/components/ui/Button';
+import { Alert } from '@/components/ui/Alert';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -73,49 +77,60 @@ export default function LoginPage() {
   }
 
   return (
-    <main style={{ padding: '2rem', maxWidth: 400, margin: '0 auto' }}>
-      <h1 style={{ marginBottom: '1rem' }}>ログイン</h1>
-      <p style={{ color: 'var(--muted)', marginBottom: '1.5rem' }}>
-        メール/パスワードでログイン（許可されたメールアドレスのみ）
-      </p>
+    <PageLayout
+      title="ログイン"
+      description="メール/パスワードでログイン（許可されたメールアドレスのみ）"
+    >
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="email" style={{ display: 'block', marginBottom: 0.25 }}>
-            メールアドレス
-          </label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-            style={{ width: '100%', padding: 0.5 }}
-          />
-        </div>
-        <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="password" style={{ display: 'block', marginBottom: 0.25 }}>
-            パスワード
-          </label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="current-password"
-            style={{ width: '100%', padding: 0.5 }}
-          />
-        </div>
-        {error && <p style={{ color: 'var(--error, #c00)', marginBottom: '1rem' }}>{error}</p>}
-        <button type="submit" disabled={loading} style={{ padding: '0.5rem 1rem' }}>
-          {loading ? 'ログイン中...' : 'ログイン'}
-        </button>
+        <FormField
+          label="メールアドレス"
+          id="email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          autoComplete="email"
+          error={error && error.includes('メールアドレス') ? error : undefined}
+        />
+        <FormField
+          label="パスワード"
+          id="password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          autoComplete="current-password"
+          error={error && error.includes('パスワード') ? error : undefined}
+        />
+        {error && !error.includes('メールアドレス') && !error.includes('パスワード') && (
+          <Alert type="error">{error}</Alert>
+        )}
+        <Button type="submit" loading={loading} variant="primary" style={{ width: '100%' }}>
+          ログイン
+        </Button>
       </form>
-      <p style={{ marginTop: '1.5rem' }}>
-        <Link href="/signup">新規登録</Link> /{' '}
-        <Link href="/reset-password">パスワードを忘れた場合</Link> / <Link href="/">トップへ</Link>
+      <p style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.875rem' }}>
+        <Link
+          href="/signup"
+          style={{ color: 'var(--link, #0070f3)', textDecoration: 'none', marginRight: '0.5rem' }}
+        >
+          新規登録
+        </Link>
+        <span style={{ color: 'var(--muted, #999)' }}>|</span>
+        <Link
+          href="/reset-password"
+          style={{ color: 'var(--link, #0070f3)', textDecoration: 'none', margin: '0 0.5rem' }}
+        >
+          パスワードを忘れた場合
+        </Link>
+        <span style={{ color: 'var(--muted, #999)' }}>|</span>
+        <Link
+          href="/"
+          style={{ color: 'var(--link, #0070f3)', textDecoration: 'none', marginLeft: '0.5rem' }}
+        >
+          トップへ
+        </Link>
       </p>
-    </main>
+    </PageLayout>
   );
 }

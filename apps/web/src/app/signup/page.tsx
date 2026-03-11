@@ -4,6 +4,10 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { getFirebaseAuthAsync } from '@/lib/firebase/client';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { PageLayout } from '@/components/ui/PageLayout';
+import { FormField } from '@/components/ui/FormField';
+import { Button } from '@/components/ui/Button';
+import { Alert } from '@/components/ui/Alert';
 
 function getAuthErrorMessage(err: unknown): string {
   const code =
@@ -73,62 +77,69 @@ export default function SignUpPage() {
   }
 
   return (
-    <main style={{ padding: '2rem', maxWidth: 400, margin: '0 auto' }}>
-      <h1 style={{ marginBottom: '1rem' }}>新規登録</h1>
-      <p style={{ color: 'var(--muted)', marginBottom: '1.5rem' }}>
-        メール/パスワードで登録（許可されたメールアドレスのみ）
-      </p>
+    <PageLayout
+      title="新規登録"
+      description="メール/パスワードで登録（許可されたメールアドレスのみ）"
+    >
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="email" style={{ display: 'block', marginBottom: 0.25 }}>
-            メールアドレス
-          </label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-            style={{ width: '100%', padding: 0.5 }}
-          />
-        </div>
-        <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="password" style={{ display: 'block', marginBottom: 0.25 }}>
-            パスワード
-          </label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="new-password"
-            minLength={6}
-            style={{ width: '100%', padding: 0.5 }}
-          />
-        </div>
-        <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="displayName" style={{ display: 'block', marginBottom: 0.25 }}>
-            表示名（任意）
-          </label>
-          <input
-            id="displayName"
-            type="text"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            autoComplete="name"
-            style={{ width: '100%', padding: 0.5 }}
-          />
-        </div>
-        {error && <p style={{ color: 'var(--error, #c00)', marginBottom: '1rem' }}>{error}</p>}
-        <button type="submit" disabled={loading} style={{ padding: '0.5rem 1rem' }}>
-          {loading ? '登録中...' : '登録'}
-        </button>
+        <FormField
+          label="メールアドレス"
+          id="email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          autoComplete="email"
+          error={
+            error && (error.includes('メールアドレス') || error.includes('email'))
+              ? error
+              : undefined
+          }
+        />
+        <FormField
+          label="パスワード"
+          id="password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          autoComplete="new-password"
+          minLength={6}
+          helperText="6文字以上"
+          error={error && error.includes('パスワード') ? error : undefined}
+        />
+        <FormField
+          label="表示名"
+          id="displayName"
+          type="text"
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
+          autoComplete="name"
+          helperText="任意"
+        />
+        {error &&
+          !error.includes('メールアドレス') &&
+          !error.includes('パスワード') &&
+          !error.includes('email') && <Alert type="error">{error}</Alert>}
+        <Button type="submit" loading={loading} variant="primary" style={{ width: '100%' }}>
+          登録
+        </Button>
       </form>
-      <p style={{ marginTop: '1.5rem' }}>
-        <Link href="/login">ログイン</Link> / <Link href="/">トップへ</Link>
+      <p style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.875rem' }}>
+        <Link
+          href="/login"
+          style={{ color: 'var(--link, #0070f3)', textDecoration: 'none', marginRight: '0.5rem' }}
+        >
+          ログイン
+        </Link>
+        <span style={{ color: 'var(--muted, #999)' }}>|</span>
+        <Link
+          href="/"
+          style={{ color: 'var(--link, #0070f3)', textDecoration: 'none', marginLeft: '0.5rem' }}
+        >
+          トップへ
+        </Link>
       </p>
-    </main>
+    </PageLayout>
   );
 }
