@@ -341,6 +341,38 @@ export default function GroupDetailPage() {
           <span style={{ textDecoration: 'underline', color: 'blue' }}>CSVからインポート</span>
         </label>
         <span>|</span>
+        <label style={{ cursor: 'pointer' }}>
+          <input
+            type="file"
+            accept=".1pux,application/json"
+            style={{ display: 'none' }}
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              try {
+                setError(null);
+                const formData = new FormData();
+                formData.append('file', file);
+                const res = await fetch(`/api/groups/${id}/import-1pux`, {
+                  method: 'POST',
+                  body: formData,
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                  throw new Error(data.error ?? '1PUXインポートに失敗しました');
+                }
+                await reloadItems();
+                alert(`${data.count}件のアイテムをインポートしました`);
+                // ファイル入力のリセット
+                e.target.value = '';
+              } catch (err) {
+                setError(err instanceof Error ? err.message : 'エラー');
+              }
+            }}
+          />
+          <span style={{ textDecoration: 'underline', color: 'blue' }}>1PUXからインポート</span>
+        </label>
+        <span>|</span>
         <button
           type="button"
           onClick={async () => {
@@ -374,6 +406,41 @@ export default function GroupDetailPage() {
           }}
         >
           CSVにエクスポート
+        </button>
+        <span>|</span>
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              setError(null);
+              const res = await fetch(`/api/groups/${id}/export-1pux`);
+              if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error ?? '1PUXエクスポートに失敗しました');
+              }
+              const blob = await res.blob();
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `vault-share-export-${id}-${new Date().toISOString().split('T')[0]}.1pux`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              window.URL.revokeObjectURL(url);
+            } catch (err) {
+              setError(err instanceof Error ? err.message : 'エラー');
+            }
+          }}
+          style={{
+            background: 'none',
+            border: 'none',
+            textDecoration: 'underline',
+            color: 'blue',
+            cursor: 'pointer',
+            padding: 0,
+          }}
+        >
+          1PUXにエクスポート
         </button>
       </div>
       <div
