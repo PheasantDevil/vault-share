@@ -54,13 +54,14 @@ gcloud projects describe vault-share-dev --format='value(projectNumber)'
      - `ALLOWED_EMAILS`: 許可するメールアドレス（カンマ区切り）
 
 2. **Secret Manager の設定**（推奨）
+
    ```bash
    # SESSION_SECRET を Secret Manager に保存
    echo -n "YOUR_SESSION_SECRET" | gcloud secrets create vault-share-session-secret \
      --data-file=- \
      --project=vault-share-dev \
      --replication-policy="automatic"
-   
+
    # サービスアカウントに Secret Manager の読み取り権限を付与
    gcloud secrets add-iam-policy-binding vault-share-session-secret \
      --member="serviceAccount:github-actions@vault-share-dev.iam.gserviceaccount.com" \
@@ -120,12 +121,12 @@ Cloud Run の URL でログイン・サインアップするには、**Firebase 
 
 ## 3. デプロイの流れ
 
-- **main への push**: 
+- **main への push**:
   - ビルド → Artifact Registry に push → Cloud Run にデプロイ（本番トラフィック 100%）
   - デプロイ失敗時は自動的に前のリビジョンにロールバック
-- **PR の push**: 
+- **PR の push**:
   - プレビュー用リビジョンをデプロイ（タグ `pr-N`、トラフィック 0%）→ PR に URL をコメント
-- **PR のクローズ**: 
+- **PR のクローズ**:
   - プレビュー用リビジョンを自動削除（`.github/workflows/cleanup-preview.yml`）
 
 ---
