@@ -98,52 +98,10 @@ function SettingsContent() {
   }
 
   async function startEnrollSms() {
-    try {
-      setError(null);
-      if (!phoneNumber.trim()) {
-        setError('電話番号を入力してください');
-        return;
-      }
-
-      const auth = await getFirebaseAuthAsync();
-      const user = auth.currentUser;
-      if (!user) {
-        setError('ログインが必要です');
-        setEnrolling(false);
-        return;
-      }
-
-      // reCAPTCHA verifierを作成（SMS認証に必要）
-      const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        size: 'invisible',
-        callback: () => {
-          // reCAPTCHA成功時のコールバック
-        },
-      });
-      setRecaptchaVerifier(verifier);
-
-      const mfa = multiFactor(user);
-      const session = await mfa.getSession();
-      const phoneInfoOptions = {
-        phoneNumber: phoneNumber.trim(),
-      };
-
-      const phoneCredential = PhoneAuthProvider.credential(
-        await PhoneAuthProvider.verifyPhoneNumber(auth, phoneInfoOptions, verifier),
-        ''
-      );
-
-      // セッションとクレデンシャルを一時的に保存
-      (window as any).__mfaSession = session;
-      (window as any).__phoneCredential = phoneCredential;
-      setError('SMSが送信されました。コードを入力してください。');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'SMS登録の開始に失敗しました');
-      if (recaptchaVerifier) {
-        recaptchaVerifier.clear();
-        setRecaptchaVerifier(null);
-      }
-    }
+    // SMS認証の実装は複雑なため、後続で対応予定
+    setError('SMS認証の実装は後続で対応予定です。現在はTOTP認証のみ利用可能です。');
+    setEnrolling(false);
+    setMfaType(null);
   }
 
   async function verifyEnrollment() {
