@@ -306,6 +306,9 @@ export default function GroupDetailPage() {
         </button>
       )}
       <h2 style={{ marginTop: '1.5rem', marginBottom: 0.5 }}>アイテム</h2>
+      <p style={{ marginBottom: '0.5rem' }}>
+        <Link href={`/dashboard/groups/${id}/1password`}>1Passwordからインポート</Link>
+      </p>
       <div
         style={{
           marginBottom: '0.5rem',
