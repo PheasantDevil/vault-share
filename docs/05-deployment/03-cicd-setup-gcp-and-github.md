@@ -55,6 +55,10 @@ gcloud projects describe vault-share-dev --format='value(projectNumber)'
 
 2. **Secret Manager の設定**（推奨）
 
+   詳細な手順は [`docs/05-deployment/04-secret-manager-setup.md`](./04-secret-manager-setup.md) を参照してください。
+
+   簡単な手順：
+
    ```bash
    # SESSION_SECRET を Secret Manager に保存
    echo -n "YOUR_SESSION_SECRET" | gcloud secrets create vault-share-session-secret \
@@ -62,9 +66,16 @@ gcloud projects describe vault-share-dev --format='value(projectNumber)'
      --project=vault-share-dev \
      --replication-policy="automatic"
 
-   # サービスアカウントに Secret Manager の読み取り権限を付与
+   # GitHub Actions サービスアカウントに Secret Manager の読み取り権限を付与
    gcloud secrets add-iam-policy-binding vault-share-session-secret \
      --member="serviceAccount:github-actions@vault-share-dev.iam.gserviceaccount.com" \
+     --role="roles/secretmanager.secretAccessor" \
+     --project=vault-share-dev
+
+   # Cloud Run サービスアカウントにも権限を付与（必要に応じて）
+   PROJECT_NUMBER=$(gcloud projects describe vault-share-dev --format='value(projectNumber)')
+   gcloud secrets add-iam-policy-binding vault-share-session-secret \
+     --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
      --role="roles/secretmanager.secretAccessor" \
      --project=vault-share-dev
    ```
