@@ -226,18 +226,20 @@ function OnePasswordImportContent() {
 
       {!loading && vaults.length > 0 && (
         <>
-          <FormField
-            label="Vaultを選択"
-            id="vault-select"
-            type="text"
-            value={selectedVaultId || ''}
-            onChange={(e) => {
-              const select = e.target as HTMLSelectElement;
-              setSelectedVaultId(select.value || null);
-            }}
-            helperText="インポート元のVaultを選択してください"
-          >
+          <div style={{ marginBottom: '1rem' }}>
+            <label
+              htmlFor="vault-select"
+              style={{
+                display: 'block',
+                marginBottom: '0.25rem',
+                fontWeight: 500,
+                fontSize: '0.875rem',
+              }}
+            >
+              Vaultを選択
+            </label>
             <select
+              id="vault-select"
               value={selectedVaultId || ''}
               onChange={(e) => setSelectedVaultId(e.target.value || null)}
               style={{
@@ -256,7 +258,17 @@ function OnePasswordImportContent() {
                 </option>
               ))}
             </select>
-          </FormField>
+            <p
+              style={{
+                color: 'var(--muted, #666)',
+                fontSize: '0.875rem',
+                marginTop: '0.25rem',
+                marginBottom: 0,
+              }}
+            >
+              インポート元のVaultを選択してください
+            </p>
+          </div>
 
           {selectedVaultId && items.length > 0 && (
             <>
