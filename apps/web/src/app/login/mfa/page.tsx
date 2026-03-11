@@ -9,8 +9,9 @@ import {
   PhoneAuthProvider,
   TotpMultiFactorGenerator,
   PhoneMultiFactorGenerator,
+  RecaptchaVerifier,
 } from 'firebase/auth';
-import type { MultiFactorError } from 'firebase/auth';
+import type { MultiFactorError, PhoneMultiFactorInfo } from 'firebase/auth';
 
 export default function MFALoginPage() {
   return (
@@ -27,6 +28,8 @@ function MFALoginContent() {
   const [loading, setLoading] = useState(false);
   const [mfaType, setMfaType] = useState<'totp' | 'phone' | null>(null);
   const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
+  const [smsSent, setSmsSent] = useState(false);
+  const [recaptchaVerifier, setRecaptchaVerifier] = useState<RecaptchaVerifier | null>(null);
 
   useEffect(() => {
     // URLパラメータからMFAエラーを取得
@@ -34,6 +37,35 @@ function MFALoginContent() {
     if (errorParam) {
       setError(decodeURIComponent(errorParam));
     }
+
+    // MFAエラーから電話番号を取得
+    async function checkMfaType() {
+      const mfaError = (window as any).__mfaError as MultiFactorError | undefined;
+      if (mfaError) {
+        try {
+          const auth = await getFirebaseAuthAsync();
+          const resolver = getMultiFactorResolver(auth, mfaError);
+          const hint = resolver.hints[0];
+          if (hint?.factorId === 'phone') {
+            setMfaType('phone');
+            const phoneHint = hint as PhoneMultiFactorInfo;
+            setPhoneNumber(phoneHint.phoneNumber || null);
+          }
+        } catch (err) {
+          console.error('Failed to check MFA type:', err);
+        }
+      }
+    }
+
+    checkMfaType();
+
+    return () => {
+      // クリーンアップ
+      if (recaptchaVerifier) {
+        recaptchaVerifier.clear();
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -65,9 +97,76 @@ function MFALoginContent() {
         );
         userCredential = await resolver.resolveSignIn(totpAssertion);
       } else if (resolver.hints[0].factorId === 'phone') {
-        // Phone認証（実装は後続で対応予定）
-        setError('Phone認証は現在サポートされていません。TOTP認証をご利用ください。');
-        return;
+        // Phone認証
+        if (!smsSent) {
+          // SMSをまだ送信していない場合は、SMS送信フローを開始
+          const hint = resolver.hints[0];
+          if (!hint || hint.factorId !== 'phone') {
+            setError('電話番号が見つかりません');
+            return;
+          }
+          const phoneHint = hint as PhoneMultiFactorInfo;
+          if (!phoneHint.phoneNumber) {
+            setError('電話番号が見つかりません');
+            return;
+          }
+
+          // reCAPTCHAを初期化（DOM要素が必要なため、動的に作成）
+          let verifier = recaptchaVerifier;
+          if (!verifier) {
+            // reCAPTCHAコンテナを作成
+            const recaptchaContainer = document.createElement('div');
+            recaptchaContainer.id = 'recaptcha-container-login';
+            recaptchaContainer.style.display = 'none';
+            document.body.appendChild(recaptchaContainer);
+
+            verifier = new RecaptchaVerifier(auth, 'recaptcha-container-login', {
+              size: 'invisible',
+              callback: () => {
+                // reCAPTCHA認証成功時のコールバック
+              },
+              'expired-callback': () => {
+                setError('reCAPTCHAの有効期限が切れました。再度お試しください。');
+              },
+            });
+            setRecaptchaVerifier(verifier);
+          }
+
+          // SMSを送信
+          const phoneAuthProvider = new PhoneAuthProvider(auth);
+          const phoneAuthCredential = await phoneAuthProvider.verifyPhoneNumber(
+            phoneHint.phoneNumber,
+            verifier
+          );
+
+          // 電話番号認証情報を一時的に保存
+          (window as any).__phoneAuthCredential = phoneAuthCredential;
+          setSmsSent(true);
+          setError(null);
+          // 成功メッセージは表示しない（UIで既に表示されている）
+          return;
+        } else {
+          // SMSが既に送信されている場合は、コードを検証
+          const phoneAuthCredential = (window as any).__phoneAuthCredential;
+          if (!phoneAuthCredential) {
+            setError('電話番号認証情報が見つかりません。最初からやり直してください。');
+            return;
+          }
+
+          const credential = PhoneAuthProvider.credential(
+            phoneAuthCredential,
+            verificationCode.trim()
+          );
+          const phoneAssertion = PhoneMultiFactorGenerator.assertion(credential);
+          userCredential = await resolver.resolveSignIn(phoneAssertion);
+
+          // クリーンアップ
+          delete (window as any).__phoneAuthCredential;
+          if (recaptchaVerifier) {
+            recaptchaVerifier.clear();
+            setRecaptchaVerifier(null);
+          }
+        }
       } else {
         setError('サポートされていないMFAタイプです');
         return;
@@ -112,7 +211,9 @@ function MFALoginContent() {
     <main style={{ padding: '2rem', maxWidth: 400, margin: '0 auto' }}>
       <h1 style={{ marginBottom: '1rem' }}>多要素認証</h1>
       <p style={{ color: 'var(--muted)', marginBottom: '1.5rem' }}>
-        認証コードを入力してください。
+        {mfaType === 'phone' && phoneNumber
+          ? `登録済みの電話番号（${phoneNumber}）にSMSコードを送信しました。コードを入力してください。`
+          : '認証コードを入力してください。'}
       </p>
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: '1rem' }}>
