@@ -140,8 +140,8 @@ function SettingsContent() {
       const session = await mfa.getSession();
 
       // PhoneAuthProviderを使用してSMSを送信
-      const phoneAuthCredential = await PhoneAuthProvider.verifyPhoneNumber(
-        auth,
+      const phoneAuthProvider = new PhoneAuthProvider(auth);
+      const phoneAuthCredential = await phoneAuthProvider.verifyPhoneNumber(
         normalizedPhone,
         recaptchaVerifier
       );

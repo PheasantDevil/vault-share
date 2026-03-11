@@ -63,6 +63,7 @@ function MFALoginContent() {
         recaptchaVerifier.clear();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -125,8 +126,8 @@ function MFALoginContent() {
           }
 
           // SMSを送信
-          const phoneAuthCredential = await PhoneAuthProvider.verifyPhoneNumber(
-            auth,
+          const phoneAuthProvider = new PhoneAuthProvider(auth);
+          const phoneAuthCredential = await phoneAuthProvider.verifyPhoneNumber(
             phoneHint.phoneNumber,
             verifier
           );
