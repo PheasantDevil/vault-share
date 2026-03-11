@@ -1,0 +1,68 @@
+name: Cleanup Preview Environments
+
+on:
+  pull_request:
+    types: [closed]
+
+env:
+  REGION: asia-northeast1
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+
+    steps:
+      - name: Validate GCP configuration
+        run: |
+          WIP="${{ vars.WORKLOAD_IDENTITY_PROVIDER || secrets.WORKLOAD_IDENTITY_PROVIDER }}"
+          SA="${{ vars.SERVICE_ACCOUNT || secrets.SERVICE_ACCOUNT }}"
+          PROJ="${{ vars.GCP_PROJECT_ID || secrets.GCP_PROJECT_ID }}"
+          REG="${{ vars.GCP_REGION || secrets.GCP_REGION }}"
+          if [ -z "$WIP" ] || [ -z "$SA" ] || [ -z "$PROJ" ] || [ -z "$REG" ]; then
+            echo "::error::WORKLOAD_IDENTITY_PROVIDER, SERVICE_ACCOUNT, GCP_PROJECT_ID, GCP_REGION must be set."
+            exit 1
+          fi
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WORKLOAD_IDENTITY_PROVIDER || secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.SERVICE_ACCOUNT || secrets.SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Delete preview revision
+        run: |
+          PROJECT_ID="${{ vars.GCP_PROJECT_ID || secrets.GCP_PROJECT_ID }}"
+          REGION="${{ vars.GCP_REGION || secrets.GCP_REGION }}"
+          SERVICE="vault-share-web"
+          TAG="pr-${{ github.event.pull_request.number }}"
+
+          # タグ付きリビジョンを検索
+          REVISIONS=$(gcloud run revisions list \
+            --service="$SERVICE" \
+            --region="$REGION" \
+            --project="$PROJECT_ID" \
+            --filter="metadata.labels.cloud.googleapis.com/location=$REGION AND metadata.labels.run.googleapis.com/tag=$TAG" \
+            --format="value(metadata.name)" 2>/dev/null || echo "")
+
+          if [ -z "$REVISIONS" ]; then
+            echo "No preview revisions found for tag: $TAG"
+            exit 0
+          fi
+
+          # 各リビジョンを削除
+          for REVISION in $REVISIONS; do
+            echo "Deleting revision: $REVISION"
+            gcloud run revisions delete "$REVISION" \
+              --region="$REGION" \
+              --project="$PROJECT_ID" \
+              --quiet || echo "Failed to delete $REVISION (may already be deleted)"
+          done
+
+          echo "Cleanup completed for PR #${{ github.event.pull_request.number }}"
