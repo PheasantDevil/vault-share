@@ -98,10 +98,142 @@ function SettingsContent() {
   }
 
   async function startEnrollSms() {
-    // SMS認証の実装は複雑なため、後続で対応予定
-    setError('SMS認証の実装は後続で対応予定です。現在はTOTP認証のみ利用可能です。');
-    setEnrolling(false);
-    setMfaType(null);
+    if (!phoneNumber.trim()) {
+      setError('電話番号を入力してください');
+      return;
+    }
+
+    // 電話番号の形式を検証（E.164形式を推奨）
+    const phoneRegex = /^\+[1-9]\d{1,14}$/;
+    const normalizedPhone = phoneNumber.trim().replace(/[-\s]/g, '');
+    if (!phoneRegex.test(normalizedPhone)) {
+      setError('電話番号はE.164形式（例: +819012345678）で入力してください');
+      return;
+    }
+
+    try {
+      setError(null);
+      const auth = await getFirebaseAuthAsync();
+      const user = auth.currentUser;
+      if (!user) {
+        setError('ログインが必要です');
+        setEnrolling(false);
+        setMfaType(null);
+        return;
+      }
+
+      // reCAPTCHAを初期化（まだ初期化されていない場合）
+      if (!recaptchaVerifier) {
+        const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+          size: 'invisible',
+          callback: () => {
+            // reCAPTCHA認証成功時のコールバック
+          },
+          'expired-callback': () => {
+            setError('reCAPTCHAの有効期限が切れました。再度お試しください。');
+          },
+        });
+        setRecaptchaVerifier(verifier);
+      }
+
+      const mfa = multiFactor(user);
+      const session = await mfa.getSession();
+
+      // PhoneAuthProviderを使用してSMSを送信
+      const phoneAuthCredential = await PhoneAuthProvider.verifyPhoneNumber(
+        auth,
+        normalizedPhone,
+        recaptchaVerifier
+      );
+
+      // 電話番号認証情報を一時的に保存
+      (window as any).__phoneAuthCredential = phoneAuthCredential;
+      setError('SMSが送信されました。コードを入力してください。');
+    } catch (err) {
+      const code =
+        typeof err === 'object' &&
+        err !== null &&
+        'code' in err &&
+        typeof (err as { code: string }).code === 'string'
+          ? (err as { code: string }).code
+          : '';
+      if (code.includes('auth/invalid-phone-number')) {
+        setError('無効な電話番号です。');
+      } else if (code.includes('auth/quota-exceeded')) {
+        setError('SMS送信の上限に達しました。1日10通まで無料です。TOTP認証をご利用ください。');
+      } else if (code.includes('auth/captcha-check-failed')) {
+        setError('reCAPTCHA認証に失敗しました。再度お試しください。');
+      } else {
+        setError(err instanceof Error ? err.message : 'SMS送信に失敗しました');
+      }
+      if (recaptchaVerifier) {
+        recaptchaVerifier.clear();
+        setRecaptchaVerifier(null);
+      }
+    }
+  }
+
+  async function verifySmsEnrollment() {
+    if (!verificationCode.trim()) {
+      setError('検証コードを入力してください');
+      return;
+    }
+
+    try {
+      setError(null);
+      const auth = await getFirebaseAuthAsync();
+      const user = auth.currentUser;
+      if (!user) {
+        setError('ログインが必要です');
+        return;
+      }
+
+      const phoneAuthCredential = (window as any).__phoneAuthCredential;
+      if (!phoneAuthCredential) {
+        setError('電話番号認証情報が見つかりません。最初からやり直してください。');
+        return;
+      }
+
+      const mfa = multiFactor(user);
+      const session = await mfa.getSession();
+
+      // PhoneAuthCredentialを作成
+      const credential = PhoneAuthProvider.credential(phoneAuthCredential, verificationCode.trim());
+
+      // PhoneMultiFactorGeneratorを使用してアサーションを作成
+      const phoneAssertion = PhoneMultiFactorGenerator.assertionForEnrollment(credential);
+
+      // MFAを登録
+      await mfa.enroll(phoneAssertion, phoneNumber.trim());
+
+      // クリーンアップ
+      delete (window as any).__phoneAuthCredential;
+      if (recaptchaVerifier) {
+        recaptchaVerifier.clear();
+        setRecaptchaVerifier(null);
+      }
+      setPhoneNumber('');
+      setVerificationCode('');
+      setEnrolling(false);
+      setMfaType(null);
+
+      await loadMFAStatus();
+    } catch (err) {
+      const code =
+        typeof err === 'object' &&
+        err !== null &&
+        'code' in err &&
+        typeof (err as { code: string }).code === 'string'
+          ? (err as { code: string }).code
+          : '';
+      if (code.includes('auth/invalid-verification-code')) {
+        setError('検証コードが正しくありません。');
+      } else if (code.includes('auth/code-expired')) {
+        setError('検証コードの有効期限が切れました。再度SMSを送信してください。');
+      } else {
+        setError(err instanceof Error ? err.message : '検証に失敗しました');
+      }
+    }
   }
 
   async function verifyEnrollment() {
@@ -310,7 +442,11 @@ function SettingsContent() {
             </div>
           )}
           <div>
-            <button type="button" onClick={startEnrollSms} style={{ marginRight: '0.5rem' }}>
+            <button
+              type="button"
+              onClick={error && error.includes('SMSが送信') ? verifySmsEnrollment : startEnrollSms}
+              style={{ marginRight: '0.5rem' }}
+            >
               {error && error.includes('SMSが送信') ? '検証' : '送信'}
             </button>
             <button
