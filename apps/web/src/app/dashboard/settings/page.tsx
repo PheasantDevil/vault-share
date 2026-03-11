@@ -123,8 +123,9 @@ function SettingsContent() {
       }
 
       // reCAPTCHAを初期化（まだ初期化されていない場合）
-      if (!recaptchaVerifier) {
-        const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+      let verifier = recaptchaVerifier;
+      if (!verifier) {
+        verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
           size: 'invisible',
           callback: () => {
             // reCAPTCHA認証成功時のコールバック
@@ -143,7 +144,7 @@ function SettingsContent() {
       const phoneAuthProvider = new PhoneAuthProvider(auth);
       const phoneAuthCredential = await phoneAuthProvider.verifyPhoneNumber(
         normalizedPhone,
-        recaptchaVerifier
+        verifier
       );
 
       // 電話番号認証情報を一時的に保存
