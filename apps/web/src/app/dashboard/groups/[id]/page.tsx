@@ -3,6 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { PageLayout } from '@/components/ui/PageLayout';
+import { FormField } from '@/components/ui/FormField';
+import { Button } from '@/components/ui/Button';
+import { Alert } from '@/components/ui/Alert';
+import { SectionHeader } from '@/components/ui/SectionHeader';
 
 type Group = { id: string; name: string };
 type Member = { userId: string; role: 'owner' | 'member'; displayName?: string; email?: string };
@@ -159,49 +164,57 @@ export default function GroupDetailPage() {
     }
   }
 
-  if (loading) return <p>読み込み中...</p>;
+  if (loading) {
+    return (
+      <PageLayout title="読み込み中..." maxWidth={720} backLink={{ href: '/dashboard', label: 'ダッシュボード' }}>
+        <p>読み込み中...</p>
+      </PageLayout>
+    );
+  }
   if (error || !group) {
     return (
-      <main style={{ padding: '2rem', maxWidth: 720, margin: '0 auto' }}>
-        <p style={{ color: 'var(--error, #c00)' }}>{error ?? 'グループが見つかりません'}</p>
-        <Link href="/dashboard">ダッシュボードへ</Link>
-      </main>
+      <PageLayout title="エラー" maxWidth={720} backLink={{ href: '/dashboard', label: 'ダッシュボード' }}>
+        <Alert type="error">{error ?? 'グループが見つかりません'}</Alert>
+      </PageLayout>
     );
   }
 
   return (
-    <main style={{ padding: '2rem', maxWidth: 720, margin: '0 auto' }}>
-      <p style={{ marginBottom: '1rem' }}>
-        <Link href="/dashboard">← ダッシュボード</Link>
-      </p>
-      <h1 style={{ marginBottom: '1rem' }}>{group.name}</h1>
+    <PageLayout title={group.name} maxWidth={720} backLink={{ href: '/dashboard', label: 'ダッシュボード' }}>
+      {error && <Alert type="error">{error}</Alert>}
       {editing ? (
         <form onSubmit={updateGroup} style={{ marginBottom: '1rem' }}>
-          <input
-            type="text"
-            value={editName}
-            onChange={(e) => setEditName(e.target.value)}
-            required
-            style={{ padding: 0.5, marginRight: 0.5 }}
-          />
-          <button type="submit" style={{ marginRight: 0.5 }}>
-            保存
-          </button>
-          <button type="button" onClick={() => setEditing(false)}>
-            キャンセル
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
+            <FormField
+              label="グループ名"
+              id="group-name"
+              type="text"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              required
+              style={{ flex: 1, marginBottom: 0 }}
+            />
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
+              <Button type="submit" variant="primary">
+                保存
+              </Button>
+              <Button type="button" onClick={() => setEditing(false)} variant="secondary">
+                キャンセル
+              </Button>
+            </div>
+          </div>
         </form>
       ) : (
-        <p style={{ marginBottom: '1rem' }}>
-          <button type="button" onClick={() => setEditing(true)}>
+        <div style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
+          <Button type="button" onClick={() => setEditing(true)} variant="secondary">
             編集
-          </button>
-          <button type="button" onClick={deleteGroup} style={{ marginLeft: 0.5 }}>
+          </Button>
+          <Button type="button" onClick={deleteGroup} variant="danger">
             削除
-          </button>
-        </p>
+          </Button>
+        </div>
       )}
-      <h2 style={{ marginTop: '1.5rem', marginBottom: 0.5 }}>メンバー</h2>
+      <SectionHeader title="メンバー" />
       <ul style={{ listStyle: 'none', padding: 0 }}>
         {members.map((m) => (
           <li key={m.userId} style={{ marginBottom: '0.25rem' }}>

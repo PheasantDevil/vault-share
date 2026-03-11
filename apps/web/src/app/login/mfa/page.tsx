@@ -12,6 +12,10 @@ import {
   RecaptchaVerifier,
 } from 'firebase/auth';
 import type { MultiFactorError, PhoneMultiFactorInfo } from 'firebase/auth';
+import { PageLayout } from '@/components/ui/PageLayout';
+import { FormField } from '@/components/ui/FormField';
+import { Button } from '@/components/ui/Button';
+import { Alert } from '@/components/ui/Alert';
 
 export default function MFALoginPage() {
   return (
@@ -208,36 +212,35 @@ function MFALoginContent() {
   }
 
   return (
-    <main style={{ padding: '2rem', maxWidth: 400, margin: '0 auto' }}>
-      <h1 style={{ marginBottom: '1rem' }}>多要素認証</h1>
-      <p style={{ color: 'var(--muted)', marginBottom: '1.5rem' }}>
-        {mfaType === 'phone' && phoneNumber
+    <PageLayout
+      title="多要素認証"
+      description={
+        mfaType === 'phone' && phoneNumber
           ? `登録済みの電話番号（${phoneNumber}）にSMSコードを送信しました。コードを入力してください。`
-          : '認証コードを入力してください。'}
-      </p>
+          : '認証コードを入力してください。'
+      }
+    >
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="code" style={{ display: 'block', marginBottom: 0.25 }}>
-            認証コード
-          </label>
-          <input
-            id="code"
-            type="text"
-            value={verificationCode}
-            onChange={(e) => setVerificationCode(e.target.value)}
-            required
-            placeholder="6桁のコード"
-            style={{ width: '100%', padding: 0.5 }}
-          />
-        </div>
-        {error && <p style={{ color: 'var(--error, #c00)', marginBottom: '1rem' }}>{error}</p>}
-        <button type="submit" disabled={loading} style={{ padding: '0.5rem 1rem' }}>
-          {loading ? '検証中...' : '検証'}
-        </button>
+        <FormField
+          label="認証コード"
+          id="code"
+          type="text"
+          value={verificationCode}
+          onChange={(e) => setVerificationCode(e.target.value)}
+          required
+          placeholder="6桁のコード"
+          error={error && error.includes('コード') ? error : undefined}
+        />
+        {error && !error.includes('コード') && <Alert type="error">{error}</Alert>}
+        <Button type="submit" loading={loading} variant="primary" style={{ width: '100%' }}>
+          検証
+        </Button>
       </form>
-      <p style={{ marginTop: '1.5rem' }}>
-        <Link href="/login">ログインページへ戻る</Link>
+      <p style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.875rem' }}>
+        <Link href="/login" style={{ color: 'var(--link, #0070f3)', textDecoration: 'none' }}>
+          ログインページへ戻る
+        </Link>
       </p>
-    </main>
+    </PageLayout>
   );
 }

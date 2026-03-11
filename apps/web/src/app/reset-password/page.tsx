@@ -4,6 +4,10 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { getFirebaseAuthAsync } from '@/lib/firebase/client';
 import { sendPasswordResetEmail } from 'firebase/auth';
+import { PageLayout } from '@/components/ui/PageLayout';
+import { FormField } from '@/components/ui/FormField';
+import { Button } from '@/components/ui/Button';
+import { Alert } from '@/components/ui/Alert';
 
 export default function ResetPasswordPage() {
   const [email, setEmail] = useState('');
@@ -47,47 +51,51 @@ export default function ResetPasswordPage() {
 
   if (sent) {
     return (
-      <main style={{ padding: '2rem', maxWidth: 400, margin: '0 auto' }}>
-        <h1 style={{ marginBottom: '1rem' }}>メールを送信しました</h1>
-        <p style={{ marginBottom: '1.5rem' }}>
+      <PageLayout title="メールを送信しました">
+        <Alert type="success">
           パスワードリセット用のメールを送信しました。メール内のリンクをクリックして、新しいパスワードを設定してください。
+        </Alert>
+        <p style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+          <Link
+            href="/login"
+            style={{ color: 'var(--link, #0070f3)', textDecoration: 'none' }}
+          >
+            ログインページへ戻る
+          </Link>
         </p>
-        <p>
-          <Link href="/login">ログインページへ戻る</Link>
-        </p>
-      </main>
+      </PageLayout>
     );
   }
 
   return (
-    <main style={{ padding: '2rem', maxWidth: 400, margin: '0 auto' }}>
-      <h1 style={{ marginBottom: '1rem' }}>パスワードリセット</h1>
-      <p style={{ color: 'var(--muted)', marginBottom: '1.5rem' }}>
-        メールアドレスを入力してください。パスワードリセット用のリンクを送信します。
-      </p>
+    <PageLayout
+      title="パスワードリセット"
+      description="メールアドレスを入力してください。パスワードリセット用のリンクを送信します。"
+    >
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="email" style={{ display: 'block', marginBottom: 0.25 }}>
-            メールアドレス
-          </label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-            style={{ width: '100%', padding: 0.5 }}
-          />
-        </div>
-        {error && <p style={{ color: 'var(--error, #c00)', marginBottom: '1rem' }}>{error}</p>}
-        <button type="submit" disabled={loading} style={{ padding: '0.5rem 1rem' }}>
-          {loading ? '送信中...' : '送信'}
-        </button>
+        <FormField
+          label="メールアドレス"
+          id="email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          autoComplete="email"
+          error={error}
+        />
+        {error && <Alert type="error">{error}</Alert>}
+        <Button type="submit" loading={loading} variant="primary" style={{ width: '100%' }}>
+          送信
+        </Button>
       </form>
-      <p style={{ marginTop: '1.5rem' }}>
-        <Link href="/login">ログインページへ戻る</Link>
+      <p style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.875rem' }}>
+        <Link
+          href="/login"
+          style={{ color: 'var(--link, #0070f3)', textDecoration: 'none' }}
+        >
+          ログインページへ戻る
+        </Link>
       </p>
-    </main>
+    </PageLayout>
   );
 }

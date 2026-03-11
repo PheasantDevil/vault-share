@@ -3,6 +3,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { PageLayout } from '@/components/ui/PageLayout';
+import { FormField } from '@/components/ui/FormField';
+import { Button } from '@/components/ui/Button';
+import { Alert } from '@/components/ui/Alert';
 
 export default function NewGroupPage() {
   const [name, setName] = useState('');
@@ -35,32 +39,36 @@ export default function NewGroupPage() {
   }
 
   return (
-    <main style={{ padding: '2rem', maxWidth: 400, margin: '0 auto' }}>
-      <h1 style={{ marginBottom: '1rem' }}>グループを作成</h1>
+    <PageLayout
+      title="グループを作成"
+      description="新しいグループを作成して、機密情報を共有しましょう"
+      maxWidth={400}
+      backLink={{ href: '/dashboard', label: 'ダッシュボード' }}
+    >
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="name" style={{ display: 'block', marginBottom: 0.25 }}>
-            グループ名
-          </label>
-          <input
-            id="name"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            style={{ width: '100%', padding: 0.5 }}
-          />
+        <FormField
+          label="グループ名"
+          id="name"
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+          error={error}
+        />
+        {error && <Alert type="error">{error}</Alert>}
+        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+          <Button type="submit" loading={loading} variant="primary">
+            作成
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => router.push('/dashboard')}
+          >
+            キャンセル
+          </Button>
         </div>
-        {error && <p style={{ color: 'var(--error, #c00)', marginBottom: '1rem' }}>{error}</p>}
-        <button
-          type="submit"
-          disabled={loading}
-          style={{ padding: '0.5rem 1rem', marginRight: '0.5rem' }}
-        >
-          {loading ? '作成中...' : '作成'}
-        </button>
-        <Link href="/dashboard">キャンセル</Link>
       </form>
-    </main>
+    </PageLayout>
   );
 }
