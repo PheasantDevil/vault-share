@@ -66,6 +66,127 @@ function SettingsContent() {
     }
   }
 
+  async function startEnrollTotp() {
+    try {
+      setError(null);
+      const auth = await getFirebaseAuthAsync();
+      const user = auth.currentUser;
+      if (!user) {
+        setError('ログインが必要です');
+        setEnrolling(false);
+        return;
+      }
+
+      const mfa = multiFactor(user);
+      const session = await mfa.getSession();
+      const totpSecret = TotpMultiFactorGenerator.generateSecret(session);
+
+      // QRコードURLを生成（otpauth://形式）
+      const email = user.email || 'user';
+      const issuer = 'Vault Share';
+      const qrCodeData = `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(email)}?secret=${totpSecret.secretKey}&issuer=${encodeURIComponent(issuer)}`;
+      const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrCodeData)}`;
+      setQrCodeUrl(qrCodeUrl);
+
+      // セッションとシークレットを一時的に保存（実際の実装では、より安全な方法を使用）
+      (window as any).__mfaSession = session;
+      (window as any).__totpSecret = totpSecret;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'TOTP登録の開始に失敗しました');
+      setEnrolling(false);
+    }
+  }
+
+  async function startEnrollSms() {
+    try {
+      setError(null);
+      if (!phoneNumber.trim()) {
+        setError('電話番号を入力してください');
+        return;
+      }
+
+      const auth = await getFirebaseAuthAsync();
+      const user = auth.currentUser;
+      if (!user) {
+        setError('ログインが必要です');
+        setEnrolling(false);
+        return;
+      }
+
+      // reCAPTCHA verifierを作成（SMS認証に必要）
+      const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        size: 'invisible',
+        callback: () => {
+          // reCAPTCHA成功時のコールバック
+        },
+      });
+      setRecaptchaVerifier(verifier);
+
+      const mfa = multiFactor(user);
+      const session = await mfa.getSession();
+      const phoneInfoOptions = {
+        phoneNumber: phoneNumber.trim(),
+      };
+
+      const phoneCredential = PhoneAuthProvider.credential(
+        await PhoneAuthProvider.verifyPhoneNumber(auth, phoneInfoOptions, verifier),
+        ''
+      );
+
+      // セッションとクレデンシャルを一時的に保存
+      (window as any).__mfaSession = session;
+      (window as any).__phoneCredential = phoneCredential;
+      setError('SMSが送信されました。コードを入力してください。');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'SMS登録の開始に失敗しました');
+      if (recaptchaVerifier) {
+        recaptchaVerifier.clear();
+        setRecaptchaVerifier(null);
+      }
+    }
+  }
+
+  async function verifyEnrollment() {
+    if (!verificationCode.trim()) {
+      setError('検証コードを入力してください');
+      return;
+    }
+
+    try {
+      setError(null);
+      const auth = await getFirebaseAuthAsync();
+      const user = auth.currentUser;
+      if (!user) {
+        setError('ログインが必要です');
+        return;
+      }
+
+      const session = (window as any).__mfaSession;
+      const totpSecret = (window as any).__totpSecret;
+
+      if (!session || !totpSecret) {
+        setError('セッションが無効です。最初からやり直してください。');
+        return;
+      }
+
+      const mfa = multiFactor(user);
+      const totpCredential = TotpMultiFactorGenerator.assertionForEnrollment(totpSecret, verificationCode.trim());
+      await mfa.enroll(totpCredential, 'Authenticator App');
+
+      // クリーンアップ
+      delete (window as any).__mfaSession;
+      delete (window as any).__totpSecret;
+      setQrCodeUrl(null);
+      setVerificationCode('');
+      setEnrolling(false);
+      setMfaType(null);
+
+      await loadMFAStatus();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '検証に失敗しました');
+    }
+  }
+
   async function unenrollMFA(factorUid: string) {
     if (!confirm('MFAを無効化しますか？')) return;
 
@@ -133,12 +254,117 @@ function SettingsContent() {
 
       {!mfaStatus?.enabled && (
         <div style={{ marginBottom: '1rem' }}>
+          <p style={{ marginBottom: '0.5rem' }}>MFAを有効化する:</p>
+          <button
+            type="button"
+            onClick={() => {
+              setMfaType('totp');
+              setEnrolling(true);
+              startEnrollTotp();
+            }}
+            style={{ marginRight: '0.5rem' }}
+          >
+            TOTP（認証アプリ）で登録
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setMfaType('sms');
+              setEnrolling(true);
+            }}
+          >
+            SMSで登録
+          </button>
+        </div>
+      )}
+
+      {enrolling && mfaType === 'totp' && (
+        <div style={{ marginBottom: '1rem', padding: '1rem', border: '1px solid #ddd' }}>
           <p style={{ marginBottom: '0.5rem' }}>
-            MFAを有効化するには、Identity PlatformのコンソールでMFAを有効化する必要があります。
+            QRコードをスキャンするか、以下のシークレットキーを認証アプリに入力してください:
           </p>
-          <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>
-            現在、MFAの登録機能は実装中です。Identity PlatformのコンソールでMFAを有効化した後、このページからMFAを設定できるようになります。
-          </p>
+          {qrCodeUrl && (
+            <div style={{ marginBottom: '0.5rem' }}>
+              <img src={qrCodeUrl} alt="QR Code" style={{ maxWidth: '200px' }} />
+            </div>
+          )}
+          <div style={{ marginBottom: '0.5rem' }}>
+            <label>
+              検証コード:
+              <input
+                type="text"
+                value={verificationCode}
+                onChange={(e) => setVerificationCode(e.target.value)}
+                placeholder="6桁のコード"
+                style={{ marginLeft: '0.25rem', padding: '0.25rem' }}
+              />
+            </label>
+          </div>
+          <div>
+            <button
+              type="button"
+              onClick={verifyEnrollment}
+              style={{ marginRight: '0.5rem' }}
+            >
+              検証
+            </button>
+            <button type="button" onClick={() => setEnrolling(false)}>キャンセル</button>
+          </div>
+        </div>
+      )}
+
+      {enrolling && mfaType === 'sms' && (
+        <div style={{ marginBottom: '1rem', padding: '1rem', border: '1px solid #ddd' }}>
+          <p style={{ marginBottom: '0.5rem' }}>電話番号を入力してください:</p>
+          <div id="recaptcha-container" style={{ marginBottom: '0.5rem' }}></div>
+          <div style={{ marginBottom: '0.5rem' }}>
+            <label>
+              電話番号:
+              <input
+                type="tel"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder="+81-90-1234-5678"
+                style={{ marginLeft: '0.25rem', padding: '0.25rem' }}
+              />
+            </label>
+          </div>
+          {error && error.includes('SMSが送信') && (
+            <div style={{ marginBottom: '0.5rem' }}>
+              <label>
+                検証コード:
+                <input
+                  type="text"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value)}
+                  placeholder="6桁のコード"
+                  style={{ marginLeft: '0.25rem', padding: '0.25rem' }}
+                />
+              </label>
+            </div>
+          )}
+          <div>
+            <button
+              type="button"
+              onClick={startEnrollSms}
+              style={{ marginRight: '0.5rem' }}
+            >
+              {error && error.includes('SMSが送信') ? '検証' : '送信'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setEnrolling(false);
+                setMfaType(null);
+                if (recaptchaVerifier) {
+                  recaptchaVerifier.clear();
+                  setRecaptchaVerifier(null);
+                }
+              }}
+            >
+              キャンセル
+            </button>
+          </div>
         </div>
       )}
     </main>
