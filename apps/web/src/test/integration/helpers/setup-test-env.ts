@@ -1,7 +1,7 @@
 /**
  * 統合テスト環境のセットアップ
  */
-import { initializeApp, cert } from 'firebase-admin/app';
+import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore, connectFirestoreEmulator } from 'firebase-admin/firestore';
 import { getAuth, connectAuthEmulator } from 'firebase-admin/auth';
 import { setDb } from '@vault-share/db';
@@ -17,7 +17,7 @@ export async function setupTestEnv() {
   }
 
   // Firebase Admin SDKの初期化（エミュレータ用）
-  try {
+  if (getApps().length === 0) {
     initializeApp({
       projectId: 'test-project',
       credential: cert({
@@ -26,22 +26,31 @@ export async function setupTestEnv() {
         privateKey: '-----BEGIN PRIVATE KEY-----\nMOCK_KEY\n-----END PRIVATE KEY-----\n',
       }),
     });
-  } catch (err) {
-    // 既に初期化されている場合は無視
-    if (!(err as Error).message.includes('already been initialized')) {
-      throw err;
-    }
   }
 
   // Firestoreエミュレータに接続
   const db = getFirestore();
-  const [host, port] = FIRESTORE_EMULATOR_HOST.split(':');
-  connectFirestoreEmulator(db, host, parseInt(port, 10));
+  try {
+    const [host, port] = FIRESTORE_EMULATOR_HOST.split(':');
+    connectFirestoreEmulator(db, host, parseInt(port, 10));
+  } catch (err) {
+    // 既に接続されている場合は無視
+    if (!(err as Error).message.includes('already connected')) {
+      throw err;
+    }
+  }
 
   // Authエミュレータに接続
   const auth = getAuth();
-  const [authHost, authPort] = AUTH_EMULATOR_HOST.split(':');
-  connectAuthEmulator(auth, `http://${authHost}:${authPort}`);
+  try {
+    const [authHost, authPort] = AUTH_EMULATOR_HOST.split(':');
+    connectAuthEmulator(auth, `http://${authHost}:${authPort}`);
+  } catch (err) {
+    // 既に接続されている場合は無視
+    if (!(err as Error).message.includes('already connected')) {
+      throw err;
+    }
+  }
 
   // DBを設定
   setDb(db);
