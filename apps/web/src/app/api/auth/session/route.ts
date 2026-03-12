@@ -11,9 +11,20 @@ import {
   getSessionCookieName,
   getSessionCookieOptions,
 } from '@/lib/auth/session';
+import { checkRateLimit, createRateLimitResponse, createUserRateLimitKey } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
+    // レート制限チェック（IPアドレスベース、1分間に5回まで）
+    const rateLimitResult = await checkRateLimit(request, {
+      windowMs: 60 * 1000, // 1分
+      maxRequests: 5,
+    });
+
+    if (!rateLimitResult.allowed) {
+      return createRateLimitResponse(rateLimitResult.resetAt);
+    }
+
     const body = await request.json();
     const idToken = typeof body.idToken === 'string' ? body.idToken : null;
     if (!idToken) {
