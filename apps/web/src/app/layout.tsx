@@ -1,7 +1,7 @@
+import { SkipLink } from '@/components/SkipLink';
+import { ToastProvider } from '@/components/ui/Toast';
 import type { Metadata } from 'next';
 import './globals.css';
-import { ToastProvider } from '@/components/ui/Toast';
-import { SkipLink } from '@/components/SkipLink';
 
 export const metadata: Metadata = {
   title: 'Vault Share',
