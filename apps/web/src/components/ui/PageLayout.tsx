@@ -18,30 +18,36 @@ export function PageLayout({
   return (
     <main
       style={{
-        padding: '2rem 1rem',
+        padding: 'clamp(1rem, 4vw, 2rem) clamp(1rem, 4vw, 2rem)',
         maxWidth: `${maxWidth}px`,
         margin: '0 auto',
         minHeight: 'calc(100vh - 4rem)',
+        width: '100%',
       }}
     >
       {backLink && (
-        <p style={{ marginBottom: '1rem' }}>
+        <nav aria-label="パンくずナビゲーション" style={{ marginBottom: '1rem' }}>
           <a
             href={backLink.href}
             style={{
               color: 'var(--link, #0070f3)',
               textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.25rem',
             }}
           >
-            ← {backLink.label}
+            <span aria-hidden="true">←</span>
+            {backLink.label}
           </a>
-        </p>
+        </nav>
       )}
       <h1
         style={{
           marginBottom: description ? '0.5rem' : '1.5rem',
-          fontSize: '1.875rem',
+          fontSize: 'clamp(1.5rem, 4vw, 1.875rem)',
           fontWeight: 600,
+          lineHeight: 1.2,
         }}
       >
         {title}
@@ -51,7 +57,7 @@ export function PageLayout({
           style={{
             color: 'var(--muted, #666)',
             marginBottom: '1.5rem',
-            fontSize: '0.875rem',
+            fontSize: 'var(--font-size-sm, 0.875rem)',
             lineHeight: 1.6,
           }}
         >

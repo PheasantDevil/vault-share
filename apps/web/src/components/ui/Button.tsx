@@ -28,13 +28,15 @@ export function Button({
     });
   }
   const baseStyle: React.CSSProperties = {
-    padding: '0.5rem 1rem',
+    padding: '0.75rem 1.5rem',
+    minHeight: '44px', // タッチ操作に適した最小サイズ
+    minWidth: '44px',
     fontSize: '1rem',
     fontWeight: 500,
-    borderRadius: '4px',
+    borderRadius: 'var(--border-radius, 4px)',
     border: 'none',
     cursor: disabled || loading ? 'not-allowed' : 'pointer',
-    transition: 'opacity 0.2s',
+    transition: 'opacity 0.2s, background-color 0.2s',
     fontFamily: 'inherit',
     display: 'inline-flex',
     alignItems: 'center',
@@ -45,16 +47,16 @@ export function Button({
 
   const variantStyles: Record<string, React.CSSProperties> = {
     primary: {
-      backgroundColor: '#0070f3',
+      backgroundColor: 'var(--primary, #0070f3)',
       color: '#fff',
     },
     secondary: {
-      backgroundColor: '#f5f5f5',
-      color: '#333',
-      border: '1px solid #ddd',
+      backgroundColor: 'var(--secondary, #f5f5f5)',
+      color: 'var(--text-primary, #333)',
+      border: '1px solid var(--border-color, #ddd)',
     },
     danger: {
-      backgroundColor: 'var(--error, #c00)',
+      backgroundColor: 'var(--danger, #c00)',
       color: '#fff',
     },
   };
@@ -66,9 +68,16 @@ export function Button({
   };
 
   return (
-    <button type="button" disabled={disabled || loading} style={combinedStyle} {...props}>
+    <button
+      type="button"
+      disabled={disabled || loading}
+      style={combinedStyle}
+      aria-disabled={disabled || loading}
+      {...props}
+    >
       {loading && (
         <span
+          aria-hidden="true"
           style={{
             display: 'inline-block',
             width: '1rem',
@@ -80,6 +89,7 @@ export function Button({
           }}
         />
       )}
+      {loading && <span className="sr-only">読み込み中</span>}
       {children}
     </button>
   );
