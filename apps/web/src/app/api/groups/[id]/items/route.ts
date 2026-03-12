@@ -99,15 +99,22 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     // 全件数（フィルタ適用前）
     const total = totalSnap.docs.filter((doc) => !doc.data().deletedAt).length;
 
-    return NextResponse.json({
-      items: filteredItems,
-      pagination: {
-        total,
-        limit,
-        offset,
-        hasMore: offset + limit < total,
+    return NextResponse.json(
+      {
+        items: filteredItems,
+        pagination: {
+          total,
+          limit,
+          offset,
+          hasMore: offset + limit < total,
+        },
       },
-    });
+      {
+        headers: {
+          'Cache-Control': 'private, max-age=30, stale-while-revalidate=60',
+        },
+      }
+    );
   } catch (err) {
     return NextResponse.json(
       createErrorResponse(

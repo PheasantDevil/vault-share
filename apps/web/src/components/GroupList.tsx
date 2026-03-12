@@ -1,35 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useGroups } from '@/lib/swr/hooks';
+import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
+import { Alert } from '@/components/ui/Alert';
 
 type Group = { id: string; name: string };
 
 export function GroupList() {
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { groups, isLoading, isError } = useGroups();
 
-  useEffect(() => {
-    fetch('/api/groups')
-      .then((res) => {
-        if (!res.ok) throw new Error('取得に失敗しました');
-        return res.json();
-      })
-      .then((data) => {
-        setGroups(data.groups ?? []);
-      })
-      .catch((err) => setError(err instanceof Error ? err.message : 'エラーが発生しました'))
-      .finally(() => setLoading(false));
-  }, []);
+  if (isLoading) {
+    return <SkeletonLoader count={3} height="4rem" />;
+  }
 
-  if (loading) return <p>読み込み中...</p>;
-  if (error) return <p style={{ color: 'var(--error, #c00)' }}>{error}</p>;
+  if (isError) {
+    return <Alert type="error">グループの読み込みに失敗しました</Alert>;
+  }
+
   if (groups.length === 0) {
     return (
       <p>参加中のグループはありません。グループを作成するか、招待リンクで参加してください。</p>
     );
   }
+
   return (
     <ul style={{ listStyle: 'none', padding: 0 }}>
       {groups.map((g) => (
