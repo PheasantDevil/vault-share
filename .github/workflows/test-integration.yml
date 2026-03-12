@@ -1,0 +1,52 @@
+name: Integration Tests
+
+on:
+  pull_request:
+    paths:
+      - 'apps/web/src/**'
+      - 'apps/web/src/test/integration/**'
+      - '.github/workflows/test-integration.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/web/src/**'
+      - 'apps/web/src/test/integration/**'
+      - '.github/workflows/test-integration.yml'
+
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Start Firebase Emulators
+        run: |
+          pnpm add -g firebase-tools
+          firebase emulators:start --only firestore,auth --project test-project &
+          sleep 10
+
+      - name: Run integration tests
+        env:
+          FIRESTORE_EMULATOR_HOST: localhost:8080
+          FIREBASE_AUTH_EMULATOR_HOST: localhost:9099
+          SESSION_SECRET: test-secret-key-for-integration-tests-min-16-chars
+        run: |
+          cd apps/web
+          pnpm test:integration
+
+      - name: Stop Firebase Emulators
+        if: always()
+        run: pkill -f firebase || true
