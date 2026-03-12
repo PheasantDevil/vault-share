@@ -63,6 +63,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     actorUid: session.uid,
     action: 'group.updateName',
     details: { name },
+    request,
   });
   return NextResponse.json({ id: params.id, name, updatedAt: now });
 }
@@ -89,6 +90,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     groupId: params.id,
     actorUid: session.uid,
     action: 'group.delete',
+    request,
   });
   return NextResponse.json({ ok: true });
 }

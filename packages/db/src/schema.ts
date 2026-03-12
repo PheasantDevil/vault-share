@@ -61,4 +61,16 @@ export interface AuditLogDoc {
   action: string;
   details?: Record<string, unknown>;
   createdAt: string;
+  /** リクエスト元のIPアドレス */
+  ipAddress?: string;
+  /** ユーザーエージェント */
+  userAgent?: string;
+  /** エラー情報（エラー発生時） */
+  error?: {
+    message: string;
+    code?: string;
+    stack?: string;
+  };
+  /** セキュリティイベントフラグ */
+  securityEvent?: boolean;
 }

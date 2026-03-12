@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
     actorUid: session.uid,
     action: 'group.create',
     details: { name },
+    request,
   });
   return NextResponse.json(groupDoc);
 }

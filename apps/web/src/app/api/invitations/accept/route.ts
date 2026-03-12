@@ -62,6 +62,7 @@ export async function POST(request: NextRequest) {
     groupId,
     actorUid: session.uid,
     action: 'member.add',
+    request,
     details: { invitedBy: inv.invitedBy, role: 'member' },
   });
   return NextResponse.json({ groupId });

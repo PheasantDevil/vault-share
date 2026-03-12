@@ -182,6 +182,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       action: 'item.create',
       itemId: item.id,
       details: { title: payload.title, type: payload.type },
+      request,
     });
 
     return NextResponse.json(
