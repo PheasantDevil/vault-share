@@ -81,45 +81,61 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ error: 'No items found in 1PUX file' }, { status: 400 });
     }
 
-    // アイテムを登録
-    const batch = db.batch();
+    // アイテムをバッチで登録
     const createdItems: string[] = [];
     const now = new Date().toISOString();
 
-    for (const itemPayload of parsedItems) {
-      const itemRef = db.collection(COLLECTIONS.items).doc();
-      const { ciphertext, iv } = encryptItemPayload(itemPayload);
+    await processBatch(
+      parsedItems,
+      (batch, itemPayload: ItemPayload, index) => {
+        const itemRef = db.collection(COLLECTIONS.items).doc();
+        const { ciphertext, iv } = encryptItemPayload(itemPayload);
 
-      const item: Omit<ItemDoc, 'id'> = {
-        groupId,
-        createdBy: session.uid,
-        createdAt: now,
-        updatedAt: now,
-        deletedAt: null,
-        ciphertext,
-        iv,
-      };
+        const item: Omit<ItemDoc, 'id'> = {
+          groupId,
+          createdBy: session.uid,
+          createdAt: now,
+          updatedAt: now,
+          deletedAt: null,
+          ciphertext,
+          iv,
+        };
 
-      batch.set(itemRef, item);
-      createdItems.push(itemRef.id);
-    }
-
-    await batch.commit();
-
-    // 監査ログを記録
-    for (const itemId of createdItems) {
-      await writeAuditLog({
-        groupId,
-        actorUid: session.uid,
-        action: 'item.create',
-        itemId,
-        details: {
-          imported: true,
-          source: '1pux',
+        batch.set(itemRef, item);
+        createdItems.push(itemRef.id);
+      },
+      {
+        batchSize: 500, // Firestoreのバッチ制限
+        onProgress: (current, total) => {
+          // 進捗ログ（必要に応じて拡張可能）
+          if (current % 100 === 0 || current === total) {
+            console.log(`1PUX import progress: ${current}/${total}`);
+          }
         },
-        request,
-      });
+        onError: (error, item) => {
+          console.error(`Failed to import item:`, error, item);
+        },
+      }
+    );
+
+    // 監査ログを記録（並列実行）
+    const auditLogPromises: Promise<void>[] = [];
+    for (const itemId of createdItems) {
+      auditLogPromises.push(
+        writeAuditLog({
+          groupId,
+          actorUid: session.uid,
+          action: 'item.create',
+          itemId,
+          details: {
+            imported: true,
+            source: '1pux',
+          },
+          request,
+        })
+      );
     }
+    await Promise.all(auditLogPromises);
 
     return NextResponse.json({
       success: true,
