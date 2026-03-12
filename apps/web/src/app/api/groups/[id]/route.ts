@@ -38,7 +38,14 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       { status: 403 }
     );
   }
-  return NextResponse.json({ id: groupSnap.id, ...groupSnap.data() });
+  return NextResponse.json(
+    { id: groupSnap.id, ...groupSnap.data() },
+    {
+      headers: {
+        'Cache-Control': 'private, max-age=60, stale-while-revalidate=300',
+      },
+    }
+  );
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
