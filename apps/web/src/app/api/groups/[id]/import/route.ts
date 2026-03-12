@@ -5,6 +5,7 @@ import type { ItemDoc } from '@vault-share/db';
 import { parseCSVToItems } from '@/lib/csv/parser';
 import { encryptItemPayload } from '@/lib/items/encryption';
 import { writeAuditLog } from '@/lib/audit/log';
+import { checkRateLimit, createRateLimitResponse, createUserRateLimitKey } from '@/lib/rate-limit';
 
 async function ensureMember(groupId: string, userId: string) {
   const db = getDb();
@@ -22,6 +23,17 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     const session = await getSessionFromRequest(request);
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // レート制限チェック（ユーザーIDベース、1時間に10回まで）
+    const rateLimitResult = await checkRateLimit(request, {
+      windowMs: 60 * 60 * 1000, // 1時間
+      maxRequests: 10,
+      keyGenerator: () => createUserRateLimitKey(session.uid, 'import'),
+    });
+
+    if (!rateLimitResult.allowed) {
+      return createRateLimitResponse(rateLimitResult.resetAt);
     }
 
     const groupId = params.id;
