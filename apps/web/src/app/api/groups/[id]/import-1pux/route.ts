@@ -105,6 +105,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
           imported: true,
           source: '1pux',
         },
+        request,
       });
     }
 

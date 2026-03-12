@@ -113,6 +113,7 @@ export async function PATCH(
     action: 'item.update',
     itemId: params.itemId,
     details: { title, type },
+    request,
   });
 
   return NextResponse.json({ id: params.itemId, updatedAt: now });
@@ -152,6 +153,7 @@ export async function DELETE(
     actorUid: session.uid,
     action: 'item.delete',
     itemId: params.itemId,
+    request,
   });
 
   return NextResponse.json({ id: params.itemId, deletedAt: now });

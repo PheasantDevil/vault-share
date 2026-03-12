@@ -1,6 +1,9 @@
 import { getDb } from '@vault-share/db';
+import type { AuditLogDoc } from '@vault-share/db';
+import type { NextRequest } from 'next/server';
+import { getIpAddress, getUserAgent } from './request-info';
 
-type AuditAction =
+export type AuditAction =
   | 'group.create'
   | 'group.updateName'
   | 'group.delete'
@@ -9,24 +12,28 @@ type AuditAction =
   | 'member.remove'
   | 'item.create'
   | 'item.update'
-  | 'item.delete';
+  | 'item.delete'
+  | 'auth.login'
+  | 'auth.loginFailed'
+  | 'auth.logout'
+  | 'auth.unauthorizedAccess';
 
-interface AuditLogParams {
+export interface AuditLogParams {
   groupId: string;
   actorUid: string;
   action: AuditAction;
   itemId?: string;
   details?: Record<string, unknown>;
-}
-
-interface AuditLogDoc {
-  id: string;
-  groupId: string;
-  itemId?: string | null;
-  actorUid: string;
-  action: string;
-  details?: Record<string, unknown>;
-  createdAt: string;
+  /** リクエストオブジェクト（IPアドレス・ユーザーエージェント取得用） */
+  request?: NextRequest;
+  /** エラー情報（エラー発生時） */
+  error?: {
+    message: string;
+    code?: string;
+    stack?: string;
+  };
+  /** セキュリティイベントフラグ */
+  securityEvent?: boolean;
 }
 
 export async function writeAuditLog(params: AuditLogParams): Promise<void> {
@@ -34,6 +41,11 @@ export async function writeAuditLog(params: AuditLogParams): Promise<void> {
   const col = db.collection('auditLogs');
   const docRef = col.doc();
   const now = new Date().toISOString();
+
+  // IPアドレスとユーザーエージェントを取得
+  const ipAddress = params.request ? getIpAddress(params.request) : undefined;
+  const userAgent = params.request ? getUserAgent(params.request) : undefined;
+
   const doc: AuditLogDoc = {
     id: docRef.id,
     groupId: params.groupId,
@@ -42,6 +54,10 @@ export async function writeAuditLog(params: AuditLogParams): Promise<void> {
     action: params.action,
     details: params.details,
     createdAt: now,
+    ipAddress,
+    userAgent,
+    error: params.error,
+    securityEvent: params.securityEvent ?? false,
   };
   await docRef.set(doc);
 }

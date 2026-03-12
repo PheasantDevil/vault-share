@@ -116,6 +116,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         actorUid: session.uid,
         action: 'member.changeRole',
         details: { userId, oldRole, newRole: role },
+        request,
       });
     }
   } catch (err) {
@@ -186,6 +187,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
         actorUid: session.uid,
         action: 'member.remove',
         details: { userId, role: removedRole },
+        request,
       });
     }
   } catch (err) {
