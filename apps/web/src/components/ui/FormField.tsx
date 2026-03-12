@@ -64,14 +64,16 @@ export function FormField({
           rows={rows}
           aria-invalid={error ? 'true' : 'false'}
           aria-describedby={error ? errorId : helperId}
+          aria-required={required}
           style={{
             width: '100%',
-            padding: '0.5rem',
-            fontSize: '1rem',
-            border: `1px solid ${error ? 'var(--error, #c00)' : '#ddd'}`,
-            borderRadius: '4px',
+            padding: 'clamp(0.5rem, 2vw, 0.75rem)',
+            fontSize: 'var(--font-size-base, 1rem)',
+            border: `1px solid ${error ? 'var(--error, #c00)' : 'var(--border-color, #ddd)'}`,
+            borderRadius: 'var(--border-radius, 4px)',
             fontFamily: 'inherit',
             resize: 'vertical',
+            minHeight: '44px', // タッチ操作に適した最小サイズ
           }}
         />
       ) : (
@@ -88,13 +90,15 @@ export function FormField({
           disabled={disabled}
           aria-invalid={error ? 'true' : 'false'}
           aria-describedby={error ? errorId : helperId}
+          aria-required={required}
           style={{
             width: '100%',
-            padding: '0.5rem',
-            fontSize: '1rem',
-            border: `1px solid ${error ? 'var(--error, #c00)' : '#ddd'}`,
-            borderRadius: '4px',
+            padding: 'clamp(0.5rem, 2vw, 0.75rem)',
+            fontSize: 'var(--font-size-base, 1rem)',
+            border: `1px solid ${error ? 'var(--error, #c00)' : 'var(--border-color, #ddd)'}`,
+            borderRadius: 'var(--border-radius, 4px)',
             fontFamily: 'inherit',
+            minHeight: '44px', // タッチ操作に適した最小サイズ
           }}
         />
       )}

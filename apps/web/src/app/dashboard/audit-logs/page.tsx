@@ -204,45 +204,147 @@ export default function AuditLogsPage() {
             <div className="p-8 text-center text-gray-500">監査ログがありません</div>
           ) : (
             <>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
+              <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <table
+                  className="w-full"
+                  role="table"
+                  aria-label="監査ログ一覧"
+                  aria-describedby="audit-logs-description"
+                >
+                  <caption id="audit-logs-description" className="sr-only">
+                    システムの操作履歴を表示するテーブル
+                  </caption>
+                  <thead style={{ backgroundColor: '#f9f9f9' }}>
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th
+                        scope="col"
+                        style={{
+                          padding: '0.75rem 1rem',
+                          textAlign: 'left',
+                          fontSize: 'var(--font-size-xs, 0.75rem)',
+                          fontWeight: 500,
+                          color: 'var(--text-secondary, #666)',
+                          textTransform: 'uppercase',
+                        }}
+                      >
                         日時
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th
+                        scope="col"
+                        style={{
+                          padding: '0.75rem 1rem',
+                          textAlign: 'left',
+                          fontSize: 'var(--font-size-xs, 0.75rem)',
+                          fontWeight: 500,
+                          color: 'var(--text-secondary, #666)',
+                          textTransform: 'uppercase',
+                        }}
+                      >
                         操作
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th
+                        scope="col"
+                        style={{
+                          padding: '0.75rem 1rem',
+                          textAlign: 'left',
+                          fontSize: 'var(--font-size-xs, 0.75rem)',
+                          fontWeight: 500,
+                          color: 'var(--text-secondary, #666)',
+                          textTransform: 'uppercase',
+                        }}
+                      >
                         ユーザーID
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th
+                        scope="col"
+                        style={{
+                          padding: '0.75rem 1rem',
+                          textAlign: 'left',
+                          fontSize: 'var(--font-size-xs, 0.75rem)',
+                          fontWeight: 500,
+                          color: 'var(--text-secondary, #666)',
+                          textTransform: 'uppercase',
+                        }}
+                      >
                         グループID
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th
+                        scope="col"
+                        style={{
+                          padding: '0.75rem 1rem',
+                          textAlign: 'left',
+                          fontSize: 'var(--font-size-xs, 0.75rem)',
+                          fontWeight: 500,
+                          color: 'var(--text-secondary, #666)',
+                          textTransform: 'uppercase',
+                        }}
+                      >
                         IPアドレス
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th
+                        scope="col"
+                        style={{
+                          padding: '0.75rem 1rem',
+                          textAlign: 'left',
+                          fontSize: 'var(--font-size-xs, 0.75rem)',
+                          fontWeight: 500,
+                          color: 'var(--text-secondary, #666)',
+                          textTransform: 'uppercase',
+                        }}
+                      >
                         セキュリティ
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody style={{ borderTop: '1px solid var(--border-color, #ddd)' }}>
                     {logs.map((log) => (
-                      <tr key={log.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 text-sm">{formatDate(log.createdAt)}</td>
-                        <td className="px-4 py-3 text-sm">{getActionLabel(log.action)}</td>
-                        <td className="px-4 py-3 text-sm font-mono text-xs">
+                      <tr
+                        key={log.id}
+                        style={{
+                          borderBottom: '1px solid var(--border-color, #ddd)',
+                          transition: 'background-color 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = '#f9f9f9';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                        }}
+                      >
+                        <td style={{ padding: '0.75rem 1rem', fontSize: 'var(--font-size-sm, 0.875rem)' }}>
+                          {formatDate(log.createdAt)}
+                        </td>
+                        <td style={{ padding: '0.75rem 1rem', fontSize: 'var(--font-size-sm, 0.875rem)' }}>
+                          {getActionLabel(log.action)}
+                        </td>
+                        <td
+                          style={{
+                            padding: '0.75rem 1rem',
+                            fontSize: 'var(--font-size-sm, 0.875rem)',
+                            fontFamily: 'monospace',
+                            fontSize: 'var(--font-size-xs, 0.75rem)',
+                          }}
+                        >
                           {log.actorUid.substring(0, 8)}...
                         </td>
-                        <td className="px-4 py-3 text-sm font-mono text-xs">
+                        <td
+                          style={{
+                            padding: '0.75rem 1rem',
+                            fontSize: 'var(--font-size-sm, 0.875rem)',
+                            fontFamily: 'monospace',
+                            fontSize: 'var(--font-size-xs, 0.75rem)',
+                          }}
+                        >
                           {log.groupId.substring(0, 8)}...
                         </td>
-                        <td className="px-4 py-3 text-sm">{log.ipAddress || '-'}</td>
-                        <td className="px-4 py-3 text-sm">
+                        <td style={{ padding: '0.75rem 1rem', fontSize: 'var(--font-size-sm, 0.875rem)' }}>
+                          {log.ipAddress || '-'}
+                        </td>
+                        <td style={{ padding: '0.75rem 1rem', fontSize: 'var(--font-size-sm, 0.875rem)' }}>
                           {log.securityEvent ? (
-                            <span className="text-red-600 font-semibold">⚠️</span>
+                            <span style={{ color: '#c00', fontWeight: 600 }} aria-label="セキュリティイベント">
+                              ⚠️
+                            </span>
                           ) : (
                             '-'
                           )}
