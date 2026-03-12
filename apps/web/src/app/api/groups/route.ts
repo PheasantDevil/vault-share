@@ -20,13 +20,27 @@ export async function GET(request: NextRequest) {
     .get();
   const groupIds = membersSnap.docs.map((d) => (d.data() as GroupMemberDoc).groupId);
   if (groupIds.length === 0) {
-    return NextResponse.json({ groups: [] });
+    return NextResponse.json(
+      { groups: [] },
+      {
+        headers: {
+          'Cache-Control': 'private, max-age=60, stale-while-revalidate=300',
+        },
+      }
+    );
   }
   const groupsSnap = await db.collection(COLLECTIONS.groups).get();
   const groups = groupsSnap.docs
     .filter((d) => groupIds.includes(d.id))
     .map((d) => ({ id: d.id, ...d.data() }));
-  return NextResponse.json({ groups });
+  return NextResponse.json(
+    { groups },
+    {
+      headers: {
+        'Cache-Control': 'private, max-age=60, stale-while-revalidate=300',
+      },
+    }
+  );
 }
 
 export async function POST(request: NextRequest) {

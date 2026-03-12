@@ -1,5 +1,7 @@
 import { SkipLink } from '@/components/SkipLink';
 import { ToastProvider } from '@/components/ui/Toast';
+import { SWRConfig } from 'swr';
+import { swrConfig } from '@/lib/swr/config';
 import type { Metadata } from 'next';
 import './globals.css';
 
@@ -13,9 +15,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ja">
       <body>
         <SkipLink href="#main-content" />
-        <ToastProvider>
-          <div id="main-content">{children}</div>
-        </ToastProvider>
+        <SWRConfig value={swrConfig}>
+          <ToastProvider>
+            <div id="main-content">{children}</div>
+          </ToastProvider>
+        </SWRConfig>
       </body>
     </html>
   );
