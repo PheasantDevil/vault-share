@@ -45,11 +45,23 @@ async function fetchRuntimeConfig(): Promise<{
   configFetched = (async () => {
     try {
       const res = await fetch('/api/config');
+      if (!res.ok) {
+        console.error('Failed to fetch Firebase config:', res.status, res.statusText);
+        return null;
+      }
       const data = await res.json();
       const f = data?.firebase;
-      if (f && f.apiKey && f.authDomain && f.projectId) return f;
-    } catch {
-      // ignore
+      if (f && f.apiKey && f.authDomain && f.projectId) {
+        // API Keyが空文字列でないことを確認
+        if (f.apiKey.trim() === '') {
+          console.error('Firebase API Key is empty');
+          return null;
+        }
+        return f;
+      }
+      console.error('Invalid Firebase config:', f);
+    } catch (err) {
+      console.error('Error fetching Firebase config:', err);
     }
     return null;
   })();
@@ -66,6 +78,10 @@ export async function getFirebaseAuthAsync(): Promise<Auth> {
     return getAuth(apps[0] as FirebaseApp);
   }
   if (hasConfig(buildTimeConfig)) {
+    // ビルド時設定のAPI Keyが空でないことを確認
+    if (!buildTimeConfig.apiKey || buildTimeConfig.apiKey.trim() === '') {
+      throw new Error('Firebase API Key is not configured. Please set NEXT_PUBLIC_FIREBASE_API_KEY environment variable.');
+    }
     return getAuth(getFirebaseAppSync());
   }
   if (typeof window === 'undefined') {
@@ -76,5 +92,6 @@ export async function getFirebaseAuthAsync(): Promise<Auth> {
     const app = initializeApp(runtime);
     return getAuth(app);
   }
-  return getAuth(getFirebaseAppSync());
+  // ランタイム設定も取得できない場合、エラーを投げる
+  throw new Error('Firebase configuration is missing. Please ensure NEXT_PUBLIC_FIREBASE_API_KEY is set in Cloud Run environment variables.');
 }
