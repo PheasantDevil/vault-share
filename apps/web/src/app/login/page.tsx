@@ -57,14 +57,27 @@ export default function LoginPage() {
         'code' in err &&
         typeof (err as { code: string }).code === 'string'
           ? (err as { code: string }).code
+          : '';
+      const message =
+        typeof err === 'object' &&
+        err !== null &&
+        'message' in err &&
+        typeof (err as { message: string }).message === 'string'
+          ? (err as { message: string }).message
           : err instanceof Error
             ? err.message
             : '';
+      
       if (code.includes('auth/unauthorized-domain')) {
         setError(
           'このドメインは Firebase の承認済みドメインに含まれていません。管理者に連絡してください。'
         );
-      } else if (code.includes('auth/invalid-api-key') || code.includes('auth/api-key-not-valid')) {
+      } else if (
+        code.includes('auth/invalid-api-key') ||
+        code.includes('auth/api-key-not-valid') ||
+        message.includes('Firebase API Key') ||
+        message.includes('Firebase configuration is missing')
+      ) {
         setError('Firebase の設定が正しくありません。管理者に連絡してください。');
       } else if (typeof code === 'string' && code.includes('auth/')) {
         setError('メールアドレスまたはパスワードが正しくありません。');
