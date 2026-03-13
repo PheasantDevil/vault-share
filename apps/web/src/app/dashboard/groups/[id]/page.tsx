@@ -681,6 +681,6 @@ export default function GroupDetailPage() {
           )}
         </section>
       )}
-    </main>
+    </PageLayout>
   );
 }
