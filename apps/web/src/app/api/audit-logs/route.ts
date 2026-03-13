@@ -117,10 +117,12 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Audit logs fetch error:', error);
-    return createErrorResponse(
-      ErrorCode.InternalServerError,
-      'Failed to fetch audit logs',
-      500
+    return NextResponse.json(
+      createErrorResponse(
+        ErrorCode.INTERNAL_ERROR,
+        'Failed to fetch audit logs'
+      ),
+      { status: 500 }
     );
   }
 }
