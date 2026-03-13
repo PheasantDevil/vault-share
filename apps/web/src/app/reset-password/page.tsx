@@ -34,11 +34,21 @@ export default function ResetPasswordPage() {
         typeof (err as { code: string }).code === 'string'
           ? (err as { code: string }).code
           : '';
+      const message =
+        typeof err === 'object' &&
+        err !== null &&
+        'message' in err &&
+        typeof (err as { message: string }).message === 'string'
+          ? (err as { message: string }).message
+          : '';
+      
       if (code.includes('auth/user-not-found')) {
         // セキュリティ上の理由で、ユーザーが存在しない場合でも成功を表示
         setSent(true);
       } else if (code.includes('auth/invalid-email')) {
         setError('メールアドレスの形式が正しくありません。');
+      } else if (code.includes('auth/invalid-api-key') || code.includes('auth/api-key-not-valid') || message.includes('Firebase API Key')) {
+        setError('Firebase の設定が正しくありません。管理者に連絡してください。');
       } else {
         setError(
           err instanceof Error ? err.message : 'パスワードリセットメールの送信に失敗しました。'
