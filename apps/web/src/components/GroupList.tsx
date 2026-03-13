@@ -11,7 +11,7 @@ export function GroupList() {
   const { groups, isLoading, isError } = useGroups();
 
   if (isLoading) {
-    return <SkeletonLoader count={3} height="4rem" />;
+    return <SkeletonLoader rows={3} height="4rem" />;
   }
 
   if (isError) {

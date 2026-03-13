@@ -198,7 +198,7 @@ export default function AuditLogsPage() {
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <SectionHeader title={`監査ログ (${totalItems}件)`} />
           {loading ? (
-            <SkeletonLoader count={5} />
+            <SkeletonLoader rows={5} />
           ) : logs.length === 0 ? (
             <div className="p-8 text-center text-gray-500">監査ログがありません</div>
           ) : (
