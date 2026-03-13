@@ -279,12 +279,11 @@ function OnePasswordImportContent() {
                 <ul
                   style={{
                     listStyle: 'none',
-                    padding: 0,
+                    padding: '0.5rem',
                     maxHeight: '400px',
                     overflowY: 'auto',
                     border: '1px solid #ddd',
                     borderRadius: '4px',
-                    padding: '0.5rem',
                   }}
                 >
                   {items.map((item) => (
