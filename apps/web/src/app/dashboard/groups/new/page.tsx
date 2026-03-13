@@ -60,11 +60,7 @@ export default function NewGroupPage() {
           <Button type="submit" loading={loading} variant="primary">
             作成
           </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => router.push('/dashboard')}
-          >
+          <Button type="button" variant="secondary" onClick={() => router.push('/dashboard')}>
             キャンセル
           </Button>
         </div>

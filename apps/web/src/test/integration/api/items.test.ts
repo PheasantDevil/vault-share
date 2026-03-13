@@ -46,20 +46,23 @@ describe('Items API Integration Tests', () => {
 
     it('should return items with pagination', async () => {
       const headers = await createTestHeaders(testUser.uid, testUser.email);
-      
+
       // アイテムを作成
-      const createRequest = new NextRequest(`http://localhost:3000/api/groups/${testGroup.id}/items`, {
-        method: 'POST',
-        headers: {
-          ...Object.fromEntries(headers),
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title: 'Test Item',
-          type: 'password',
-          value: 'test-value',
-        }),
-      });
+      const createRequest = new NextRequest(
+        `http://localhost:3000/api/groups/${testGroup.id}/items`,
+        {
+          method: 'POST',
+          headers: {
+            ...Object.fromEntries(headers),
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title: 'Test Item',
+            type: 'password',
+            value: 'test-value',
+          }),
+        }
+      );
       await POST(createRequest, { params: { id: testGroup.id } });
 
       // アイテム一覧を取得

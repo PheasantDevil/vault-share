@@ -17,10 +17,10 @@ test.describe('Item Operations', () => {
     // グループ詳細ページに移動（グループIDは事前に作成されていることを前提）
     // 実際のテストでは、グループを作成してからそのIDを使用
     await page.goto('/dashboard');
-    
+
     // 最初のグループをクリック（存在する場合）
     const groupLink = page.locator('a[href^="/dashboard/groups/"]').first();
-    if (await groupLink.count() > 0) {
+    if ((await groupLink.count()) > 0) {
       await groupLink.click();
       await page.waitForURL(/\/dashboard\/groups\/[^/]+$/);
 

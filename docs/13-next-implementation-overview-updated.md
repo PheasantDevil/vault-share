@@ -48,6 +48,7 @@
 ### 1. 統合テスト・E2Eテストの追加 — 高優先度
 
 **概要:**
+
 - 現在はユニットテストのみ。APIエンドポイントやユーザーフローの統合テスト・E2Eテストが必要
 
 **実装内容:**
@@ -66,11 +67,13 @@
      - 1Passwordインポートフロー
 
 **懸念事項:**
+
 - テスト環境のセットアップ（Firestoreエミュレータ、認証モック等）
 - テストのメンテナンスコスト
 - CI/CDでのテスト実行時間
 
 **参考:**
+
 - Playwright: [Playwright Documentation](https://playwright.dev/)
 - Firestore Emulator: [Firestore Emulator](https://firebase.google.com/docs/emulator-suite)
 
@@ -79,6 +82,7 @@
 ### 2. 監査ログの拡充・可視化 — 中優先度
 
 **概要:**
+
 - 現在は基本的な監査ログのみ。より詳細なログと可視化機能が必要
 
 **実装内容:**
@@ -96,11 +100,13 @@
    - ページネーション対応
 
 **懸念事項:**
+
 - Firestoreの無料枠を超えないようにする（読み取り5万/日）
 - ログの保持期間の設定（30日、90日、1年等）
 - 大量ログのパフォーマンス
 
 **参考:**
+
 - Firestoreのクエリ最適化: [Firestore Query Optimization](https://cloud.google.com/firestore/docs/query-data/queries)
 
 ---
@@ -108,6 +114,7 @@
 ### 3. レスポンシブデザイン・アクセシビリティの改善 — 中優先度
 
 **概要:**
+
 - 現在のUIは基本的なレスポンシブ対応だが、モバイル・タブレットでの操作性向上が必要
 
 **実装内容:**
@@ -126,11 +133,13 @@
    - フォーカス表示の改善
 
 **懸念事項:**
+
 - デザインの一貫性
 - ブラウザ互換性
 - テスト方法（アクセシビリティテストツール）
 
 **参考:**
+
 - WCAG 2.1: [Web Content Accessibility Guidelines](https://www.w3.org/WAI/WCAG21/quickref/)
 - Next.js Accessibility: [Next.js Accessibility](https://nextjs.org/docs/app/building-your-application/accessibility)
 
@@ -139,6 +148,7 @@
 ### 4. セキュリティ強化 — 低優先度
 
 **概要:**
+
 - 基本的なセキュリティ対策は実装済みだが、さらなる強化が可能
 
 **実装内容:**
@@ -161,11 +171,13 @@
    - セッション一覧の表示（アクティブセッション管理）
 
 **懸念事項:**
+
 - レート制限の適切な設定値
 - ユーザー体験への影響
 - セッション管理の複雑さ
 
 **参考:**
+
 - Next.js Security Headers: [Next.js Security Headers](https://nextjs.org/docs/app/api-reference/next-config-js/headers)
 
 ---
@@ -173,6 +185,7 @@
 ### 5. パフォーマンス最適化の追加改善 — 低優先度
 
 **概要:**
+
 - 基本的なページネーションは実装済みだが、さらなる最適化が可能
 
 **実装内容:**
@@ -192,6 +205,7 @@
    - 進捗表示の追加
 
 **懸念事項:**
+
 - Firestoreの無料枠を超えないようにする
 - キャッシュの無効化タイミング
 - 複雑さの増加

@@ -28,7 +28,7 @@ describe('Auth API Integration Tests', () => {
       // 注意: エミュレータ環境では、カスタムトークンからIDトークンへの変換が必要です
       // 実際のテストでは、Firebase Client SDKを使用してカスタムトークンからIDトークンを取得する必要があります
       // このテストはE2Eテストで実装する方が適切です
-      
+
       // ここでは基本的な構造のみをテスト
       const request = new NextRequest('http://localhost:3000/api/auth/session', {
         method: 'POST',
@@ -39,7 +39,7 @@ describe('Auth API Integration Tests', () => {
       });
 
       const response = await SessionPOST(request);
-      
+
       // 無効なトークンの場合はエラーが返されることを確認
       expect(response.status).toBeGreaterThanOrEqual(400);
     });

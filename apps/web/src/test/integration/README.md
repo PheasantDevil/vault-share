@@ -7,16 +7,19 @@
 ## セットアップ
 
 1. Firebase CLIをインストール:
+
 ```bash
 pnpm add -g firebase-tools
 ```
 
 2. エミュレータを起動:
+
 ```bash
 firebase emulators:start --only firestore,auth
 ```
 
 3. 別のターミナルでテストを実行:
+
 ```bash
 cd apps/web
 FIRESTORE_EMULATOR_HOST=localhost:8080 \

@@ -273,8 +273,20 @@ function OnePasswordImportContent() {
           {selectedVaultId && items.length > 0 && (
             <>
               <div style={{ marginBottom: '1rem' }}>
-                <p style={{ marginBottom: '0.5rem', fontWeight: 500 }}>インポートするアイテムを選択してください:</p>
-                <ul style={{ listStyle: 'none', padding: 0, maxHeight: '400px', overflowY: 'auto', border: '1px solid #ddd', borderRadius: '4px', padding: '0.5rem' }}>
+                <p style={{ marginBottom: '0.5rem', fontWeight: 500 }}>
+                  インポートするアイテムを選択してください:
+                </p>
+                <ul
+                  style={{
+                    listStyle: 'none',
+                    padding: 0,
+                    maxHeight: '400px',
+                    overflowY: 'auto',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    padding: '0.5rem',
+                  }}
+                >
                   {items.map((item) => (
                     <li key={item.id} style={{ marginBottom: '0.5rem' }}>
                       <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>

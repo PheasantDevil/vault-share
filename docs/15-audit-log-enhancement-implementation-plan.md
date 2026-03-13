@@ -4,22 +4,22 @@
 
 ### 1.1 監査ログの拡充
 
-| 項目 | 内容 |
-|------|------|
-| **IPアドレス** | リクエスト元のIPアドレスを記録 |
-| **ユーザーエージェント** | ブラウザ情報を記録 |
-| **エラー情報** | エラー発生時のエラーメッセージ・スタックトレースを記録 |
-| **セキュリティイベント** | 不正アクセス試行、認証失敗等を記録 |
+| 項目                     | 内容                                                   |
+| ------------------------ | ------------------------------------------------------ |
+| **IPアドレス**           | リクエスト元のIPアドレスを記録                         |
+| **ユーザーエージェント** | ブラウザ情報を記録                                     |
+| **エラー情報**           | エラー発生時のエラーメッセージ・スタックトレースを記録 |
+| **セキュリティイベント** | 不正アクセス試行、認証失敗等を記録                     |
 
 ### 1.2 監査ログの可視化
 
-| 項目 | 内容 |
-|------|------|
-| **監査ログ一覧ページ** | `/dashboard/audit-logs` で監査ログを表示 |
-| **フィルタリング** | 日付範囲、ユーザー、操作種別、グループでフィルタ |
-| **ソート機能** | 日時順、ユーザー順等でソート |
-| **エクスポート機能** | CSV形式でエクスポート |
-| **ページネーション** | 大量ログに対応したページネーション |
+| 項目                   | 内容                                             |
+| ---------------------- | ------------------------------------------------ |
+| **監査ログ一覧ページ** | `/dashboard/audit-logs` で監査ログを表示         |
+| **フィルタリング**     | 日付範囲、ユーザー、操作種別、グループでフィルタ |
+| **ソート機能**         | 日時順、ユーザー順等でソート                     |
+| **エクスポート機能**   | CSV形式でエクスポート                            |
+| **ページネーション**   | 大量ログに対応したページネーション               |
 
 ---
 
@@ -55,6 +55,7 @@ export interface AuditLogDoc {
 #### 2.2.1 GET /api/audit-logs
 
 **クエリパラメータ:**
+
 - `groupId` (optional): グループIDでフィルタ
 - `actorUid` (optional): ユーザーIDでフィルタ
 - `action` (optional): 操作種別でフィルタ
@@ -66,6 +67,7 @@ export interface AuditLogDoc {
 - `sortOrder` (optional): ソート順（`asc`, `desc`、デフォルト: `desc`）
 
 **レスポンス:**
+
 ```typescript
 {
   logs: AuditLogDoc[];
@@ -81,21 +83,23 @@ export interface AuditLogDoc {
 #### 2.2.2 GET /api/audit-logs/export
 
 **クエリパラメータ:**
+
 - 上記と同じフィルタパラメータ
 
 **レスポンス:**
+
 - CSVファイル（`Content-Type: text/csv`）
 
 ### 2.3 UI設計
 
 #### 2.3.1 監査ログ一覧ページ
 
-| コンポーネント | 役割 | Props / State |
-|---------------|------|---------------|
-| **AuditLogsPage** | 監査ログ一覧ページ | フィルタ状態、ページネーション状態 |
-| **AuditLogFilters** | フィルタUI | フィルタ値、onChange |
-| **AuditLogTable** | ログテーブル | ログデータ、ソート状態 |
-| **AuditLogExportButton** | エクスポートボタン | フィルタパラメータ |
+| コンポーネント           | 役割               | Props / State                      |
+| ------------------------ | ------------------ | ---------------------------------- |
+| **AuditLogsPage**        | 監査ログ一覧ページ | フィルタ状態、ページネーション状態 |
+| **AuditLogFilters**      | フィルタUI         | フィルタ値、onChange               |
+| **AuditLogTable**        | ログテーブル       | ログデータ、ソート状態             |
+| **AuditLogExportButton** | エクスポートボタン | フィルタパラメータ                 |
 
 ---
 
@@ -127,14 +131,14 @@ interface PaginationState {
 
 ## 4. 懸念事項・エッジケース・パフォーマンス
 
-| 懸念 | 対策 |
-|------|------|
-| **Firestoreの無料枠超過** | インデックス最適化、ページネーション、必要に応じてログの保持期間を設定 |
-| **大量ログのパフォーマンス** | インデックス設定、クエリ最適化、ページネーション |
-| **IPアドレスの取得** | Next.jsの`request.headers`から取得（`x-forwarded-for`等を考慮） |
-| **ユーザーエージェントの取得** | `request.headers.get('user-agent')`から取得 |
-| **エラーログの記録** | エラー発生時に`writeAuditLog`を呼び出し、エラー情報を`details`に含める |
-| **セキュリティイベントの記録** | 認証失敗、不正アクセス試行等を`securityEvent: true`で記録 |
+| 懸念                           | 対策                                                                   |
+| ------------------------------ | ---------------------------------------------------------------------- |
+| **Firestoreの無料枠超過**      | インデックス最適化、ページネーション、必要に応じてログの保持期間を設定 |
+| **大量ログのパフォーマンス**   | インデックス設定、クエリ最適化、ページネーション                       |
+| **IPアドレスの取得**           | Next.jsの`request.headers`から取得（`x-forwarded-for`等を考慮）        |
+| **ユーザーエージェントの取得** | `request.headers.get('user-agent')`から取得                            |
+| **エラーログの記録**           | エラー発生時に`writeAuditLog`を呼び出し、エラー情報を`details`に含める |
+| **セキュリティイベントの記録** | 認証失敗、不正アクセス試行等を`securityEvent: true`で記録              |
 
 ---
 
@@ -166,6 +170,7 @@ interface PaginationState {
 ### 6.1 監査ログの拡充
 
 **ファイル:**
+
 - `packages/db/src/schema.ts` - AuditLogDocスキーマの拡張
 - `apps/web/src/lib/audit/log.ts` - writeAuditLog関数の拡張
 - `apps/web/src/lib/audit/request-info.ts` - リクエスト情報取得ヘルパー
@@ -173,12 +178,14 @@ interface PaginationState {
 ### 6.2 API実装
 
 **ファイル:**
+
 - `apps/web/src/app/api/audit-logs/route.ts` - 監査ログ一覧API
 - `apps/web/src/app/api/audit-logs/export/route.ts` - CSVエクスポートAPI
 
 ### 6.3 UI実装
 
 **ファイル:**
+
 - `apps/web/src/app/dashboard/audit-logs/page.tsx` - 監査ログ一覧ページ
 - `apps/web/src/components/audit-logs/AuditLogFilters.tsx` - フィルタUI
 - `apps/web/src/components/audit-logs/AuditLogTable.tsx` - ログテーブル

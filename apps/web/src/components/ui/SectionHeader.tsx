@@ -41,7 +41,9 @@ export function SectionHeader({ title, description, actions }: SectionHeaderProp
           </p>
         )}
       </div>
-      {actions && <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>{actions}</div>}
+      {actions && (
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>{actions}</div>
+      )}
     </div>
   );
 }

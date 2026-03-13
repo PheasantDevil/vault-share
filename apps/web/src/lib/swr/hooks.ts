@@ -46,14 +46,10 @@ async function fetcher<T>(url: string): Promise<T> {
  * グループ一覧を取得するフック
  */
 export function useGroups() {
-  const { data, error, isLoading, mutate } = useSWR<GroupsResponse>(
-    '/api/groups',
-    fetcher,
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 2000,
-    }
-  );
+  const { data, error, isLoading, mutate } = useSWR<GroupsResponse>('/api/groups', fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 2000,
+  });
 
   return {
     groups: data?.groups || [],
@@ -106,14 +102,10 @@ export function useItems(
     ? `/api/groups/${groupId}/items${params.toString() ? `?${params.toString()}` : ''}`
     : null;
 
-  const { data, error, isLoading, mutate } = useSWR<ItemsResponse>(
-    url,
-    fetcher,
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 2000,
-    }
-  );
+  const { data, error, isLoading, mutate } = useSWR<ItemsResponse>(url, fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 2000,
+  });
 
   return {
     items: data?.items || [],

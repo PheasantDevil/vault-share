@@ -67,7 +67,7 @@ export default function LoginPage() {
           : err instanceof Error
             ? err.message
             : '';
-      
+
       if (code.includes('auth/unauthorized-domain')) {
         setError(
           'このドメインは Firebase の承認済みドメインに含まれていません。管理者に連絡してください。'

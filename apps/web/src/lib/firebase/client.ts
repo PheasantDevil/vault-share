@@ -80,7 +80,9 @@ export async function getFirebaseAuthAsync(): Promise<Auth> {
   if (hasConfig(buildTimeConfig)) {
     // ビルド時設定のAPI Keyが空でないことを確認
     if (!buildTimeConfig.apiKey || buildTimeConfig.apiKey.trim() === '') {
-      throw new Error('Firebase API Key is not configured. Please set NEXT_PUBLIC_FIREBASE_API_KEY environment variable.');
+      throw new Error(
+        'Firebase API Key is not configured. Please set NEXT_PUBLIC_FIREBASE_API_KEY environment variable.'
+      );
     }
     return getAuth(getFirebaseAppSync());
   }
@@ -93,5 +95,7 @@ export async function getFirebaseAuthAsync(): Promise<Auth> {
     return getAuth(app);
   }
   // ランタイム設定も取得できない場合、エラーを投げる
-  throw new Error('Firebase configuration is missing. Please ensure NEXT_PUBLIC_FIREBASE_API_KEY is set in Cloud Run environment variables.');
+  throw new Error(
+    'Firebase configuration is missing. Please ensure NEXT_PUBLIC_FIREBASE_API_KEY is set in Cloud Run environment variables.'
+  );
 }

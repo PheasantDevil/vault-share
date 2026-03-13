@@ -146,9 +146,7 @@ export default function AuditLogsPage() {
               <select
                 className="w-full px-3 py-2 border rounded-md"
                 value={filters.action || ''}
-                onChange={(e) =>
-                  setFilters({ ...filters, action: e.target.value || undefined })
-                }
+                onChange={(e) => setFilters({ ...filters, action: e.target.value || undefined })}
               >
                 <option value="">すべて</option>
                 <option value="group.create">グループ作成</option>
@@ -172,9 +170,7 @@ export default function AuditLogsPage() {
                 type="date"
                 className="w-full px-3 py-2 border rounded-md"
                 value={filters.startDate || ''}
-                onChange={(e) =>
-                  setFilters({ ...filters, startDate: e.target.value || undefined })
-                }
+                onChange={(e) => setFilters({ ...filters, startDate: e.target.value || undefined })}
               />
             </div>
             <div>
@@ -183,9 +179,7 @@ export default function AuditLogsPage() {
                 type="date"
                 className="w-full px-3 py-2 border rounded-md"
                 value={filters.endDate || ''}
-                onChange={(e) =>
-                  setFilters({ ...filters, endDate: e.target.value || undefined })
-                }
+                onChange={(e) => setFilters({ ...filters, endDate: e.target.value || undefined })}
               />
             </div>
           </div>
@@ -203,7 +197,10 @@ export default function AuditLogsPage() {
             <div className="p-8 text-center text-gray-500">監査ログがありません</div>
           ) : (
             <>
-              <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+              <div
+                className="table-responsive"
+                style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}
+              >
                 <table
                   className="w-full"
                   role="table"
@@ -310,10 +307,20 @@ export default function AuditLogsPage() {
                           e.currentTarget.style.backgroundColor = 'transparent';
                         }}
                       >
-                        <td style={{ padding: '0.75rem 1rem', fontSize: 'var(--font-size-sm, 0.875rem)' }}>
+                        <td
+                          style={{
+                            padding: '0.75rem 1rem',
+                            fontSize: 'var(--font-size-sm, 0.875rem)',
+                          }}
+                        >
                           {formatDate(log.createdAt)}
                         </td>
-                        <td style={{ padding: '0.75rem 1rem', fontSize: 'var(--font-size-sm, 0.875rem)' }}>
+                        <td
+                          style={{
+                            padding: '0.75rem 1rem',
+                            fontSize: 'var(--font-size-sm, 0.875rem)',
+                          }}
+                        >
                           {getActionLabel(log.action)}
                         </td>
                         <td
@@ -335,12 +342,25 @@ export default function AuditLogsPage() {
                         >
                           {log.groupId.substring(0, 8)}...
                         </td>
-                        <td style={{ padding: '0.75rem 1rem', fontSize: 'var(--font-size-sm, 0.875rem)' }}>
+                        <td
+                          style={{
+                            padding: '0.75rem 1rem',
+                            fontSize: 'var(--font-size-sm, 0.875rem)',
+                          }}
+                        >
                           {log.ipAddress || '-'}
                         </td>
-                        <td style={{ padding: '0.75rem 1rem', fontSize: 'var(--font-size-sm, 0.875rem)' }}>
+                        <td
+                          style={{
+                            padding: '0.75rem 1rem',
+                            fontSize: 'var(--font-size-sm, 0.875rem)',
+                          }}
+                        >
                           {log.securityEvent ? (
-                            <span style={{ color: '#c00', fontWeight: 600 }} aria-label="セキュリティイベント">
+                            <span
+                              style={{ color: '#c00', fontWeight: 600 }}
+                              aria-label="セキュリティイベント"
+                            >
                               ⚠️
                             </span>
                           ) : (

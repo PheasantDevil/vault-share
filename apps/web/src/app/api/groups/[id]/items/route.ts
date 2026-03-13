@@ -21,10 +21,9 @@ async function ensureMember(groupId: string, userId: string): Promise<GroupMembe
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSessionFromRequest(request);
   if (!session) {
-    return NextResponse.json(
-      createErrorResponse(ErrorCode.UNAUTHORIZED, '認証が必要です'),
-      { status: 401 }
-    );
+    return NextResponse.json(createErrorResponse(ErrorCode.UNAUTHORIZED, '認証が必要です'), {
+      status: 401,
+    });
   }
   const db = getDb();
   const member = await ensureMember(params.id, session.uid);
@@ -86,9 +85,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     let filteredItems = allItems;
     if (searchQuery) {
       const queryLower = searchQuery.toLowerCase();
-      filteredItems = filteredItems.filter((item) =>
-        item.title.toLowerCase().includes(queryLower)
-      );
+      filteredItems = filteredItems.filter((item) => item.title.toLowerCase().includes(queryLower));
     }
 
     // タイプフィルタリング
@@ -117,11 +114,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     );
   } catch (err) {
     return NextResponse.json(
-      createErrorResponse(
-        ErrorCode.INTERNAL_ERROR,
-        'アイテムの取得に失敗しました',
-        { originalError: err instanceof Error ? err.message : String(err) }
-      ),
+      createErrorResponse(ErrorCode.INTERNAL_ERROR, 'アイテムの取得に失敗しました', {
+        originalError: err instanceof Error ? err.message : String(err),
+      }),
       { status: 500 }
     );
   }
@@ -130,10 +125,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSessionFromRequest(request);
   if (!session) {
-    return NextResponse.json(
-      createErrorResponse(ErrorCode.UNAUTHORIZED, '認証が必要です'),
-      { status: 401 }
-    );
+    return NextResponse.json(createErrorResponse(ErrorCode.UNAUTHORIZED, '認証が必要です'), {
+      status: 401,
+    });
   }
 
   const db = getDb();
@@ -149,7 +143,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     const body = (await request.json()) as Partial<ItemPayload>;
     const title = typeof body.title === 'string' ? body.title.trim() : '';
     const type =
-      body.type === 'password' || body.type === 'note' || body.type === 'key' || body.type === 'other'
+      body.type === 'password' ||
+      body.type === 'note' ||
+      body.type === 'key' ||
+      body.type === 'other'
         ? body.type
         : 'other';
     const value = typeof body.value === 'string' ? body.value : '';
@@ -203,11 +200,9 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     );
   } catch (err) {
     return NextResponse.json(
-      createErrorResponse(
-        ErrorCode.INTERNAL_ERROR,
-        'アイテムの作成に失敗しました',
-        { originalError: err instanceof Error ? err.message : String(err) }
-      ),
+      createErrorResponse(ErrorCode.INTERNAL_ERROR, 'アイテムの作成に失敗しました', {
+        originalError: err instanceof Error ? err.message : String(err),
+      }),
       { status: 500 }
     );
   }
