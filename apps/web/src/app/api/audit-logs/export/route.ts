@@ -6,6 +6,7 @@ import { getDb, COLLECTIONS } from '@vault-share/db';
 import type { AuditLogDoc } from '@vault-share/db';
 import { getSessionFromRequest } from '@/lib/auth/get-session';
 import { createErrorResponse, ErrorCode } from '@/lib/api/error-response';
+import type { Query } from 'firebase-admin/firestore';
 
 /**
  * CSV形式に変換
@@ -87,7 +88,7 @@ export async function GET(request: NextRequest) {
     }
 
     // クエリ構築（エクスポートは最大1000件まで）
-    let query = db
+    let query: Query = db
       .collection(COLLECTIONS.auditLogs)
       .where('groupId', 'in', accessibleGroupIds.slice(0, 10));
 

@@ -6,6 +6,7 @@ import { getDb, COLLECTIONS } from '@vault-share/db';
 import type { AuditLogDoc } from '@vault-share/db';
 import { getSessionFromRequest } from '@/lib/auth/get-session';
 import { createErrorResponse, ErrorCode } from '@/lib/api/error-response';
+import type { Query } from 'firebase-admin/firestore';
 
 export async function GET(request: NextRequest) {
   const session = await getSessionFromRequest(request);
@@ -50,7 +51,7 @@ export async function GET(request: NextRequest) {
 
     // クエリ構築
     // グループIDでフィルタ（指定されている場合）
-    let query = db.collection(COLLECTIONS.auditLogs);
+    let query: Query = db.collection(COLLECTIONS.auditLogs);
     if (groupId && accessibleGroupIds.includes(groupId)) {
       query = query.where('groupId', '==', groupId);
     } else if (accessibleGroupIds.length > 0) {

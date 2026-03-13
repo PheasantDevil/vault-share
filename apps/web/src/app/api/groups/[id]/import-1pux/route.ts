@@ -6,6 +6,8 @@ import { parse1PuxToItems } from '@/lib/1pux/parser';
 import { encryptItemPayload } from '@/lib/items/encryption';
 import { writeAuditLog } from '@/lib/audit/log';
 import { checkRateLimit, createRateLimitResponse, createUserRateLimitKey } from '@/lib/rate-limit';
+import { processBatch } from '@/lib/batch/processor';
+import type { ItemPayload } from '@/lib/items/types';
 
 async function ensureMember(groupId: string, userId: string) {
   const db = getDb();

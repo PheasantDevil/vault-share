@@ -1,8 +1,9 @@
 /**
  * バッチ処理ユーティリティ
  */
-import { getDb, COLLECTIONS } from '@vault-share/db';
+import { getDb } from '@vault-share/db';
 import type { Firestore } from '@vault-share/db';
+import type { WriteBatch } from 'firebase-admin/firestore';
 
 export interface BatchProcessorConfig<T> {
   batchSize?: number; // デフォルト: 500（Firestoreの制限）
@@ -15,7 +16,7 @@ export interface BatchProcessorConfig<T> {
  */
 export async function processBatch<T>(
   items: T[],
-  processor: (batch: Firestore['batch'], item: T, index: number) => void,
+  processor: (batch: WriteBatch, item: T, index: number) => void,
   config: BatchProcessorConfig<T> = {}
 ): Promise<void> {
   const { batchSize = 500, onProgress, onError } = config;
