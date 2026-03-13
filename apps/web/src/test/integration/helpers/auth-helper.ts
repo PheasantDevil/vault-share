@@ -4,7 +4,8 @@
 import { SignJWT } from 'jose';
 import { getSessionCookieName } from '@/lib/auth/session';
 
-const SESSION_SECRET = process.env.SESSION_SECRET || 'test-secret-key-for-integration-tests-min-16-chars';
+const SESSION_SECRET =
+  process.env.SESSION_SECRET || 'test-secret-key-for-integration-tests-min-16-chars';
 
 /**
  * テスト用のセッションCookieを生成

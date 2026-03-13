@@ -82,7 +82,7 @@ describe('Groups API Integration Tests', () => {
       expect(response.status).toBe(201);
       expect(data.id).toBeDefined();
       expect(data.name).toBe('New Group');
-      
+
       if (data.id) {
         groupIds.push(data.id);
       }

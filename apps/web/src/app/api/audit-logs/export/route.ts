@@ -55,10 +55,9 @@ function formatAuditLogsToCSV(logs: AuditLogDoc[]): string {
 export async function GET(request: NextRequest) {
   const session = await getSessionFromRequest(request);
   if (!session) {
-    return NextResponse.json(
-      createErrorResponse(ErrorCode.UNAUTHORIZED, 'Unauthorized'),
-      { status: 401 }
-    );
+    return NextResponse.json(createErrorResponse(ErrorCode.UNAUTHORIZED, 'Unauthorized'), {
+      status: 401,
+    });
   }
 
   try {
@@ -128,10 +127,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Audit logs export error:', error);
     return NextResponse.json(
-      createErrorResponse(
-        ErrorCode.INTERNAL_ERROR,
-        'Failed to export audit logs'
-      ),
+      createErrorResponse(ErrorCode.INTERNAL_ERROR, 'Failed to export audit logs'),
       { status: 500 }
     );
   }

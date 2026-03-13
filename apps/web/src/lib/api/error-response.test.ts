@@ -15,7 +15,11 @@ describe('error-response', () => {
 
     it('should create error response with details', () => {
       const details = { field: 'email', reason: 'invalid format' };
-      const response = createErrorResponse(ErrorCode.VALIDATION_ERROR, 'Validation failed', details);
+      const response = createErrorResponse(
+        ErrorCode.VALIDATION_ERROR,
+        'Validation failed',
+        details
+      );
       expect(response).toEqual({
         error: {
           code: ErrorCode.VALIDATION_ERROR,

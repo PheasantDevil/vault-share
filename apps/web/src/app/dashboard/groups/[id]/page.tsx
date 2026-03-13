@@ -221,21 +221,33 @@ export default function GroupDetailPage() {
 
   if (loading) {
     return (
-      <PageLayout title="読み込み中..." maxWidth={720} backLink={{ href: '/dashboard', label: 'ダッシュボード' }}>
+      <PageLayout
+        title="読み込み中..."
+        maxWidth={720}
+        backLink={{ href: '/dashboard', label: 'ダッシュボード' }}
+      >
         <p>読み込み中...</p>
       </PageLayout>
     );
   }
   if (error || !group) {
     return (
-      <PageLayout title="エラー" maxWidth={720} backLink={{ href: '/dashboard', label: 'ダッシュボード' }}>
+      <PageLayout
+        title="エラー"
+        maxWidth={720}
+        backLink={{ href: '/dashboard', label: 'ダッシュボード' }}
+      >
         <Alert type="error">{error ?? 'グループが見つかりません'}</Alert>
       </PageLayout>
     );
   }
 
   return (
-    <PageLayout title={group.name} maxWidth={720} backLink={{ href: '/dashboard', label: 'ダッシュボード' }}>
+    <PageLayout
+      title={group.name}
+      maxWidth={720}
+      backLink={{ href: '/dashboard', label: 'ダッシュボード' }}
+    >
       {error && <Alert type="error">{error}</Alert>}
       {editing ? (
         <form onSubmit={updateGroup} style={{ marginBottom: '1rem' }}>

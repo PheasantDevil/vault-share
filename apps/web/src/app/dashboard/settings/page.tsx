@@ -314,15 +314,30 @@ function SettingsContent() {
 
   if (loading) {
     return (
-      <PageLayout title="設定" maxWidth={720} backLink={{ href: '/dashboard', label: 'ダッシュボード' }}>
+      <PageLayout
+        title="設定"
+        maxWidth={720}
+        backLink={{ href: '/dashboard', label: 'ダッシュボード' }}
+      >
         <p>読み込み中...</p>
       </PageLayout>
     );
   }
 
   return (
-    <PageLayout title="設定" maxWidth={720} backLink={{ href: '/dashboard', label: 'ダッシュボード' }}>
-      <h2 style={{ marginTop: '1.5rem', marginBottom: '0.5rem', fontSize: '1.25rem', fontWeight: 600 }}>
+    <PageLayout
+      title="設定"
+      maxWidth={720}
+      backLink={{ href: '/dashboard', label: 'ダッシュボード' }}
+    >
+      <h2
+        style={{
+          marginTop: '1.5rem',
+          marginBottom: '0.5rem',
+          fontSize: '1.25rem',
+          fontWeight: 600,
+        }}
+      >
         多要素認証（MFA）
       </h2>
       {error && <Alert type="error">{error}</Alert>}
@@ -441,7 +456,9 @@ function SettingsContent() {
             placeholder="+81-90-1234-5678"
             helperText="E.164形式（例: +819012345678）"
             error={
-              error && !error.includes('SMSが送信') && error.includes('電話番号') ? error : undefined
+              error && !error.includes('SMSが送信') && error.includes('電話番号')
+                ? error
+                : undefined
             }
           />
           {error && error.includes('SMSが送信') && (

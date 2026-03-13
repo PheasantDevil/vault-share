@@ -57,10 +57,7 @@ export async function createTestUser(
 /**
  * テスト用グループを作成
  */
-export async function createTestGroup(
-  name: string,
-  createdBy: string
-): Promise<TestGroup> {
+export async function createTestGroup(name: string, createdBy: string): Promise<TestGroup> {
   const db = getDb();
   const groupRef = db.collection(COLLECTIONS.groups).doc();
   const now = new Date().toISOString();
@@ -95,7 +92,7 @@ export async function createTestGroup(
 export async function createIdToken(uid: string): Promise<string> {
   const auth = getAuth();
   const customToken = await auth.createCustomToken(uid);
-  
+
   // カスタムトークンをIDトークンに変換（エミュレータでは簡略化）
   // 実際の実装では、Firebase Client SDKを使用してカスタムトークンからIDトークンを取得
   // ここではモックとしてカスタムトークンを返す

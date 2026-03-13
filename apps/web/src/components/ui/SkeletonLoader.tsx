@@ -7,7 +7,12 @@ interface SkeletonLoaderProps {
   style?: React.CSSProperties;
 }
 
-export function SkeletonLoader({ rows = 1, height = '1rem', width = '100%', style }: SkeletonLoaderProps) {
+export function SkeletonLoader({
+  rows = 1,
+  height = '1rem',
+  width = '100%',
+  style,
+}: SkeletonLoaderProps) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', ...style }}>
       {Array.from({ length: rows }).map((_, i) => (

@@ -32,6 +32,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Build monorepo dependencies
+        run: pnpm run build
+
       - name: Install Playwright browsers
         run: |
           cd apps/web

@@ -125,9 +125,7 @@ function ResetPasswordConfirmContent() {
           minLength={6}
           helperText="6文字以上"
           error={
-            error && (error.includes('パスワード') || error.includes('弱すぎ'))
-              ? error
-              : undefined
+            error && (error.includes('パスワード') || error.includes('弱すぎ')) ? error : undefined
           }
         />
         <FormField
