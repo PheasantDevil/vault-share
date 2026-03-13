@@ -15,6 +15,7 @@ interface FormFieldProps {
   helperText?: string;
   disabled?: boolean;
   rows?: number;
+  style?: React.CSSProperties;
 }
 
 export function FormField({
@@ -32,13 +33,14 @@ export function FormField({
   helperText,
   disabled = false,
   rows,
+  style,
 }: FormFieldProps) {
   const inputId = `field-${id}`;
   const errorId = error ? `${inputId}-error` : undefined;
   const helperId = helperText ? `${inputId}-helper` : undefined;
 
   return (
-    <div style={{ marginBottom: '1rem' }}>
+    <div style={{ marginBottom: '1rem', ...style }}>
       <label
         htmlFor={inputId}
         style={{
