@@ -10,7 +10,10 @@ import { createErrorResponse, ErrorCode } from '@/lib/api/error-response';
 export async function GET(request: NextRequest) {
   const session = await getSessionFromRequest(request);
   if (!session) {
-    return createErrorResponse(ErrorCode.Unauthorized, 'Unauthorized', 401);
+    return NextResponse.json(
+      createErrorResponse(ErrorCode.UNAUTHORIZED, 'Unauthorized'),
+      { status: 401 }
+    );
   }
 
   try {
