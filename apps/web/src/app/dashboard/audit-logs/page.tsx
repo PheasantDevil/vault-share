@@ -335,9 +335,8 @@ export default function AuditLogsPage() {
                         <td
                           style={{
                             padding: '0.75rem 1rem',
-                            fontSize: 'var(--font-size-sm, 0.875rem)',
-                            fontFamily: 'monospace',
                             fontSize: 'var(--font-size-xs, 0.75rem)',
+                            fontFamily: 'monospace',
                           }}
                         >
                           {log.groupId.substring(0, 8)}...
