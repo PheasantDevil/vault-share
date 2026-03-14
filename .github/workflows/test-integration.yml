@@ -35,6 +35,12 @@ jobs:
       - name: Build monorepo dependencies
         run: pnpm run build
 
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
       - name: Start Firebase Emulators
         run: |
           pnpm add -g firebase-tools

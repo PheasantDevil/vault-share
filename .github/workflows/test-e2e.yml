@@ -45,12 +45,24 @@ jobs:
           cd apps/web
           pnpm build
 
+      - name: Start application
+        env:
+          NODE_ENV: production
+        run: |
+          cd apps/web
+          pnpm start &
+          sleep 10
+
       - name: Run E2E tests
         env:
           PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
         run: |
           cd apps/web
           pnpm test:e2e
+
+      - name: Stop application
+        if: always()
+        run: pkill -f "next start" || true
 
       - uses: actions/upload-artifact@v4
         if: always()

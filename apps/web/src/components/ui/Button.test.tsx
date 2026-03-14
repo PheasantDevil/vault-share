@@ -30,18 +30,21 @@ describe('Button', () => {
 
   it('should apply variant styles', () => {
     const { rerender } = render(<Button variant="primary">Primary</Button>);
-    expect(screen.getByText('Primary').closest('button')).toHaveStyle({
-      backgroundColor: '#0070f3',
+    const primaryButton = screen.getByText('Primary').closest('button');
+    expect(primaryButton).toHaveStyle({
+      backgroundColor: 'rgb(0, 112, 243)', // #0070f3 in rgb
     });
 
     rerender(<Button variant="secondary">Secondary</Button>);
-    expect(screen.getByText('Secondary').closest('button')).toHaveStyle({
-      backgroundColor: '#f5f5f5',
+    const secondaryButton = screen.getByText('Secondary').closest('button');
+    expect(secondaryButton).toHaveStyle({
+      backgroundColor: 'rgb(245, 245, 245)', // #f5f5f5 in rgb
     });
 
     rerender(<Button variant="danger">Danger</Button>);
-    expect(screen.getByText('Danger').closest('button')).toHaveStyle({
-      backgroundColor: 'var(--error, #c00)',
+    const dangerButton = screen.getByText('Danger').closest('button');
+    expect(dangerButton).toHaveStyle({
+      backgroundColor: 'rgb(204, 0, 0)', // #c00 in rgb
     });
   });
 });
