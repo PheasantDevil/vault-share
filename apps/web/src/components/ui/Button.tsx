@@ -4,6 +4,8 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'danger';
   loading?: boolean;
   children: React.ReactNode;
+  style?: React.CSSProperties;
+  asChild?: boolean;
 }
 
 export function Button({
@@ -15,18 +17,6 @@ export function Button({
   asChild = false,
   ...props
 }: ButtonProps) {
-  if (asChild && React.isValidElement(children)) {
-    return React.cloneElement(children as React.ReactElement, {
-      style: {
-        ...(children as React.ReactElement).props.style,
-        ...baseStyle,
-        ...variantStyles[variant],
-        opacity: disabled || loading ? 0.6 : 1,
-        ...style,
-      },
-      disabled: disabled || loading,
-    });
-  }
   const baseStyle: React.CSSProperties = {
     padding: '0.75rem 1.5rem',
     minHeight: '44px', // タッチ操作に適した最小サイズ
@@ -60,6 +50,19 @@ export function Button({
       color: '#fff',
     },
   };
+
+  if (asChild && React.isValidElement(children)) {
+    return React.cloneElement(children as React.ReactElement, {
+      style: {
+        ...(children as React.ReactElement).props.style,
+        ...baseStyle,
+        ...variantStyles[variant],
+        opacity: disabled || loading ? 0.6 : 1,
+        ...style,
+      },
+      disabled: disabled || loading,
+    });
+  }
 
   const combinedStyle = {
     ...baseStyle,
