@@ -37,9 +37,9 @@ export async function createTestUser(
   // FirestoreにUserDocを作成
   const db = getDb();
   const userDoc: UserDoc = {
-    id: user.uid,
+    uid: user.uid,
     email: user.email || email,
-    displayName: displayName || null,
+    displayName: displayName || undefined,
     mfaEnabled: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
