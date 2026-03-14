@@ -92,7 +92,7 @@ export default function ResetPasswordPage() {
           onChange={(e) => setEmail(e.target.value)}
           required
           autoComplete="email"
-          error={error}
+          error={error ?? undefined}
         />
         {error && <Alert type="error">{error}</Alert>}
         <Button type="submit" loading={loading} variant="primary" style={{ width: '100%' }}>
