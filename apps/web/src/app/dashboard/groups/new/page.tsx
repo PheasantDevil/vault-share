@@ -53,7 +53,7 @@ export default function NewGroupPage() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
-          error={error}
+          error={error ?? undefined}
         />
         {error && <Alert type="error">{error}</Alert>}
         <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
