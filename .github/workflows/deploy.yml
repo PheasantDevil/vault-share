@@ -91,13 +91,13 @@ jobs:
           IMAGE=${{ steps.build.outputs.image }}
           SERVICE="vault-share-web"
 
-          # 環境変数ファイルを作成（特殊文字を適切に処理するため）
+          # 環境変数ファイルを作成（YAMLパーサーに誤解されないよう echo で出力）
           ENV_VARS_FILE="/tmp/env-vars.yaml"
-          cat > "$ENV_VARS_FILE" <<EOF
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: vault-share-dev.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_PROJECT_ID: $PROJECT_ID
-GOOGLE_CLOUD_PROJECT: $PROJECT_ID
-EOF
+          {
+            echo "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: vault-share-dev.firebaseapp.com"
+            echo "NEXT_PUBLIC_FIREBASE_PROJECT_ID: $PROJECT_ID"
+            echo "GOOGLE_CLOUD_PROJECT: $PROJECT_ID"
+          } > "$ENV_VARS_FILE"
 
           # GitHub Secretsから環境変数を追加（存在する場合）
           if [ -n "${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}" ]; then
@@ -187,8 +187,8 @@ EOF
         uses: actions/github-script@v7
         with:
           script: |
-            const url = `${{ steps.deploy.outputs.url }}`;
-            const revision = `${{ steps.deploy.outputs.revision_name }}`;
+            const url = "${{ steps.deploy.outputs.url }}";
+            const revision = "${{ steps.deploy.outputs.revision_name }}";
             const body = `## プレビュー環境\n\nデプロイが完了しました。\n\n**URL**: ${url}\n**リビジョン**: ${revision}`;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
