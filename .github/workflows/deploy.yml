@@ -105,7 +105,9 @@ jobs:
             ENV_VARS="$ENV_VARS,NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}"
           fi
           if [ -n "${{ secrets.ALLOWED_EMAILS }}" ]; then
-            ENV_VARS="$ENV_VARS,ALLOWED_EMAILS=${{ secrets.ALLOWED_EMAILS }}"
+            # 環境変数の値をエスケープ（特殊文字を含む可能性があるため）
+            ALLOWED_EMAILS_ESCAPED=$(echo "${{ secrets.ALLOWED_EMAILS }}" | sed 's/"/\\"/g')
+            ENV_VARS="$ENV_VARS,ALLOWED_EMAILS=$ALLOWED_EMAILS_ESCAPED"
           fi
 
           if [ "${{ github.event_name }}" = "pull_request" ]; then
