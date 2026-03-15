@@ -91,23 +91,27 @@ jobs:
           IMAGE=${{ steps.build.outputs.image }}
           SERVICE="vault-share-web"
 
-          # 環境変数とシークレットの設定
-          ENV_VARS="NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=vault-share-dev.firebaseapp.com,NEXT_PUBLIC_FIREBASE_PROJECT_ID=$PROJECT_ID,GOOGLE_CLOUD_PROJECT=$PROJECT_ID"
+          # 環境変数ファイルを作成（特殊文字を適切に処理するため）
+          ENV_VARS_FILE="/tmp/env-vars.yaml"
+          cat > "$ENV_VARS_FILE" <<EOF
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: vault-share-dev.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID: $PROJECT_ID
+GOOGLE_CLOUD_PROJECT: $PROJECT_ID
+EOF
+
+          # GitHub Secretsから環境変数を追加（存在する場合）
+          if [ -n "${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}" ]; then
+            echo "NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}" >> "$ENV_VARS_FILE"
+          fi
+          if [ -n "${{ secrets.ALLOWED_EMAILS }}" ]; then
+            # YAML形式でエスケープ（特殊文字を含む可能性があるため）
+            echo "ALLOWED_EMAILS: \"${{ secrets.ALLOWED_EMAILS }}\"" >> "$ENV_VARS_FILE"
+          fi
 
           # Secret Managerからシークレットを読み込む（存在する場合）
           SECRETS=""
           if gcloud secrets describe vault-share-session-secret --project="$PROJECT_ID" &>/dev/null; then
             SECRETS="SESSION_SECRET=vault-share-session-secret:latest"
-          fi
-
-          # GitHub Secretsから環境変数を設定（存在する場合）
-          if [ -n "${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}" ]; then
-            ENV_VARS="$ENV_VARS,NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}"
-          fi
-          if [ -n "${{ secrets.ALLOWED_EMAILS }}" ]; then
-            # 環境変数の値をエスケープ（特殊文字を含む可能性があるため）
-            ALLOWED_EMAILS_ESCAPED=$(echo "${{ secrets.ALLOWED_EMAILS }}" | sed 's/"/\\"/g')
-            ENV_VARS="$ENV_VARS,ALLOWED_EMAILS=$ALLOWED_EMAILS_ESCAPED"
           fi
 
           if [ "${{ github.event_name }}" = "pull_request" ]; then
@@ -130,7 +134,7 @@ jobs:
             --project=\"$PROJECT_ID\" \
             --platform=managed \
             --allow-unauthenticated \
-            --set-env-vars=\"$ENV_VARS\""
+            --env-vars-file=\"$ENV_VARS_FILE\""
 
           if [ -n "$SECRETS" ]; then
             DEPLOY_CMD="$DEPLOY_CMD --set-secrets=\"$SECRETS\""

@@ -54,14 +54,17 @@ jobs:
           pnpm start > /tmp/nextjs.log 2>&1 &
           echo $! > /tmp/nextjs.pid
           # アプリケーションが起動するまで待機
-          for i in {1..30}; do
+          for i in {1..60}; do
             if curl -f http://localhost:3000 > /dev/null 2>&1; then
               echo "Application is ready"
-              break
+              exit 0
             fi
-            echo "Waiting for application to start... ($i/30)"
+            echo "Waiting for application to start... ($i/60)"
             sleep 2
           done
+          echo "Application failed to start"
+          cat /tmp/nextjs.log
+          exit 1
 
       - name: Run E2E tests
         env:
