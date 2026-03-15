@@ -1,11 +1,12 @@
 /**
  * Firebase クライアント初期化（ブラウザのみ。Identity Platform のメール/パスワード認証用）
  * ビルド時に NEXT_PUBLIC_* が無い場合、/api/config からランタイムで取得する。
+ * E2E/テスト時は NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST を設定すると Auth Emulator に接続する。
  */
 import type { FirebaseApp } from 'firebase/app';
 import { getApps, initializeApp } from 'firebase/app';
 import type { Auth } from 'firebase/auth';
-import { getAuth } from 'firebase/auth';
+import { connectAuthEmulator, getAuth } from 'firebase/auth';
 
 const buildTimeConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -25,9 +26,19 @@ function getFirebaseAppSync(): FirebaseApp {
   return initializeApp(buildTimeConfig as Record<string, string>);
 }
 
+function maybeConnectAuthEmulator(auth: Auth): void {
+  const host = process.env.NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST;
+  if (typeof window !== 'undefined' && host && host.trim() !== '') {
+    const url = host.startsWith('http') ? host : `http://${host}`;
+    connectAuthEmulator(auth, url, { disableWarnings: true });
+  }
+}
+
 /** 同期的に Auth を返す（ビルド時に NEXT_PUBLIC_* が設定されている場合のみ正常動作） */
 export function getFirebaseAuth(): Auth {
-  return getAuth(getFirebaseAppSync());
+  const auth = getAuth(getFirebaseAppSync());
+  maybeConnectAuthEmulator(auth);
+  return auth;
 }
 
 let configFetched: Promise<{
@@ -84,15 +95,21 @@ export async function getFirebaseAuthAsync(): Promise<Auth> {
         'Firebase API Key is not configured. Please set NEXT_PUBLIC_FIREBASE_API_KEY environment variable.'
       );
     }
-    return getAuth(getFirebaseAppSync());
+    const auth = getAuth(getFirebaseAppSync());
+    maybeConnectAuthEmulator(auth);
+    return auth;
   }
   if (typeof window === 'undefined') {
-    return getAuth(getFirebaseAppSync());
+    const auth = getAuth(getFirebaseAppSync());
+    maybeConnectAuthEmulator(auth);
+    return auth;
   }
   const runtime = await fetchRuntimeConfig();
   if (runtime) {
     const app = initializeApp(runtime);
-    return getAuth(app);
+    const auth = getAuth(app);
+    maybeConnectAuthEmulator(auth);
+    return auth;
   }
   // ランタイム設定も取得できない場合、エラーを投げる
   throw new Error(
