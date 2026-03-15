@@ -32,6 +32,9 @@ pnpm-debug.log*
 # Test
 coverage/
 .nyc_output/
+**/test-results/
+**/playwright-report/
+**/.playwright-artifacts-*/
 
 # Pulumi
 infra/.pulumi/
