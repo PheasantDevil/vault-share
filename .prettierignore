@@ -1,0 +1,6 @@
+# Build and generated
+.next/
+**/test-results/
+**/playwright-report/
+**/.playwright-artifacts-*/
+node_modules/

@@ -43,8 +43,8 @@ export async function writeAuditLog(params: AuditLogParams): Promise<void> {
   const now = new Date().toISOString();
 
   // IPアドレスとユーザーエージェントを取得
-  const ipAddress = params.request ? getIpAddress(params.request) : null;
-  const userAgent = params.request ? getUserAgent(params.request) : null;
+  const ipAddress = params.request ? getIpAddress(params.request) : undefined;
+  const userAgent = params.request ? getUserAgent(params.request) : undefined;
 
   const doc: AuditLogDoc = {
     id: docRef.id,
@@ -54,8 +54,8 @@ export async function writeAuditLog(params: AuditLogParams): Promise<void> {
     action: params.action,
     details: params.details,
     createdAt: now,
-    ipAddress: ipAddress ?? null,
-    userAgent: userAgent ?? null,
+    ipAddress,
+    userAgent,
     error: params.error,
     securityEvent: params.securityEvent ?? false,
   };
