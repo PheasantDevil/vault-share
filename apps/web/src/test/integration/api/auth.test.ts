@@ -14,7 +14,9 @@ describe('Auth API Integration Tests', () => {
 
   beforeAll(async () => {
     await setupTestEnv();
-    testUser = await createTestUser('test@example.com', 'password123', 'Test User');
+    // ユニークなメールアドレスを使用（タイムスタンプを追加）
+    const uniqueEmail = `test-${Date.now()}@example.com`;
+    testUser = await createTestUser(uniqueEmail, 'password123', 'Test User');
     userIds.push(testUser.uid);
   });
 
