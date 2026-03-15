@@ -38,6 +38,22 @@ export async function setupTestEnv() {
   // Authエミュレータに接続（環境変数により自動接続）
   const auth = getAuth();
 
+  // エミュレータへの接続確認（未起動時は分かりやすいエラーを出す）
+  try {
+    await auth.listUsers(1);
+  } catch (err) {
+    const msg =
+      err &&
+      typeof err === 'object' &&
+      'code' in err &&
+      (err as { code?: string }).code === 'app/network-error'
+        ? 'Firebase Emulators に接続できません。別ターミナルで "firebase emulators:start --only firestore,auth" を実行してから再度テストを実行してください。'
+        : err instanceof Error
+          ? err.message
+          : String(err);
+    throw new Error(`統合テストのセットアップに失敗しました: ${msg}`);
+  }
+
   // DBを設定
   setDb(db);
 
