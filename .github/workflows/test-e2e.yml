@@ -46,11 +46,25 @@ jobs:
           distribution: "temurin"
           java-version: "21"
 
+      - name: Install Firebase CLI
+        run: pnpm add -g firebase-tools
+
       - name: Start Firebase Emulators
         run: |
-          pnpm add -g firebase-tools
           firebase emulators:start --only firestore,auth --project test-project &
-          sleep 10
+          # Auth エミュレータ (9099) が応答するまで待機
+          for i in $(seq 1 30); do
+            if (echo >/dev/tcp/localhost/9099) 2>/dev/null; then
+              echo "Firebase Emulators are ready"
+              break
+            fi
+            if [ "$i" -eq 30 ]; then
+              echo "Emulators did not become ready in time"
+              exit 1
+            fi
+            echo "Waiting for emulators... ($i/30)"
+            sleep 1
+          done
 
       - name: Seed E2E test user
         env:
@@ -58,7 +72,15 @@ jobs:
           FIREBASE_AUTH_EMULATOR_HOST: localhost:9099
         run: |
           cd apps/web
-          pnpm run seed:e2e
+          for attempt in 1 2 3 4 5; do
+            if pnpm run seed:e2e; then
+              exit 0
+            fi
+            echo "Seed attempt $attempt failed, retrying in 3s..."
+            sleep 3
+          done
+          echo "Seed E2E user failed after 5 attempts"
+          exit 1
 
       - name: Build application
         env:

@@ -3,16 +3,16 @@ name: Integration Tests
 on:
   pull_request:
     paths:
-      - 'apps/web/src/**'
-      - 'apps/web/src/test/integration/**'
-      - '.github/workflows/test-integration.yml'
+      - "apps/web/src/**"
+      - "apps/web/src/test/integration/**"
+      - ".github/workflows/test-integration.yml"
   push:
     branches:
       - main
     paths:
-      - 'apps/web/src/**'
-      - 'apps/web/src/test/integration/**'
-      - '.github/workflows/test-integration.yml'
+      - "apps/web/src/**"
+      - "apps/web/src/test/integration/**"
+      - ".github/workflows/test-integration.yml"
 
 jobs:
   integration-test:
@@ -26,8 +26,8 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'pnpm'
+          node-version: "20"
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install
@@ -38,24 +38,16 @@ jobs:
       - name: Setup Java 21
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '21'
+          distribution: "temurin"
+          java-version: "21"
 
-      - name: Start Firebase Emulators
-        run: |
-          pnpm add -g firebase-tools
-          firebase emulators:start --only firestore,auth --project test-project &
-          sleep 10
+      - name: Install Firebase CLI
+        run: pnpm add -g firebase-tools
 
-      - name: Run integration tests
+      - name: Run integration tests with Firebase Emulators
         env:
           FIRESTORE_EMULATOR_HOST: localhost:8080
           FIREBASE_AUTH_EMULATOR_HOST: localhost:9099
           SESSION_SECRET: test-secret-key-for-integration-tests-min-16-chars
         run: |
-          cd apps/web
-          pnpm test:integration
-
-      - name: Stop Firebase Emulators
-        if: always()
-        run: pkill -f firebase || true
+          firebase emulators:exec --only firestore,auth --project test-project -- "cd apps/web && pnpm test:integration"
