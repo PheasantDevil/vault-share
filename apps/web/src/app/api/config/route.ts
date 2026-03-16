@@ -8,19 +8,34 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   // Next.js standaloneモードでは、NEXT_PUBLIC_*はビルド時に埋め込まれるため、
   // ランタイムの環境変数を直接読み込む（サーバーサイドではprocess.envから直接取得可能）
-  // ただし、standaloneモードではNEXT_PUBLIC_*はビルド時に置換されるため、
-  // ランタイムで設定された環境変数を読み込むには、環境変数名を直接指定する必要がある
+  // ただし、standaloneモードでは、ビルド時にNEXT_PUBLIC_*が空の場合、ランタイムでも空のままになる
   
   // ビルド時に埋め込まれた値が空文字列の場合、ランタイムの環境変数を読み込む
   // Next.jsのstandaloneモードでは、ビルド時にNEXT_PUBLIC_*が空の場合、ランタイムの環境変数が使用される
+  // しかし、実際にはビルド時に埋め込まれた値が優先されるため、
+  // ビルド時に環境変数を設定する必要がある
+  
+  // サーバーサイドでは、process.envから直接読み込めるはずだが、
+  // standaloneモードでは、ビルド時にNEXT_PUBLIC_*が空の場合、ランタイムでも空のままになる
+  // そのため、Cloud Runの環境変数を直接読み込む必要がある
+  
+  // ビルド時に埋め込まれた値（空の可能性がある）
   let apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '';
   let authDomain = process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '';
   let projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '';
   
   // ビルド時に埋め込まれた値が空の場合、ランタイムの環境変数を確認
-  // （standaloneモードでは、ビルド時に空の場合、ランタイムの環境変数が使用される可能性がある）
-  // ただし、実際にはビルド時に埋め込まれた値が優先されるため、
+  // standaloneモードでは、ビルド時にNEXT_PUBLIC_*が空の場合、ランタイムの環境変数が使用される可能性がある
+  // しかし、実際にはビルド時に埋め込まれた値が優先されるため、
   // ビルド時に環境変数を設定する必要がある
+  
+  // デバッグ: 環境変数の値を確認
+  console.log('Environment variables check:', {
+    NEXT_PUBLIC_FIREBASE_API_KEY: apiKey ? '***' : 'empty',
+    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: authDomain,
+    NEXT_PUBLIC_FIREBASE_PROJECT_ID: projectId,
+    NODE_ENV: process.env.NODE_ENV,
+  });
   
   apiKey = apiKey.trim();
   authDomain = authDomain.trim();

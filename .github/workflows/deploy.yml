@@ -66,6 +66,20 @@ jobs:
           IMAGE="$REPO/web"
 
           # Docker build時にARGとして環境変数を渡す
+          # 環境変数が設定されていることを確認
+          if [ -z "$NEXT_PUBLIC_FIREBASE_API_KEY" ]; then
+            echo "::error::NEXT_PUBLIC_FIREBASE_API_KEY is not set"
+            exit 1
+          fi
+          if [ -z "$NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN" ]; then
+            echo "::error::NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN is not set"
+            exit 1
+          fi
+          if [ -z "$NEXT_PUBLIC_FIREBASE_PROJECT_ID" ]; then
+            echo "::error::NEXT_PUBLIC_FIREBASE_PROJECT_ID is not set"
+            exit 1
+          fi
+          
           docker build \
             --build-arg NEXT_PUBLIC_FIREBASE_API_KEY="$NEXT_PUBLIC_FIREBASE_API_KEY" \
             --build-arg NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="$NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN" \

@@ -40,6 +40,12 @@ RUN adduser --system --uid 1001 nextjs
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
 
+# Next.js standaloneモードでは、NEXT_PUBLIC_*はビルド時に埋め込まれるため、
+# ランタイムの環境変数は使用されない。しかし、/api/configエンドポイントで
+# サーバーサイドからprocess.envを読み込むため、環境変数を設定する必要がある
+# （Cloud Runで設定された環境変数がprocess.envから読み込まれる）
+# ただし、ビルド時に埋め込まれた値が優先されるため、ビルド時に設定する必要がある
+
 USER nextjs
 
 EXPOSE 3000
