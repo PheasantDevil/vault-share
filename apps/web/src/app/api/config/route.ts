@@ -6,12 +6,35 @@ import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? '';
-  const authDomain = process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? '';
-  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? '';
+  // Next.js standaloneモードでは、NEXT_PUBLIC_*はビルド時に埋め込まれるため、
+  // ランタイムの環境変数を直接読み込む（サーバーサイドではprocess.envから直接取得可能）
+  // ただし、standaloneモードではNEXT_PUBLIC_*はビルド時に置換されるため、
+  // ランタイムで設定された環境変数を読み込むには、環境変数名を直接指定する必要がある
+  
+  // ビルド時に埋め込まれた値が空文字列の場合、ランタイムの環境変数を読み込む
+  // Next.jsのstandaloneモードでは、ビルド時にNEXT_PUBLIC_*が空の場合、ランタイムの環境変数が使用される
+  let apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '';
+  let authDomain = process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '';
+  let projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '';
+  
+  // ビルド時に埋め込まれた値が空の場合、ランタイムの環境変数を確認
+  // （standaloneモードでは、ビルド時に空の場合、ランタイムの環境変数が使用される可能性がある）
+  // ただし、実際にはビルド時に埋め込まれた値が優先されるため、
+  // ビルド時に環境変数を設定する必要がある
+  
+  apiKey = apiKey.trim();
+  authDomain = authDomain.trim();
+  projectId = projectId.trim();
 
   // API Keyが設定されていない場合、エラーを返す
-  if (!apiKey || apiKey.trim() === '') {
+  if (!apiKey || apiKey === '') {
+    // デバッグ情報をログに出力（本番環境でのトラブルシューティング用）
+    console.error('Firebase API Key is not configured. Environment variables:', {
+      NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? '***' : 'undefined',
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      NODE_ENV: process.env.NODE_ENV,
+    });
     return NextResponse.json(
       {
         error: 'Firebase API Key is not configured',
