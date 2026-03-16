@@ -7,12 +7,8 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   // Next.js standaloneモードでは、NEXT_PUBLIC_*はビルド時に埋め込まれるため、
-  // ランタイムの環境変数を直接読み込む（サーバーサイドではprocess.envから直接取得可能）
-  // ただし、standaloneモードでは、ビルド時にNEXT_PUBLIC_*が空の場合、ランタイムでも空のままになる
-  
-  // サーバーサイドでは、process.envから直接読み込めるはずだが、
-  // standaloneモードでは、ビルド時にNEXT_PUBLIC_*が空の場合、ランタイムでも空のままになる
-  // そのため、Cloud Runの環境変数を直接読み込む必要がある
+  // ビルド時に空の場合、ランタイムでも空のままになる
+  // そのため、サーバーサイドではprocess.envから直接読み込む必要がある
   
   // ビルド時に埋め込まれた値（空の可能性がある）
   let apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '';
@@ -33,6 +29,8 @@ export async function GET() {
     apiKeyLength: apiKey.length,
     authDomainLength: authDomain.length,
     projectIdLength: projectId.length,
+    // すべてのprocess.envのキーを確認（デバッグ用）
+    allEnvKeysSample: Object.keys(process.env).slice(0, 20),
   });
   
   apiKey = apiKey.trim();
