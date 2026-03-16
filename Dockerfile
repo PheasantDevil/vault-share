@@ -12,6 +12,18 @@ COPY packages/db/package.json packages/db/
 RUN pnpm install --frozen-lockfile
 
 COPY . .
+
+# Next.js standaloneモードでは、NEXT_PUBLIC_*環境変数はビルド時に埋め込まれるため、
+# ビルド時に環境変数を設定する必要がある
+# ただし、ARGとして受け取ってENVに設定することで、ビルド時に使用可能にする
+ARG NEXT_PUBLIC_FIREBASE_API_KEY
+ARG NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+ARG NEXT_PUBLIC_FIREBASE_PROJECT_ID
+
+ENV NEXT_PUBLIC_FIREBASE_API_KEY=$NEXT_PUBLIC_FIREBASE_API_KEY
+ENV NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=$NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+ENV NEXT_PUBLIC_FIREBASE_PROJECT_ID=$NEXT_PUBLIC_FIREBASE_PROJECT_ID
+
 RUN pnpm run build
 
 # Production stage
