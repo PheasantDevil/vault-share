@@ -10,11 +10,6 @@ export async function GET() {
   // ランタイムの環境変数を直接読み込む（サーバーサイドではprocess.envから直接取得可能）
   // ただし、standaloneモードでは、ビルド時にNEXT_PUBLIC_*が空の場合、ランタイムでも空のままになる
   
-  // ビルド時に埋め込まれた値が空文字列の場合、ランタイムの環境変数を読み込む
-  // Next.jsのstandaloneモードでは、ビルド時にNEXT_PUBLIC_*が空の場合、ランタイムの環境変数が使用される
-  // しかし、実際にはビルド時に埋め込まれた値が優先されるため、
-  // ビルド時に環境変数を設定する必要がある
-  
   // サーバーサイドでは、process.envから直接読み込めるはずだが、
   // standaloneモードでは、ビルド時にNEXT_PUBLIC_*が空の場合、ランタイムでも空のままになる
   // そのため、Cloud Runの環境変数を直接読み込む必要がある
@@ -24,17 +19,20 @@ export async function GET() {
   let authDomain = process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '';
   let projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '';
   
-  // ビルド時に埋め込まれた値が空の場合、ランタイムの環境変数を確認
-  // standaloneモードでは、ビルド時にNEXT_PUBLIC_*が空の場合、ランタイムの環境変数が使用される可能性がある
-  // しかし、実際にはビルド時に埋め込まれた値が優先されるため、
-  // ビルド時に環境変数を設定する必要がある
-  
-  // デバッグ: 環境変数の値を確認
+  // デバッグ: すべての環境変数を確認（本番環境でのトラブルシューティング用）
+  const allEnvKeys = Object.keys(process.env).filter(key => 
+    key.includes('FIREBASE') || key.includes('NEXT_PUBLIC')
+  );
   console.log('Environment variables check:', {
     NEXT_PUBLIC_FIREBASE_API_KEY: apiKey ? '***' : 'empty',
     NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: authDomain,
     NEXT_PUBLIC_FIREBASE_PROJECT_ID: projectId,
     NODE_ENV: process.env.NODE_ENV,
+    allFirebaseEnvKeys: allEnvKeys,
+    // 実際の値（マスク済み）を確認
+    apiKeyLength: apiKey.length,
+    authDomainLength: authDomain.length,
+    projectIdLength: projectId.length,
   });
   
   apiKey = apiKey.trim();
