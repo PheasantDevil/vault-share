@@ -52,7 +52,9 @@ export default function ResetPasswordPage() {
         code.includes('auth/api-key-not-valid') ||
         message.includes('Firebase API Key')
       ) {
-        setError('Firebase の設定が正しくありません。管理者に連絡してください。');
+        setError(
+          'Firebase の設定が Cloud Run に反映されていません（NEXT_PUBLIC_FIREBASE_API_KEY が空の可能性）。管理者に連絡してください。'
+        );
       } else {
         setError(
           err instanceof Error ? err.message : 'パスワードリセットメールの送信に失敗しました。'

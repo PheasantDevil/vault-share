@@ -4,10 +4,8 @@
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 
-const FIRESTORE_EMULATOR_HOST =
-  process.env.FIRESTORE_EMULATOR_HOST || 'localhost:8080';
-const AUTH_EMULATOR_HOST =
-  process.env.FIREBASE_AUTH_EMULATOR_HOST || 'localhost:9099';
+const FIRESTORE_EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST || 'localhost:8080';
+const AUTH_EMULATOR_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST || 'localhost:9099';
 
 export default async function globalSetup() {
   if (!process.env.FIRESTORE_EMULATOR_HOST) {
@@ -32,15 +30,9 @@ export default async function globalSetup() {
       'code' in err &&
       (err as { code?: string }).code === 'app/network-error';
     if (isNetworkError) {
-      console.warn(
-        'Firebase Emulators に接続できません。統合テストをスキップします。',
-      );
-      console.warn(
-        '  実行するには: firebase emulators:start --only firestore,auth',
-      );
-      console.warn(
-        '  または: pnpm run test:integration:with-emulators（要 Java）',
-      );
+      console.warn('Firebase Emulators に接続できません。統合テストをスキップします。');
+      console.warn('  実行するには: firebase emulators:start --only firestore,auth');
+      console.warn('  または: pnpm run test:integration:with-emulators（要 Java）');
       process.exit(0);
     }
     throw err;

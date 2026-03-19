@@ -78,7 +78,9 @@ export default function LoginPage() {
         message.includes('Firebase API Key') ||
         message.includes('Firebase configuration is missing')
       ) {
-        setError('Firebase の設定が正しくありません。管理者に連絡してください。');
+        setError(
+          'Firebase の設定が Cloud Run に反映されていません（NEXT_PUBLIC_FIREBASE_API_KEY が空の可能性）。管理者に連絡してください。'
+        );
       } else if (typeof code === 'string' && code.includes('auth/')) {
         setError('メールアドレスまたはパスワードが正しくありません。');
       } else {

@@ -79,7 +79,7 @@ jobs:
             echo "::error::NEXT_PUBLIC_FIREBASE_PROJECT_ID is not set"
             exit 1
           fi
-          
+
           docker build \
             --build-arg NEXT_PUBLIC_FIREBASE_API_KEY="$NEXT_PUBLIC_FIREBASE_API_KEY" \
             --build-arg NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="$NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN" \
@@ -127,7 +127,8 @@ jobs:
           # GitHub Secretsから環境変数を追加（存在する場合）
           # ビルド時に設定されているため、ランタイムでも設定する必要がある
           if [ -n "${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}" ]; then
-            echo "NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}" >> "$ENV_VARS_FILE"
+            # YAMLパーサの解釈事故を避けるため必ずクォートして書き込む
+            echo "NEXT_PUBLIC_FIREBASE_API_KEY: \"${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}\"" >> "$ENV_VARS_FILE"
           else
             echo "::error::NEXT_PUBLIC_FIREBASE_API_KEY is not set in GitHub Secrets"
             exit 1

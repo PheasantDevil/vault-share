@@ -26,7 +26,7 @@ function getAuthErrorMessage(err: unknown): string {
     return 'このドメインは Firebase の承認済みドメインに含まれていません。管理者に連絡するか、Firebase コンソールの「認証」→「設定」→「承認済みドメイン」にこのサイトのドメインを追加してください。';
   }
   if (code.includes('auth/invalid-api-key') || code.includes('auth/api-key-not-valid')) {
-    return 'Firebase の設定が正しくありません。管理者に連絡してください。';
+    return 'Firebase の設定が Cloud Run に反映されていません（NEXT_PUBLIC_FIREBASE_API_KEY が空の可能性）。管理者に連絡してください。';
   }
   if (code.includes('auth/weak-password')) {
     return 'パスワードは6文字以上にしてください。';
