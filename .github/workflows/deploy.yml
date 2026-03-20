@@ -3,8 +3,10 @@ name: Deploy to Cloud Run
 on:
   push:
     branches: [main]
+  # マージ時の closed では走らせない（push の本番デプロイと競合し、--no-traffic だけの revision が最新になり得る）
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened]
 
 env:
   REGION: asia-northeast1
@@ -109,6 +111,10 @@ jobs:
 
       - name: Deploy to Cloud Run
         id: deploy
+        env:
+          # bash 内で event 名の文字列比較がずれる事故を避け、PR プレビューのみ --no-traffic を付ける
+          IS_PR_PREVIEW: ${{ github.event_name == 'pull_request' }}
+          PR_NUMBER: ${{ github.event_name == 'pull_request' && github.event.pull_request.number || '' }}
         run: |
           set -e
           PROJECT_ID="${{ vars.GCP_PROJECT_ID || secrets.GCP_PROJECT_ID }}"
@@ -144,8 +150,8 @@ jobs:
             SECRETS="SESSION_SECRET=vault-share-session-secret:latest"
           fi
 
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            TAG="pr-${{ github.event.pull_request.number }}"
+          if [ "$IS_PR_PREVIEW" = "true" ] && [ -n "$PR_NUMBER" ]; then
+            TAG="pr-$PR_NUMBER"
             # --no-traffic は既存サービスへのデプロイ時のみ使用可能（初回作成時は不可）
             if gcloud run services describe "$SERVICE" --region="$REGION" --project="$PROJECT_ID" &>/dev/null; then
               FLAGS="--tag=$TAG --no-traffic"
