@@ -191,6 +191,16 @@ jobs:
             --format='value(status.latestReadyRevisionName)')
           echo "revision_name=$REVISION_NAME" >> $GITHUB_OUTPUT
 
+          # main URL が常に最新 revision にルーティングされるようにする
+          #（過去の no-traffic デプロイが残っていると、最新コードでも古い revision を参照し続けるため）
+          if [ "${{ github.event_name }}" = "push" ]; then
+            gcloud run services update-traffic "$SERVICE" \
+              --region="$REGION" \
+              --project="$PROJECT_ID" \
+              --to-revisions="$REVISION_NAME=100" \
+              --quiet
+          fi
+
           if [ -n "$TAG" ]; then
             BASE_URL=$(gcloud run services describe "$SERVICE" --region="$REGION" --project="$PROJECT_ID" --format='value(status.url)')
             PREVIEW_URL=$(echo "$BASE_URL" | sed "s|https://|https://$TAG---|")
