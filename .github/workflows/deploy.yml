@@ -145,10 +145,9 @@ jobs:
           fi
 
           # Secret Managerからシークレットを読み込む（存在する場合）
-          SECRETS=""
-          if gcloud secrets describe vault-share-session-secret --project="$PROJECT_ID" &>/dev/null; then
-            SECRETS="SESSION_SECRET=vault-share-session-secret:latest"
-          fi
+          # SESSION_SECRET は Cookie 署名に必須のため、存在チェックを行わず常に参照を設定する
+          # （このワークフローの権限不足等で存在チェックが失敗すると、実行環境に SESSION_SECRET が注入されずログインが落ちるため）
+          SECRETS="SESSION_SECRET=vault-share-session-secret:latest"
 
           if [ "$IS_PR_PREVIEW" = "true" ] && [ -n "$PR_NUMBER" ]; then
             TAG="pr-$PR_NUMBER"

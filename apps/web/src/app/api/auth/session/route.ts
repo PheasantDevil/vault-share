@@ -46,25 +46,33 @@ export async function POST(request: NextRequest) {
     const mfaEnabled = (mfaSettings?.enrolledFactors?.length ?? 0) > 0;
 
     const now = new Date().toISOString();
+    // Firestore への書き込みでは `undefined` を含むフィールドがエラーになるため、
+    // 任意フィールド（displayName など）は存在する場合のみ付与する。
     const userDoc: UserDoc = {
       uid,
       email: decoded.email ?? undefined,
-      displayName: (decoded.name as string) ?? undefined,
       mfaEnabled,
       createdAt: now,
       updatedAt: now,
     };
+    const displayName = decoded.name as string | undefined;
+    if (displayName) {
+      userDoc.displayName = displayName;
+    }
 
     const db = getDb();
     const userRef = db.collection(COLLECTIONS.users).doc(uid);
     const existing = await userRef.get();
     if (existing.exists) {
-      await userRef.update({
+      const updateData: Partial<UserDoc> = {
         email: userDoc.email,
-        displayName: userDoc.displayName,
         mfaEnabled: userDoc.mfaEnabled,
         updatedAt: now,
-      });
+      };
+      if (userDoc.displayName !== undefined) {
+        updateData.displayName = userDoc.displayName;
+      }
+      await userRef.update(updateData);
     } else {
       await userRef.set(userDoc);
     }
