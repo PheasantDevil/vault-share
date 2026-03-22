@@ -37,9 +37,17 @@ export function DocsShell({ tree, children }: Props) {
           >
             ☰
           </button>
-          <Link href="/docs" className={styles.brand}>
-            ドキュメント
-          </Link>
+          <div className={styles.headerBrand}>
+            <Link href="/" className={styles.homeLink}>
+              Vault Share
+            </Link>
+            <span className={styles.headerSep} aria-hidden>
+              /
+            </span>
+            <Link href="/docs" className={styles.brand}>
+              ドキュメント
+            </Link>
+          </div>
           <div className={styles.searchWrap}>
             <DocsSearch />
           </div>
