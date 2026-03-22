@@ -23,8 +23,10 @@ test.describe('Authentication Flow', () => {
     await page.fill('input[type="password"]', 'wrongpassword');
     await page.click('button[type="submit"]');
 
-    // エラーメッセージが表示されることを確認
-    await expect(page.locator('text=/メールアドレスまたはパスワード/')).toBeVisible();
+    // エラーメッセージ（認証失敗は Alert 1 件。strict モード回避のため getByRole を使用）
+    await expect(
+      page.getByRole('alert', { name: /メールアドレスまたはパスワードが正しくありません/ })
+    ).toBeVisible();
   });
 
   test('should logout and redirect to login', async ({ page }) => {
