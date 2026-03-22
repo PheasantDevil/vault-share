@@ -124,28 +124,23 @@ export default function LoginPage() {
           ログイン
         </Button>
       </form>
-      <p style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.875rem' }}>
-        <Link
-          href="/signup"
-          style={{ color: 'var(--link, #0070f3)', textDecoration: 'none', marginRight: '0.5rem' }}
-        >
+      <div className="app-link-row">
+        <Link href="/signup" className="app-link">
           新規登録
         </Link>
-        <span style={{ color: 'var(--muted, #999)' }}>|</span>
-        <Link
-          href="/reset-password"
-          style={{ color: 'var(--link, #0070f3)', textDecoration: 'none', margin: '0 0.5rem' }}
-        >
+        <span className="app-link-row__sep" aria-hidden>
+          |
+        </span>
+        <Link href="/reset-password" className="app-link">
           パスワードを忘れた場合
         </Link>
-        <span style={{ color: 'var(--muted, #999)' }}>|</span>
-        <Link
-          href="/"
-          style={{ color: 'var(--link, #0070f3)', textDecoration: 'none', marginLeft: '0.5rem' }}
-        >
+        <span className="app-link-row__sep" aria-hidden>
+          |
+        </span>
+        <Link href="/" className="app-link">
           トップへ
         </Link>
-      </p>
+      </div>
     </PageLayout>
   );
 }

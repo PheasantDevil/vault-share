@@ -40,18 +40,21 @@ export function FormField({
   const helperId = helperText ? `${inputId}-helper` : undefined;
 
   return (
-    <div style={{ marginBottom: '1rem', ...style }}>
+    <div style={{ marginBottom: 'var(--spacing-md)', ...style }}>
       <label
         htmlFor={inputId}
         style={{
           display: 'block',
-          marginBottom: '0.25rem',
-          fontWeight: 500,
-          fontSize: '0.875rem',
+          marginBottom: 'var(--spacing-xs)',
+          fontWeight: 'var(--font-weight-medium)',
+          fontSize: 'var(--font-size-sm)',
+          color: 'var(--text-primary)',
         }}
       >
         {label}
-        {required && <span style={{ color: 'var(--error, #c00)', marginLeft: '0.25rem' }}>*</span>}
+        {required && (
+          <span style={{ color: 'var(--error)', marginLeft: 'var(--spacing-xs)' }}>*</span>
+        )}
       </label>
       {rows ? (
         <textarea
@@ -72,7 +75,7 @@ export function FormField({
             padding: 'clamp(0.5rem, 2vw, 0.75rem)',
             fontSize: 'var(--font-size-base, 1rem)',
             border: `1px solid ${error ? 'var(--error, #c00)' : 'var(--border-color, #ddd)'}`,
-            borderRadius: 'var(--border-radius, 4px)',
+            borderRadius: 'var(--radius-md)',
             fontFamily: 'inherit',
             resize: 'vertical',
             minHeight: '44px', // タッチ操作に適した最小サイズ
@@ -98,7 +101,7 @@ export function FormField({
             padding: 'clamp(0.5rem, 2vw, 0.75rem)',
             fontSize: 'var(--font-size-base, 1rem)',
             border: `1px solid ${error ? 'var(--error, #c00)' : 'var(--border-color, #ddd)'}`,
-            borderRadius: 'var(--border-radius, 4px)',
+            borderRadius: 'var(--radius-md)',
             fontFamily: 'inherit',
             minHeight: '44px', // タッチ操作に適した最小サイズ
           }}
@@ -110,8 +113,8 @@ export function FormField({
           role="alert"
           style={{
             color: 'var(--error, #c00)',
-            fontSize: '0.875rem',
-            marginTop: '0.25rem',
+            fontSize: 'var(--font-size-sm)',
+            marginTop: 'var(--spacing-xs)',
             marginBottom: 0,
           }}
         >
@@ -122,9 +125,9 @@ export function FormField({
         <p
           id={helperId}
           style={{
-            color: 'var(--muted, #666)',
-            fontSize: '0.875rem',
-            marginTop: '0.25rem',
+            color: 'var(--text-secondary)',
+            fontSize: 'var(--font-size-sm)',
+            marginTop: 'var(--spacing-xs)',
             marginBottom: 0,
           }}
         >

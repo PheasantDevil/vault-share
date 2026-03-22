@@ -9,24 +9,24 @@ interface AlertProps {
 export function Alert({ type = 'error', children, style }: AlertProps) {
   const typeStyles: Record<string, React.CSSProperties> = {
     error: {
-      backgroundColor: '#fee',
-      borderColor: 'var(--error, #c00)',
-      color: 'var(--error, #c00)',
+      backgroundColor: 'var(--alert-error-bg)',
+      borderColor: 'var(--alert-error-border)',
+      color: 'var(--alert-error-fg)',
     },
     success: {
-      backgroundColor: '#efe',
-      borderColor: '#0a0',
-      color: '#0a0',
+      backgroundColor: 'var(--alert-success-bg)',
+      borderColor: 'var(--alert-success-border)',
+      color: 'var(--alert-success-fg)',
     },
     warning: {
-      backgroundColor: '#ffe',
-      borderColor: '#fa0',
-      color: '#fa0',
+      backgroundColor: 'var(--alert-warning-bg)',
+      borderColor: 'var(--alert-warning-border)',
+      color: 'var(--alert-warning-fg)',
     },
     info: {
-      backgroundColor: '#eef',
-      borderColor: '#07f',
-      color: '#07f',
+      backgroundColor: 'var(--alert-info-bg)',
+      borderColor: 'var(--alert-info-border)',
+      color: 'var(--alert-info-fg)',
     },
   };
 
@@ -35,10 +35,11 @@ export function Alert({ type = 'error', children, style }: AlertProps) {
       role="alert"
       style={{
         padding: '0.75rem 1rem',
-        marginBottom: '1rem',
+        marginBottom: 'var(--spacing-md)',
         border: '1px solid',
-        borderRadius: '4px',
-        fontSize: '0.875rem',
+        borderRadius: 'var(--radius-md)',
+        fontSize: 'var(--font-size-sm)',
+        lineHeight: 1.5,
         ...typeStyles[type],
         ...style,
       }}

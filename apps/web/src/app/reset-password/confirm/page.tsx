@@ -86,11 +86,11 @@ function ResetPasswordConfirmContent() {
         <Alert type="success">
           新しいパスワードが設定されました。ログインページにリダイレクトします...
         </Alert>
-        <p style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-          <Link href="/login" style={{ color: 'var(--link, #0070f3)', textDecoration: 'none' }}>
+        <div className="app-link-row">
+          <Link href="/login" className="app-link">
             ログインページへ
           </Link>
-        </p>
+        </div>
       </PageLayout>
     );
   }
@@ -99,14 +99,11 @@ function ResetPasswordConfirmContent() {
     return (
       <PageLayout title="エラー">
         {error && <Alert type="error">{error}</Alert>}
-        <p style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-          <Link
-            href="/reset-password"
-            style={{ color: 'var(--link, #0070f3)', textDecoration: 'none' }}
-          >
+        <div className="app-link-row">
+          <Link href="/reset-password" className="app-link">
             パスワードリセットページへ戻る
           </Link>
-        </p>
+        </div>
       </PageLayout>
     );
   }
@@ -147,11 +144,11 @@ function ResetPasswordConfirmContent() {
           パスワードを設定
         </Button>
       </form>
-      <p style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.875rem' }}>
-        <Link href="/login" style={{ color: 'var(--link, #0070f3)', textDecoration: 'none' }}>
+      <div className="app-link-row">
+        <Link href="/login" className="app-link">
           ログインページへ戻る
         </Link>
-      </p>
+      </div>
     </PageLayout>
   );
 }

@@ -125,21 +125,17 @@ export default function SignUpPage() {
           登録
         </Button>
       </form>
-      <p style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.875rem' }}>
-        <Link
-          href="/login"
-          style={{ color: 'var(--link, #0070f3)', textDecoration: 'none', marginRight: '0.5rem' }}
-        >
+      <div className="app-link-row">
+        <Link href="/login" className="app-link">
           ログイン
         </Link>
-        <span style={{ color: 'var(--muted, #999)' }}>|</span>
-        <Link
-          href="/"
-          style={{ color: 'var(--link, #0070f3)', textDecoration: 'none', marginLeft: '0.5rem' }}
-        >
+        <span className="app-link-row__sep" aria-hidden>
+          |
+        </span>
+        <Link href="/" className="app-link">
           トップへ
         </Link>
-      </p>
+      </div>
     </PageLayout>
   );
 }

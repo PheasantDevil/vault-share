@@ -9,11 +9,19 @@ import { getFirestore } from 'firebase-admin/firestore';
 const FIRESTORE_EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST || 'localhost:8080';
 const AUTH_EMULATOR_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST || 'localhost:9099';
 
+/** 32-byte AES key (base64). 統合テスト専用。本番は ITEM_ENCRYPTION_KEY を必ず別値で設定すること。 */
+const DEFAULT_INTEGRATION_ITEM_ENCRYPTION_KEY = 'QkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkI=';
+
 let isInitialized = false;
 
 export async function setupTestEnv() {
   if (isInitialized) {
     return;
+  }
+
+  // アイテム暗号化（@vault-share/crypto は 32 バイトの base64 キーを要求）
+  if (!process.env.ITEM_ENCRYPTION_KEY) {
+    process.env.ITEM_ENCRYPTION_KEY = DEFAULT_INTEGRATION_ITEM_ENCRYPTION_KEY;
   }
 
   // 環境変数を設定（Firebase Admin SDKは環境変数から自動的にエミュレーターに接続）

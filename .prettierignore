@@ -4,3 +4,4 @@
 **/playwright-report/
 **/.playwright-artifacts-*/
 node_modules/
+apps/web/public/generated/
