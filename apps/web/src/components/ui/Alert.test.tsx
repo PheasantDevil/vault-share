@@ -11,25 +11,25 @@ describe('Alert', () => {
   it('should apply error type styles', () => {
     render(<Alert type="error">Error message</Alert>);
     const alert = screen.getByText('Error message');
-    expect(alert).toHaveStyle({ backgroundColor: '#fee' });
+    expect(alert).toHaveStyle({ backgroundColor: 'var(--alert-error-bg)' });
   });
 
   it('should apply success type styles', () => {
     render(<Alert type="success">Success message</Alert>);
     const alert = screen.getByText('Success message');
-    expect(alert).toHaveStyle({ backgroundColor: '#efe' });
+    expect(alert).toHaveStyle({ backgroundColor: 'var(--alert-success-bg)' });
   });
 
   it('should apply warning type styles', () => {
     render(<Alert type="warning">Warning message</Alert>);
     const alert = screen.getByText('Warning message');
-    expect(alert).toHaveStyle({ backgroundColor: '#ffe' });
+    expect(alert).toHaveStyle({ backgroundColor: 'var(--alert-warning-bg)' });
   });
 
   it('should apply info type styles', () => {
     render(<Alert type="info">Info message</Alert>);
     const alert = screen.getByText('Info message');
-    expect(alert).toHaveStyle({ backgroundColor: '#eef' });
+    expect(alert).toHaveStyle({ backgroundColor: 'var(--alert-info-bg)' });
   });
 
   it('should have role="alert"', () => {

@@ -22,8 +22,8 @@ export function Button({
     minHeight: '44px', // タッチ操作に適した最小サイズ
     minWidth: '44px',
     fontSize: '1rem',
-    fontWeight: 500,
-    borderRadius: 'var(--border-radius, 4px)',
+    fontWeight: 'var(--font-weight-medium)',
+    borderRadius: 'var(--radius-md)',
     border: 'none',
     cursor: disabled || loading ? 'not-allowed' : 'pointer',
     transition: 'opacity 0.2s, background-color 0.2s',
@@ -37,16 +37,17 @@ export function Button({
 
   const variantStyles: Record<string, React.CSSProperties> = {
     primary: {
-      backgroundColor: 'var(--primary, #0070f3)',
+      backgroundColor: 'var(--primary)',
       color: '#fff',
     },
     secondary: {
-      backgroundColor: 'var(--secondary, #f5f5f5)',
-      color: 'var(--text-primary, #333)',
-      border: '1px solid var(--border-color, #ddd)',
+      backgroundColor: 'var(--bg-primary)',
+      color: 'var(--text-primary)',
+      border: '1px solid var(--border-color)',
+      boxShadow: 'var(--shadow-xs)',
     },
     danger: {
-      backgroundColor: 'var(--danger, #c00)',
+      backgroundColor: 'var(--danger)',
       color: '#fff',
     },
   };
@@ -96,18 +97,4 @@ export function Button({
       {children}
     </button>
   );
-}
-
-// CSS animation for spinner (should be added to global styles or styled-components)
-if (typeof document !== 'undefined') {
-  const style = document.createElement('style');
-  style.textContent = `
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-  `;
-  if (!document.head.querySelector('style[data-spinner]')) {
-    style.setAttribute('data-spinner', 'true');
-    document.head.appendChild(style);
-  }
 }

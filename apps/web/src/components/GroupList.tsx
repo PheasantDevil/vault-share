@@ -20,15 +20,19 @@ export function GroupList() {
 
   if (groups.length === 0) {
     return (
-      <p>参加中のグループはありません。グループを作成するか、招待リンクで参加してください。</p>
+      <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-size-sm)' }}>
+        参加中のグループはありません。グループを作成するか、招待リンクで参加してください。
+      </p>
     );
   }
 
   return (
-    <ul style={{ listStyle: 'none', padding: 0 }}>
+    <ul className="app-list">
       {groups.map((g) => (
-        <li key={g.id} style={{ marginBottom: '0.5rem' }}>
-          <Link href={`/dashboard/groups/${g.id}`}>{g.name}</Link>
+        <li key={g.id}>
+          <Link href={`/dashboard/groups/${g.id}`} className="app-list__link">
+            {g.name}
+          </Link>
         </li>
       ))}
     </ul>

@@ -71,11 +71,11 @@ export default function ResetPasswordPage() {
         <Alert type="success">
           パスワードリセット用のメールを送信しました。メール内のリンクをクリックして、新しいパスワードを設定してください。
         </Alert>
-        <p style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-          <Link href="/login" style={{ color: 'var(--link, #0070f3)', textDecoration: 'none' }}>
+        <div className="app-link-row">
+          <Link href="/login" className="app-link">
             ログインページへ戻る
           </Link>
-        </p>
+        </div>
       </PageLayout>
     );
   }
@@ -101,11 +101,11 @@ export default function ResetPasswordPage() {
           送信
         </Button>
       </form>
-      <p style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.875rem' }}>
-        <Link href="/login" style={{ color: 'var(--link, #0070f3)', textDecoration: 'none' }}>
+      <div className="app-link-row">
+        <Link href="/login" className="app-link">
           ログインページへ戻る
         </Link>
-      </p>
+      </div>
     </PageLayout>
   );
 }

@@ -31,18 +31,18 @@ describe('Button', () => {
   it('should apply variant styles', () => {
     const { rerender } = render(<Button variant="primary">Primary</Button>);
     const primaryButton = screen.getByText('Primary').closest('button');
-    // CSS変数が解決されない場合、var(--primary, #0070f3)という文字列が返される
+    // CSS変数が解決されない場合、var(--primary) などの文字列が返される
     const primaryBg = primaryButton?.style.backgroundColor || '';
-    expect(primaryBg).toMatch(/var\(--primary|rgb\(0,\s*112,\s*243\)|#0070f3/);
+    expect(primaryBg).toMatch(/var\(--primary|rgb\(37,\s*99,\s*235\)|#2563eb/);
 
     rerender(<Button variant="secondary">Secondary</Button>);
     const secondaryButton = screen.getByText('Secondary').closest('button');
     const secondaryBg = secondaryButton?.style.backgroundColor || '';
-    expect(secondaryBg).toMatch(/var\(--secondary|rgb\(245,\s*245,\s*245\)|#f5f5f5/);
+    expect(secondaryBg).toMatch(/var\(--bg-primary|rgb\(255,\s*255,\s*255\)|#fff/);
 
     rerender(<Button variant="danger">Danger</Button>);
     const dangerButton = screen.getByText('Danger').closest('button');
     const dangerBg = dangerButton?.style.backgroundColor || '';
-    expect(dangerBg).toMatch(/var\(--danger|rgb\(204,\s*0,\s*0\)|#c00/);
+    expect(dangerBg).toMatch(/var\(--danger|rgb\(220,\s*38,\s*38\)|#dc2626/);
   });
 });
