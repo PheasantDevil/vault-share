@@ -6,20 +6,7 @@ import { randomBytes } from 'crypto';
 import { getDb, COLLECTIONS } from '@vault-share/db';
 import type { InvitationDoc } from '@vault-share/db';
 import { getSessionFromRequest } from '@/lib/auth/get-session';
-
-async function ensureMember(
-  db: Awaited<ReturnType<typeof getDb>>,
-  groupId: string,
-  userId: string
-) {
-  const memberSnap = await db
-    .collection(COLLECTIONS.groupMembers)
-    .where('groupId', '==', groupId)
-    .where('userId', '==', userId)
-    .limit(1)
-    .get();
-  return memberSnap.empty ? null : memberSnap.docs[0].data();
-}
+import { getGroupMembership } from '@/lib/groups/get-group-membership';
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSessionFromRequest(request);
@@ -32,7 +19,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   if (!groupSnap.exists) {
     return NextResponse.json({ error: 'グループが見つかりません' }, { status: 404 });
   }
-  const member = await ensureMember(db, params.id, session.uid);
+  const member = await getGroupMembership(params.id, session.uid);
   if (!member) {
     return NextResponse.json(
       { error: 'このグループに招待を発行する権限がありません' },

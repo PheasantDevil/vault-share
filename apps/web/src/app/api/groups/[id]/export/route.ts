@@ -6,17 +6,7 @@ import { decryptItemPayload } from '@/lib/items/encryption';
 import { exportItemsToCSV } from '@/lib/csv/exporter';
 import type { ItemPayload } from '@/lib/items/types';
 import { checkRateLimit, createRateLimitResponse, createUserRateLimitKey } from '@/lib/rate-limit';
-
-async function ensureMember(groupId: string, userId: string) {
-  const db = getDb();
-  const snap = await db
-    .collection(COLLECTIONS.groupMembers)
-    .where('groupId', '==', groupId)
-    .where('userId', '==', userId)
-    .limit(1)
-    .get();
-  return snap.empty ? null : snap.docs[0].data();
-}
+import { getGroupMembership } from '@/lib/groups/get-group-membership';
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -45,7 +35,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'Group not found' }, { status: 404 });
     }
 
-    const member = await ensureMember(groupId, session.uid);
+    const member = await getGroupMembership(groupId, session.uid);
     if (!member) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }

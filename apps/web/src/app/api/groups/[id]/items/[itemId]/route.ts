@@ -1,21 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb, COLLECTIONS } from '@vault-share/db';
-import type { GroupMemberDoc, ItemDoc } from '@vault-share/db';
+import type { ItemDoc } from '@vault-share/db';
 import { getSessionFromRequest } from '@/lib/auth/get-session';
 import { decryptItemPayload, encryptItemPayload } from '@/lib/items/encryption';
 import type { ItemPayload } from '@/lib/items/types';
 import { writeAuditLog } from '@/lib/audit/log';
-
-async function ensureMember(groupId: string, userId: string): Promise<GroupMemberDoc | null> {
-  const db = getDb();
-  const snap = await db
-    .collection(COLLECTIONS.groupMembers)
-    .where('groupId', '==', groupId)
-    .where('userId', '==', userId)
-    .limit(1)
-    .get();
-  return snap.empty ? null : (snap.docs[0].data() as GroupMemberDoc);
-}
+import { getGroupMembership } from '@/lib/groups/get-group-membership';
 
 export async function GET(
   request: NextRequest,
@@ -27,7 +17,7 @@ export async function GET(
   }
 
   const db = getDb();
-  const member = await ensureMember(params.id, session.uid);
+  const member = await getGroupMembership(params.id, session.uid);
   if (!member) {
     return NextResponse.json(
       { error: 'このグループにアクセスする権限がありません' },
@@ -68,7 +58,7 @@ export async function PATCH(
   }
 
   const db = getDb();
-  const member = await ensureMember(params.id, session.uid);
+  const member = await getGroupMembership(params.id, session.uid);
   if (!member) {
     return NextResponse.json(
       { error: 'このグループにアクセスする権限がありません' },
@@ -129,7 +119,7 @@ export async function DELETE(
   }
 
   const db = getDb();
-  const member = await ensureMember(params.id, session.uid);
+  const member = await getGroupMembership(params.id, session.uid);
   if (!member) {
     return NextResponse.json(
       { error: 'このグループにアクセスする権限がありません' },

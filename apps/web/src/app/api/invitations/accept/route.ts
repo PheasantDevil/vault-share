@@ -6,6 +6,7 @@ import { getDb, COLLECTIONS } from '@vault-share/db';
 import type { GroupMemberDoc } from '@vault-share/db';
 import { getSessionFromRequest } from '@/lib/auth/get-session';
 import { writeAuditLog } from '@/lib/audit/log';
+import { getGroupMembership } from '@/lib/groups/get-group-membership';
 
 export async function POST(request: NextRequest) {
   const session = await getSessionFromRequest(request);
@@ -36,13 +37,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '招待の有効期限が切れています' }, { status: 400 });
   }
   const groupId = inv.groupId;
-  const existingSnap = await db
-    .collection(COLLECTIONS.groupMembers)
-    .where('groupId', '==', groupId)
-    .where('userId', '==', session.uid)
-    .limit(1)
-    .get();
-  if (!existingSnap.empty) {
+  const existingMember = await getGroupMembership(groupId, session.uid);
+  if (existingMember) {
     await db
       .collection(COLLECTIONS.invitations)
       .doc(invDoc.id)
