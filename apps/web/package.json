@@ -16,7 +16,8 @@
     "test:integration:with-emulators": "cd ../.. && env FIRESTORE_EMULATOR_HOST=localhost:8080 FIREBASE_AUTH_EMULATOR_HOST=localhost:9099 SESSION_SECRET=test-secret-key-for-integration-tests-min-16-chars ITEM_ENCRYPTION_KEY=QkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkI= pnpm --filter web exec firebase emulators:exec --only firestore,auth --project test-project \"pnpm test:integration\"",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "seed:e2e": "tsx scripts/seed-e2e-user.ts"
+    "seed:e2e": "tsx scripts/seed-e2e-user.ts",
+    "clear:firestore-group-data": "tsx scripts/clear-firestore-group-data.ts"
   },
   "dependencies": {
     "@vault-share/api-client": "workspace:*",
