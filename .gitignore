@@ -44,3 +44,6 @@ infra/Pulumi.*.yaml
 # Misc
 *.pem
 .secret-manager/
+
+# Generated at build (docs search index)
+apps/web/public/generated/docs-search.json

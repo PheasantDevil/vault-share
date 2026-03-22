@@ -46,18 +46,27 @@ export async function writeAuditLog(params: AuditLogParams): Promise<void> {
   const ipAddress = params.request ? getIpAddress(params.request) : undefined;
   const userAgent = params.request ? getUserAgent(params.request) : undefined;
 
+  // Firestore はフィールド値に undefined を許可しない（ignoreUndefinedProperties 無効時）
   const doc: AuditLogDoc = {
     id: docRef.id,
     groupId: params.groupId,
     itemId: params.itemId ?? null,
     actorUid: params.actorUid,
     action: params.action,
-    details: params.details,
     createdAt: now,
-    ipAddress,
-    userAgent,
-    error: params.error,
     securityEvent: params.securityEvent ?? false,
   };
+  if (params.details !== undefined) {
+    doc.details = params.details;
+  }
+  if (ipAddress !== undefined) {
+    doc.ipAddress = ipAddress;
+  }
+  if (userAgent !== undefined) {
+    doc.userAgent = userAgent;
+  }
+  if (params.error !== undefined) {
+    doc.error = params.error;
+  }
   await docRef.set(doc);
 }
