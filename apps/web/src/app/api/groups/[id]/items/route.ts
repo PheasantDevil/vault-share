@@ -7,6 +7,7 @@ import type { ItemPayload } from '@/lib/items/types';
 import { writeAuditLog } from '@/lib/audit/log';
 import { createErrorResponse, ErrorCode } from '@/lib/api/error-response';
 import { getGroupMembership } from '@/lib/groups/get-group-membership';
+import { getItemSnapshotsByGroupId } from '@/lib/items/query-items-by-group';
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSessionFromRequest(request);
@@ -35,10 +36,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     // Firestore 複合インデックス（groupId + createdAt + offset 等）が未デプロイでも動くよう、
     // 等価フィルタのみで取得し、並び替え・ページネーション・検索はアプリ側で行う。
     // （グループあたり件数が大きくなったら firestore.indexes.json をデプロイし server 側ページに戻す選択可）
-    const itemsSnap = await db
-      .collection(COLLECTIONS.items)
-      .where('groupId', '==', params.id)
-      .get();
+    const itemsSnap = await getItemSnapshotsByGroupId(db, params.id);
 
     type Row = {
       id: string;

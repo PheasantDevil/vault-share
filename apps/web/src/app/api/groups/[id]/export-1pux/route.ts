@@ -7,6 +7,7 @@ import { exportItemsTo1Pux } from '@/lib/1pux/exporter';
 import type { ItemPayload } from '@/lib/items/types';
 import { checkRateLimit, createRateLimitResponse, createUserRateLimitKey } from '@/lib/rate-limit';
 import { getGroupMembership } from '@/lib/groups/get-group-membership';
+import { getItemSnapshotsByGroupId } from '@/lib/items/query-items-by-group';
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -40,16 +41,16 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // アイテムを取得
-    const itemsSnapshot = await db
-      .collection(COLLECTIONS.items)
-      .where('groupId', '==', groupId)
-      .orderBy('createdAt', 'desc')
-      .get();
+    const itemsSnapshot = await getItemSnapshotsByGroupId(db, groupId);
+    const sortedDocs = [...itemsSnapshot.docs].sort((a, b) => {
+      const ca = (a.data() as ItemDoc).createdAt;
+      const cb = (b.data() as ItemDoc).createdAt;
+      return cb.localeCompare(ca);
+    });
 
     // アイテムを復号
     const itemPayloads: ItemPayload[] = [];
-    for (const itemDoc of itemsSnapshot.docs) {
+    for (const itemDoc of sortedDocs) {
       const data = itemDoc.data() as ItemDoc;
       if (data.deletedAt) continue;
       try {

@@ -48,6 +48,25 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
+      # firestore.indexes.json を本番プロジェクトへ同期（未作成だと古いクエリや別経路で 500 になり得る）
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Deploy Firestore indexes
+        id: firestore_indexes
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        continue-on-error: true
+        env:
+          PROJECT_ID: ${{ vars.GCP_PROJECT_ID || secrets.GCP_PROJECT_ID }}
+        run: |
+          npx --yes firebase-tools@13.35.1 deploy --only firestore:indexes --project "$PROJECT_ID" --non-interactive
+
+      - name: Firestore indexes deploy hint
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.firestore_indexes.outcome == 'failure'
+        run: |
+          echo "::warning::Firestore インデックスの自動デプロイに失敗しました。デプロイ SA に Firebase / Datastore Index Admin 等の権限を付与するか、手元で firebase deploy --only firestore:indexes を実行してください。"
+
       - name: Configure Docker for Artifact Registry
         run: |
           REGION="${{ vars.GCP_REGION || secrets.GCP_REGION }}"
