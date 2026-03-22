@@ -7,7 +7,6 @@ import { setupTestEnv, cleanupTestEnv } from '../helpers/setup-test-env';
 import { createTestUser, createTestGroup, cleanupTestData } from '../helpers/test-data';
 import { createTestHeaders } from '../helpers/auth-helper';
 import { GET, POST } from '@/app/api/groups/[id]/items/route';
-import { encryptItemPayload } from '@/lib/items/encryption';
 
 describe('Items API Integration Tests', () => {
   let testUser: { email: string; password: string; uid: string; displayName?: string };

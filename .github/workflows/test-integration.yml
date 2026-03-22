@@ -49,5 +49,7 @@ jobs:
           FIRESTORE_EMULATOR_HOST: localhost:8080
           FIREBASE_AUTH_EMULATOR_HOST: localhost:9099
           SESSION_SECRET: test-secret-key-for-integration-tests-min-16-chars
+          # 32-byte key base64（@vault-share/crypto）。統合テスト専用の固定値。
+          ITEM_ENCRYPTION_KEY: QkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkI=
         run: |
-          firebase emulators:exec --only firestore,auth --project test-project -- "cd apps/web && pnpm test:integration"
+          firebase emulators:exec --only firestore,auth --project test-project "cd apps/web && pnpm test:integration"
