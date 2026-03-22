@@ -3,6 +3,7 @@ import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypeSanitize from 'rehype-sanitize';
 import rehypeSlug from 'rehype-slug';
 import remarkGfm from 'remark-gfm';
+import { docsMarkdownSanitizeSchema } from '@/lib/docs/markdown-sanitize-schema';
 import styles from './docs.module.css';
 
 type Props = {
@@ -17,7 +18,11 @@ export function DocsArticle({ markdown }: Props) {
     <article className={styles.prose}>
       <Markdown
         remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeSlug, [rehypeAutolinkHeadings, { behavior: 'wrap' }], rehypeSanitize]}
+        rehypePlugins={[
+          rehypeSlug,
+          [rehypeAutolinkHeadings, { behavior: 'wrap' }],
+          [rehypeSanitize, docsMarkdownSanitizeSchema],
+        ]}
       >
         {markdown}
       </Markdown>

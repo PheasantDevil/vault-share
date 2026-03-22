@@ -15,7 +15,7 @@ export async function generateDocsArtifacts(): Promise<void> {
 
   for (const slug of slugs) {
     const src = await readMarkdownSource(slug);
-    if (!src) continue;
+    if (src === null) continue;
     docs.push({
       slug,
       title: extractTitleFromMarkdown(src),

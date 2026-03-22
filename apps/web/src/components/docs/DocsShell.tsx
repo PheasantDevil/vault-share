@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { DocsNavNode } from '@/lib/docs/nav-tree';
 import { DocsSearch } from './DocsSearch';
 import { DocsSidebar } from './DocsSidebar';
@@ -14,6 +14,7 @@ type Props = {
 
 export function DocsShell({ tree, children }: Props) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!drawerOpen) return;
@@ -22,6 +23,20 @@ export function DocsShell({ tree, children }: Props) {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
+  }, [drawerOpen]);
+
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const previous = document.activeElement;
+    const id = requestAnimationFrame(() => {
+      closeButtonRef.current?.focus();
+    });
+    return () => {
+      cancelAnimationFrame(id);
+      if (previous instanceof HTMLElement) {
+        previous.focus();
+      }
+    };
   }, [drawerOpen]);
 
   return (
@@ -70,11 +85,15 @@ export function DocsShell({ tree, children }: Props) {
 
         <aside
           className={`${styles.drawer} ${drawerOpen ? styles.drawerOpen : ''}`}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="docs-drawer-title"
           aria-hidden={!drawerOpen}
         >
           <div className={styles.drawerHeader}>
-            <span>目次</span>
+            <span id="docs-drawer-title">目次</span>
             <button
+              ref={closeButtonRef}
               type="button"
               onClick={() => setDrawerOpen(false)}
               aria-label="サイドバーを閉じる"

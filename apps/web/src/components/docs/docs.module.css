@@ -298,10 +298,14 @@
   color: var(--text-primary);
 }
 
-.searchResultBtn:hover,
+.searchResultBtn:hover {
+  background: var(--bg-muted);
+}
+
 .searchResultBtn:focus-visible {
   background: var(--bg-muted);
-  outline: none;
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
 }
 
 .searchResultTitle {

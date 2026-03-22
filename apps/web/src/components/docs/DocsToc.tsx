@@ -1,10 +1,7 @@
 import Link from 'next/link';
 import type { DocsNavNode } from '@/lib/docs/nav-tree';
+import { docsHrefFromSlug } from '@/lib/docs/paths';
 import styles from './docs.module.css';
-
-function hrefForSlug(slug: string): string {
-  return '/docs/' + slug.split('/').map(encodeURIComponent).join('/');
-}
 
 function TocNodes({ nodes }: { nodes: DocsNavNode[] }) {
   return (
@@ -13,7 +10,7 @@ function TocNodes({ nodes }: { nodes: DocsNavNode[] }) {
         if (node.type === 'file') {
           return (
             <li key={node.slug}>
-              <Link href={hrefForSlug(node.slug)} className={styles.tocLink}>
+              <Link href={docsHrefFromSlug(node.slug)} className={styles.tocLink}>
                 {node.title}
               </Link>
             </li>

@@ -3,13 +3,10 @@
 import Fuse from 'fuse.js';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { docsHrefFromSlug } from '@/lib/docs/paths';
 import styles from './docs.module.css';
 
 type DocItem = { slug: string; title: string; body: string };
-
-function hrefForSlug(slug: string): string {
-  return '/docs/' + slug.split('/').map(encodeURIComponent).join('/');
-}
 
 export function DocsSearch() {
   const router = useRouter();
@@ -53,7 +50,7 @@ export function DocsSearch() {
 
   const go = useCallback(
     (slug: string) => {
-      router.push(hrefForSlug(slug));
+      router.push(docsHrefFromSlug(slug));
       setQ('');
     },
     [router]

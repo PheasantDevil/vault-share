@@ -3,11 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { DocsNavNode } from '@/lib/docs/nav-tree';
+import { docsHrefFromSlug } from '@/lib/docs/paths';
 import styles from './docs.module.css';
-
-function hrefForSlug(slug: string): string {
-  return '/docs/' + slug.split('/').map(encodeURIComponent).join('/');
-}
 
 function normalizePathname(pathname: string | null): string {
   if (!pathname) return '';
@@ -27,7 +24,7 @@ function NavList({ nodes, pathname, onNavigate, depth = 0 }: NavListProps) {
     <ul className={styles.navList} data-depth={depth}>
       {nodes.map((node) => {
         if (node.type === 'file') {
-          const href = hrefForSlug(node.slug);
+          const href = docsHrefFromSlug(node.slug);
           const active = pathname === href;
           return (
             <li key={node.slug}>

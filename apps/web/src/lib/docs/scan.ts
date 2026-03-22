@@ -17,7 +17,10 @@ export async function getAllDocSlugs(): Promise<string[]> {
     let entries;
     try {
       entries = await fs.readdir(dir, { withFileTypes: true });
-    } catch {
+    } catch (err) {
+      if (relDir === '') {
+        throw err;
+      }
       return;
     }
     entries.sort((a, b) => a.name.localeCompare(b.name));
@@ -64,5 +67,9 @@ export async function resolveMarkdownFilePath(slug: string): Promise<string | nu
 export async function readMarkdownSource(slug: string): Promise<string | null> {
   const abs = await resolveMarkdownFilePath(slug);
   if (!abs) return null;
-  return fs.readFile(abs, 'utf8');
+  try {
+    return await fs.readFile(abs, 'utf8');
+  } catch {
+    return null;
+  }
 }

@@ -44,11 +44,17 @@ export function buildDocsNavTree(items: { slug: string; title: string }[]): Docs
   return root;
 }
 
+/** ファイルはフル slug ではなく最終セグメントで並べる（同一ディレクトリ内の見た目順） */
+function fileSortKey(node: DocsNavFile): string {
+  const i = node.slug.lastIndexOf('/');
+  return i === -1 ? node.slug : node.slug.slice(i + 1);
+}
+
 function compareNodes(a: DocsNavNode, b: DocsNavNode): number {
   if (a.type === 'dir' && b.type === 'file') return -1;
   if (a.type === 'file' && b.type === 'dir') return 1;
-  const na = a.type === 'dir' ? a.name : a.slug;
-  const nb = b.type === 'dir' ? b.name : b.slug;
+  const na = a.type === 'dir' ? a.name : fileSortKey(a);
+  const nb = b.type === 'dir' ? b.name : fileSortKey(b);
   return na.localeCompare(nb, 'ja');
 }
 
