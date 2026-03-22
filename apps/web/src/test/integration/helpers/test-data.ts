@@ -27,24 +27,40 @@ export async function createTestUser(
   displayName?: string
 ): Promise<TestUser> {
   const auth = getAuth();
-  const user = await auth.createUser({
-    email,
-    password,
-    displayName,
-    emailVerified: true,
-  });
+  let user;
+  try {
+    user = await auth.createUser({
+      email,
+      password,
+      emailVerified: true,
+      ...(displayName ? { displayName } : {}),
+    });
+  } catch (e: unknown) {
+    const code =
+      typeof e === 'object' && e !== null && 'code' in e
+        ? String((e as { code: string }).code)
+        : '';
+    // E2E ワークフローは seed を複数回試行するため、既存ユーザーは再利用する
+    if (code === 'auth/email-already-exists') {
+      user = await auth.getUserByEmail(email);
+    } else {
+      throw e;
+    }
+  }
 
-  // FirestoreにUserDocを作成
+  // Firestore に UserDoc（undefined フィールドは書かない — Emulator が拒否する）
   const db = getDb();
   const userDoc: UserDoc = {
     uid: user.uid,
     email: user.email || email,
-    displayName: displayName || undefined,
     mfaEnabled: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
-  await db.collection(COLLECTIONS.users).doc(user.uid).set(userDoc);
+  if (displayName) {
+    userDoc.displayName = displayName;
+  }
+  await db.collection(COLLECTIONS.users).doc(user.uid).set(userDoc, { merge: true });
 
   return {
     email,
