@@ -124,6 +124,29 @@
 
 ---
 
+### 2.4 Firestore 複合インデックスのデプロイ（必須）
+
+**目的**: `items` コレクションへのクエリ（`groupId` 一致 + `createdAt` 降順 + `limit`/`offset`）が本番 Firestore で動くようにする。インデックス未定義のままだと API が `FAILED_PRECONDITION` / 500 になる。
+
+**定義ファイル**: リポジトリルートの `firestore.indexes.json`（`firebase.json` で参照）。
+
+#### 手順
+
+1. [Firebase CLI](https://firebase.google.com/docs/cli) を導入し、`gcloud` または `firebase login` で **vault-share-dev** にデプロイ可能な認証を済ませる。
+
+2. リポジトリルートで実行:
+
+   ```bash
+   cd /path/to/vault-share
+   firebase deploy --only firestore:indexes --project vault-share-dev
+   ```
+
+3. コンソールで **ビルド → Firestore → インデックス** を開き、該当インデックスが **有効** になるまで待つ（構築に数分かかることがあります）。
+
+**補足**: エラーレスポンス内のコンソール URL からインデックスを作成することもできますが、**リポジトリの `firestore.indexes.json` を正とし、上記コマンドでデプロイ**すると環境間で定義が揃います。
+
+---
+
 ## 3. 確認の目安（初期設定完了後）
 
 以下が満たされていれば、認証・Firestore・暗号化の実装に進んで問題ありません。
@@ -131,5 +154,6 @@
 - [ ] GCP にログイン済み（`gcloud auth list`）
 - [ ] プロジェクト `vault-share-dev` が選択されている
 - [ ] Firestore に `(default)` データベースが存在する（asia-northeast1）
+- [ ] `firebase deploy --only firestore:indexes` を実行し、`items` 等の複合インデックスが有効になっている
 - [ ] Identity Platform で「メール/パスワード」のみ有効（Google は無効のまま）
 - [ ] Secret Manager に `vault-share-item-encryption-key` が存在し、少なくとも 1 つのバージョンが登録されている

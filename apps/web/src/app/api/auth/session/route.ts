@@ -11,18 +11,26 @@ import {
   getSessionCookieName,
   getSessionCookieOptions,
 } from '@/lib/auth/session';
-import { checkRateLimit, createRateLimitResponse, createUserRateLimitKey } from '@/lib/rate-limit';
+import { checkRateLimit, createRateLimitResponse } from '@/lib/rate-limit';
+
+function shouldSkipSessionRateLimit(): boolean {
+  const v = (process.env.E2E_SKIP_RATE_LIMIT ?? '').toLowerCase();
+  return v === '1' || v === 'true';
+}
 
 export async function POST(request: NextRequest) {
   try {
     // レート制限チェック（IPアドレスベース、1分間に5回まで）
-    const rateLimitResult = await checkRateLimit(request, {
-      windowMs: 60 * 1000, // 1分
-      maxRequests: 5,
-    });
+    // E2E（複数 spec のログイン + Playwright リトライ）では同一 IP で超過しやすいため CI でのみ無効化可
+    if (!shouldSkipSessionRateLimit()) {
+      const rateLimitResult = await checkRateLimit(request, {
+        windowMs: 60 * 1000, // 1分
+        maxRequests: 5,
+      });
 
-    if (!rateLimitResult.allowed) {
-      return createRateLimitResponse(rateLimitResult.resetAt);
+      if (!rateLimitResult.allowed) {
+        return createRateLimitResponse(rateLimitResult.resetAt);
+      }
     }
 
     const body = await request.json();

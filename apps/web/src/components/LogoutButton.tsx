@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getFirebaseAuth } from '@/lib/firebase/client';
 import { signOut } from 'firebase/auth';
+import { Button } from '@/components/ui/Button';
 
 export function LogoutButton() {
   const [loading, setLoading] = useState(false);
@@ -23,13 +24,8 @@ export function LogoutButton() {
   }
 
   return (
-    <button
-      type="button"
-      onClick={handleLogout}
-      disabled={loading}
-      style={{ padding: '0.5rem 1rem' }}
-    >
-      {loading ? 'ログアウト中...' : 'ログアウト'}
-    </button>
+    <Button type="button" variant="secondary" loading={loading} onClick={handleLogout}>
+      ログアウト
+    </Button>
   );
 }

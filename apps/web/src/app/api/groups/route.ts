@@ -79,5 +79,5 @@ export async function POST(request: NextRequest) {
     details: { name },
     request,
   });
-  return NextResponse.json(groupDoc);
+  return NextResponse.json(groupDoc, { status: 201 });
 }

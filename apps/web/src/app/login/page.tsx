@@ -11,12 +11,29 @@ import { FormField } from '@/components/ui/FormField';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 
+function parseSessionApiError(data: unknown): string {
+  if (!data || typeof data !== 'object') return 'ログインに失敗しました。';
+  const err = (data as { error?: unknown }).error;
+  if (typeof err === 'string') return err;
+  if (
+    err &&
+    typeof err === 'object' &&
+    'message' in err &&
+    typeof (err as { message: string }).message === 'string'
+  ) {
+    return (err as { message: string }).message;
+  }
+  return 'ログインに失敗しました。';
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const isGenericCredentialError = !!error && error.includes('メールアドレスまたはパスワード');
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -33,7 +50,7 @@ export default function LoginPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error ?? 'ログインに失敗しました。');
+        setError(parseSessionApiError(data));
         return;
       }
       window.location.href = '/dashboard';
@@ -105,7 +122,11 @@ export default function LoginPage() {
           onChange={(e) => setEmail(e.target.value)}
           required
           autoComplete="email"
-          error={error && error.includes('メールアドレス') ? error : undefined}
+          error={
+            error && !isGenericCredentialError && error.includes('メールアドレス')
+              ? error
+              : undefined
+          }
         />
         <FormField
           label="パスワード"
@@ -115,37 +136,36 @@ export default function LoginPage() {
           onChange={(e) => setPassword(e.target.value)}
           required
           autoComplete="current-password"
-          error={error && error.includes('パスワード') ? error : undefined}
+          error={
+            error && !isGenericCredentialError && error.includes('パスワード') ? error : undefined
+          }
         />
-        {error && !error.includes('メールアドレス') && !error.includes('パスワード') && (
-          <Alert type="error">{error}</Alert>
-        )}
+        {error &&
+          (isGenericCredentialError ||
+            (!error.includes('メールアドレス') && !error.includes('パスワード'))) && (
+            <Alert type="error">{error}</Alert>
+          )}
         <Button type="submit" loading={loading} variant="primary" style={{ width: '100%' }}>
           ログイン
         </Button>
       </form>
-      <p style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.875rem' }}>
-        <Link
-          href="/signup"
-          style={{ color: 'var(--link, #0070f3)', textDecoration: 'none', marginRight: '0.5rem' }}
-        >
+      <div className="app-link-row">
+        <Link href="/signup" className="app-link">
           新規登録
         </Link>
-        <span style={{ color: 'var(--muted, #999)' }}>|</span>
-        <Link
-          href="/reset-password"
-          style={{ color: 'var(--link, #0070f3)', textDecoration: 'none', margin: '0 0.5rem' }}
-        >
+        <span className="app-link-row__sep" aria-hidden>
+          |
+        </span>
+        <Link href="/reset-password" className="app-link">
           パスワードを忘れた場合
         </Link>
-        <span style={{ color: 'var(--muted, #999)' }}>|</span>
-        <Link
-          href="/"
-          style={{ color: 'var(--link, #0070f3)', textDecoration: 'none', marginLeft: '0.5rem' }}
-        >
+        <span className="app-link-row__sep" aria-hidden>
+          |
+        </span>
+        <Link href="/" className="app-link">
           トップへ
         </Link>
-      </p>
+      </div>
     </PageLayout>
   );
 }

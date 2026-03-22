@@ -38,8 +38,19 @@ pnpm test:e2e:ui
 - `groups.spec.ts` - グループ操作のE2Eテスト
 - `items.spec.ts` - アイテム操作のE2Eテスト
 
+## 環境変数（ローカルでエミュレータ＋本番ビルドに近い起動をする場合）
+
+CI（`.github/workflows/test-e2e.yml`）と同様に、少なくとも次を設定してください。
+
+- `ALLOWED_EMAILS` — シードユーザー `test@example.com` を含める（例: `test@example.com`）
+- `ITEM_ENCRYPTION_KEY` — 32 バイトの base64（統合テストと同じ固定値でも可）
+- `FIRESTORE_EMULATOR_HOST` / `FIREBASE_AUTH_EMULATOR_HOST` — エミュレータ利用時
+- `SESSION_SECRET` — 16 文字以上
+- 任意: セッション API のレート制限を避ける `E2E_SKIP_RATE_LIMIT=1`（複数 spec を連続実行する場合）
+
+シード: `pnpm run seed:e2e`（エミュレータ起動後、`apps/web` で実行）
+
 ## 注意事項
 
-- E2Eテストは実際のFirebase環境を使用します（エミュレータではありません）
-- テスト用のユーザーとデータが必要です
-- CI/CDでは自動的に開発サーバーが起動されます
+- **GitHub Actions** では Firebase Emulator + `pnpm start` で E2E を実行します（上記環境変数をワークフローで設定済み）
+- ローカルでは `playwright.config` の `webServer` により `pnpm dev` を起動してテストします（`.env.local` で Firebase クライアント用変数を設定してください）

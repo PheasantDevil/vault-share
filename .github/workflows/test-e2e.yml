@@ -17,6 +17,13 @@ on:
 jobs:
   e2e-test:
     runs-on: ubuntu-latest
+    env:
+      # ログイン許可（未設定だと isEmailAllowed が常に false）
+      ALLOWED_EMAILS: test@example.com
+      # アイテム API の暗号化（32 バイト base64）
+      ITEM_ENCRYPTION_KEY: QkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkI=
+      # セッション API は IP あたり 1 分 5 回 — E2E の複数ログイン + リトライで 429 になるため CI のみ無効化
+      E2E_SKIP_RATE_LIMIT: "1"
     steps:
       - uses: actions/checkout@v4
 
@@ -52,17 +59,17 @@ jobs:
       - name: Start Firebase Emulators
         run: |
           firebase emulators:start --only firestore,auth --project test-project &
-          # Auth エミュレータ (9099) が応答するまで待機
-          for i in $(seq 1 30); do
-            if (echo >/dev/tcp/localhost/9099) 2>/dev/null; then
+          # Auth (9099) と Firestore (8080) の両方が開くまで待機
+          for i in $(seq 1 60); do
+            if (echo >/dev/tcp/localhost/9099) 2>/dev/null && (echo >/dev/tcp/localhost/8080) 2>/dev/null; then
               echo "Firebase Emulators are ready"
-              break
+              exit 0
             fi
-            if [ "$i" -eq 30 ]; then
+            if [ "$i" -eq 60 ]; then
               echo "Emulators did not become ready in time"
               exit 1
             fi
-            echo "Waiting for emulators... ($i/30)"
+            echo "Waiting for emulators... ($i/60)"
             sleep 1
           done
 
@@ -88,6 +95,7 @@ jobs:
           NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: localhost
           NEXT_PUBLIC_FIREBASE_PROJECT_ID: test-project
           NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST: http://localhost:9099
+          GOOGLE_CLOUD_PROJECT: test-project
         run: |
           cd apps/web
           pnpm build
@@ -96,6 +104,9 @@ jobs:
         env:
           NODE_ENV: production
           PORT: 3000
+          # http://localhost での E2E では Secure Cookie が保存されずセッションが効かないため無効化
+          SESSION_COOKIE_SECURE: "false"
+          GOOGLE_CLOUD_PROJECT: test-project
           FIRESTORE_EMULATOR_HOST: localhost:8080
           FIREBASE_AUTH_EMULATOR_HOST: localhost:9099
           SESSION_SECRET: test-secret-key-for-integration-tests-min-16-chars
