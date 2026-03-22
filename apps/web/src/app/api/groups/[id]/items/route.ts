@@ -42,31 +42,30 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   const typeFilter = searchParams.get('type')?.trim() || '';
 
   try {
-    // ベースクエリ
-    let query = db
-      .collection(COLLECTIONS.items)
-      .where('groupId', '==', params.id)
-      .orderBy('createdAt', 'desc');
-
-    // ページネーション適用
-    query = query.limit(limit).offset(offset);
-
-    const itemsSnap = await query.get();
-
-    // 全件数を取得（ページネーション用）
-    const totalSnap = await db
+    // Firestore 複合インデックス（groupId + createdAt + offset 等）が未デプロイでも動くよう、
+    // 等価フィルタのみで取得し、並び替え・ページネーション・検索はアプリ側で行う。
+    // （グループあたり件数が大きくなったら firestore.indexes.json をデプロイし server 側ページに戻す選択可）
+    const itemsSnap = await db
       .collection(COLLECTIONS.items)
       .where('groupId', '==', params.id)
       .get();
 
-    const allItems = itemsSnap.docs
-      .map((doc) => doc.data() as ItemDoc)
-      .filter((doc) => !doc.deletedAt)
-      .map((doc) => {
+    type Row = {
+      id: string;
+      title: string;
+      type: string;
+      updatedAt: string;
+      createdAt: string;
+    };
+
+    const rows: Row[] = itemsSnap.docs
+      .map((doc) => ({ id: doc.id, data: doc.data() as ItemDoc }))
+      .filter(({ data }) => !data.deletedAt)
+      .map(({ id, data }) => {
         let title = '';
         let type = 'other';
         try {
-          const payload = decryptItemPayload({ ciphertext: doc.ciphertext, iv: doc.iv });
+          const payload = decryptItemPayload({ ciphertext: data.ciphertext, iv: data.iv });
           title = payload.title;
           type = payload.type;
         } catch {
@@ -74,31 +73,36 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           type = 'other';
         }
         return {
-          id: doc.id,
+          id,
           title,
           type,
-          updatedAt: doc.updatedAt,
+          updatedAt: data.updatedAt,
+          createdAt: data.createdAt,
         };
       });
 
-    // サーバー側検索フィルタリング（タイトル検索）
-    let filteredItems = allItems;
+    rows.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+
+    let filtered = rows;
     if (searchQuery) {
-      const queryLower = searchQuery.toLowerCase();
-      filteredItems = filteredItems.filter((item) => item.title.toLowerCase().includes(queryLower));
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter((item) => item.title.toLowerCase().includes(q));
     }
-
-    // タイプフィルタリング
     if (typeFilter && typeFilter !== 'all') {
-      filteredItems = filteredItems.filter((item) => item.type === typeFilter);
+      filtered = filtered.filter((item) => item.type === typeFilter);
     }
 
-    // 全件数（フィルタ適用前）
-    const total = totalSnap.docs.filter((doc) => !doc.data().deletedAt).length;
+    const total = filtered.length;
+    const page = filtered.slice(offset, offset + limit).map((row) => ({
+      id: row.id,
+      title: row.title,
+      type: row.type,
+      updatedAt: row.updatedAt,
+    }));
 
     return NextResponse.json(
       {
-        items: filteredItems,
+        items: page,
         pagination: {
           total,
           limit,
