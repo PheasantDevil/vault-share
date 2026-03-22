@@ -48,7 +48,7 @@ export function getSessionCookieName(): string {
   return COOKIE_NAME;
 }
 
-function useSecureSessionCookie(): boolean {
+function resolveSecureSessionCookie(): boolean {
   if (process.env.SESSION_COOKIE_SECURE === 'false') return false;
   if (process.env.SESSION_COOKIE_SECURE === 'true') return true;
   // 本番は HTTPS 想定で Secure。E2E 等で NODE_ENV=production かつ http://localhost のときは SESSION_COOKIE_SECURE=false を設定すること。
@@ -64,7 +64,7 @@ export function getSessionCookieOptions(): {
 } {
   return {
     httpOnly: true,
-    secure: useSecureSessionCookie(),
+    secure: resolveSecureSessionCookie(),
     sameSite: 'lax',
     path: '/',
     maxAge: 60 * 60 * 24 * 7, // 7 days
