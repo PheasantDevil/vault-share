@@ -36,9 +36,13 @@ export async function GET() {
     );
   }
 
+  const buildSha = (process.env.BUILD_SHA ?? '').trim();
+
   return NextResponse.json(
     {
       firebase: { apiKey, authDomain, projectId },
+      /** 本番イメージがどの Git コミットか（Docker --build-arg BUILD_SHA）。ローカルでは空のことが多い */
+      ...(buildSha ? { buildSha } : {}),
     },
     {
       headers: {
