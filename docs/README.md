@@ -5,5 +5,6 @@
 - **03-github-setup**: GitHub 初期作成・設定（**GitHub CLI コマンド一覧**は `03-github-setup/01-github-cli-commands.md`）
 - **04-gcp-setup**: GCP 初期設定（**gcloud コマンド一覧**と**初期設定時に実行したコマンドの記録**は `04-gcp-setup/01-gcloud-commands-and-initial-setup.md`）
 - **05-deployment**: デプロイ先の比較・方針。**フロントは Cloud Run（GCP 統一）**。無料枠・課金・プレビュー URL 方針は `05-deployment/02-cloud-run-free-tier-and-preview.md`
+- **06-operations**: 運用・データメンテ。**API エラー時の PDCA 対応手順**は `06-operations/api-errors-pdca-playbook.md`
 
 リポジトリ作成後は、本ディレクトリを `<リポジトリ名>/docs/` に配置して運用する。
