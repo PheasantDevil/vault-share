@@ -53,19 +53,14 @@ jobs:
         with:
           node-version: '20'
 
+      # 権限不足で失敗しても Cloud Run だけ進むと、古いクエリ経路で 500 が残り得るため main では必須とする
       - name: Deploy Firestore indexes
         id: firestore_indexes
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        continue-on-error: true
         env:
           PROJECT_ID: ${{ vars.GCP_PROJECT_ID || secrets.GCP_PROJECT_ID }}
         run: |
           npx --yes firebase-tools@13.35.1 deploy --only firestore:indexes --project "$PROJECT_ID" --non-interactive
-
-      - name: Firestore indexes deploy hint
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.firestore_indexes.outcome == 'failure'
-        run: |
-          echo "::warning::Firestore インデックスの自動デプロイに失敗しました。デプロイ SA に Firebase / Datastore Index Admin 等の権限を付与するか、手元で firebase deploy --only firestore:indexes を実行してください。"
 
       - name: Configure Docker for Artifact Registry
         run: |
@@ -105,6 +100,7 @@ jobs:
             --build-arg NEXT_PUBLIC_FIREBASE_API_KEY="$NEXT_PUBLIC_FIREBASE_API_KEY" \
             --build-arg NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="$NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN" \
             --build-arg NEXT_PUBLIC_FIREBASE_PROJECT_ID="$NEXT_PUBLIC_FIREBASE_PROJECT_ID" \
+            --build-arg BUILD_SHA="${{ github.sha }}" \
             -t "$IMAGE:${{ github.sha }}" .
           docker push "$IMAGE:${{ github.sha }}"
           echo "image=$IMAGE:${{ github.sha }}" >> $GITHUB_OUTPUT

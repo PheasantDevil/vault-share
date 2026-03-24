@@ -29,6 +29,10 @@ RUN pnpm run build
 # Production stage
 FROM node:20-alpine AS runner
 
+# Cloud Run でどのコミットのイメージか確認する（/api/config の buildSha）
+ARG BUILD_SHA=
+ENV BUILD_SHA=$BUILD_SHA
+
 WORKDIR /app
 
 ENV NODE_ENV=production
