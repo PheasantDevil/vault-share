@@ -45,5 +45,8 @@ infra/Pulumi.*.yaml
 *.pem
 .secret-manager/
 
+# 1Password Connect ローカル（CLI が生成する秘密情報）
+infra/1password-connect/1password-credentials.json
+
 # Generated at build (docs search index)
 apps/web/public/generated/docs-search.json

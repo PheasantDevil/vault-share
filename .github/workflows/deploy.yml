@@ -159,10 +159,20 @@ jobs:
             echo "ALLOWED_EMAILS: \"${{ secrets.ALLOWED_EMAILS }}\"" >> "$ENV_VARS_FILE"
           fi
 
+          # 1Password Connect（任意）: Repository Variable ONEPASSWORD_CONNECT_URL が空でないときだけ有効化
+          # GCP Secret Manager の vault-share-onepassword-connect-token を ONEPASSWORD_CONNECT_TOKEN として注入する。
+          # 事前準備: scripts/gcp/setup-onepassword-connect-secret.sh と docs/05-deployment/05-onepassword-connect-cloud-run.md 参照
+          if [ -n "${{ vars.ONEPASSWORD_CONNECT_URL }}" ]; then
+            echo "ONEPASSWORD_CONNECT_URL: \"${{ vars.ONEPASSWORD_CONNECT_URL }}\"" >> "$ENV_VARS_FILE"
+            EXTRA_OP_SECRET=',ONEPASSWORD_CONNECT_TOKEN=vault-share-onepassword-connect-token:latest'
+          else
+            EXTRA_OP_SECRET=""
+          fi
+
           # Secret Managerからシークレットを読み込む（存在する場合）
           # SESSION_SECRET は Cookie 署名に必須のため、存在チェックを行わず常に参照を設定する
           # （このワークフローの権限不足等で存在チェックが失敗すると、実行環境に SESSION_SECRET が注入されずログインが落ちるため）
-          SECRETS="SESSION_SECRET=vault-share-session-secret:latest"
+          SECRETS="SESSION_SECRET=vault-share-session-secret:latest${EXTRA_OP_SECRET}"
 
           if [ "$IS_PR_PREVIEW" = "true" ] && [ -n "$PR_NUMBER" ]; then
             TAG="pr-$PR_NUMBER"
