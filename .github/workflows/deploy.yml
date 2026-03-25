@@ -159,11 +159,16 @@ jobs:
             echo "ALLOWED_EMAILS: \"${{ secrets.ALLOWED_EMAILS }}\"" >> "$ENV_VARS_FILE"
           fi
 
-          # 1Password Connect（任意）: Repository Variable ONEPASSWORD_CONNECT_URL が空でないときだけ有効化
+          # 1Password Connect（任意）: Secret または Variable の ONEPASSWORD_CONNECT_URL が空でないときだけ有効化
+          # （Secret を優先。未設定なら Variable を参照）
           # GCP Secret Manager の vault-share-onepassword-connect-token を ONEPASSWORD_CONNECT_TOKEN として注入する。
           # 事前準備: scripts/gcp/setup-onepassword-connect-secret.sh と docs/05-deployment/05-onepassword-connect-cloud-run.md 参照
-          if [ -n "${{ vars.ONEPASSWORD_CONNECT_URL }}" ]; then
-            echo "ONEPASSWORD_CONNECT_URL: \"${{ vars.ONEPASSWORD_CONNECT_URL }}\"" >> "$ENV_VARS_FILE"
+          OP_URL="${{ secrets.ONEPASSWORD_CONNECT_URL }}"
+          if [ -z "$OP_URL" ]; then
+            OP_URL="${{ vars.ONEPASSWORD_CONNECT_URL }}"
+          fi
+          if [ -n "$OP_URL" ]; then
+            echo "ONEPASSWORD_CONNECT_URL: \"$OP_URL\"" >> "$ENV_VARS_FILE"
             EXTRA_OP_SECRET=',ONEPASSWORD_CONNECT_TOKEN=vault-share-onepassword-connect-token:latest'
           else
             EXTRA_OP_SECRET=""

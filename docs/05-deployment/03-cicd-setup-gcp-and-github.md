@@ -33,13 +33,14 @@ gcloud projects describe vault-share-dev --format='value(projectNumber)'
 
 ### 1.1 任意: 1Password Connect（本番インポート）
 
-Cloud Run で「1Passwordからインポート」を使う場合のみ、次の **リポジトリ変数**を追加する。
+Cloud Run で「1Passwordからインポート」を使う場合のみ、次の **Actions Secret または Variable** の `ONEPASSWORD_CONNECT_URL` を設定する（**Secret が優先**され、空のときだけ Variable）。
 
-| 変数名                    | 値                                                                   |
-| ------------------------- | -------------------------------------------------------------------- |
-| `ONEPASSWORD_CONNECT_URL` | Connect API の HTTPS ベース URL（例: `https://connect.example.com`） |
+| 種別           | 名前                      | 値                                                                                  |
+| -------------- | ------------------------- | ----------------------------------------------------------------------------------- |
+| Secret（推奨） | `ONEPASSWORD_CONNECT_URL` | Connect のベース URL（例: `https://connect.example.com` や検証用 `http://IP:8080`） |
+| Variable       | `ONEPASSWORD_CONNECT_URL` | 上と同じ（Secret 未設定時のみ使用）                                                 |
 
-- **空のまま**にすると、デプロイは従来どおり `SESSION_SECRET` のみを Secret 参照し、1Password 用の参照は付けない。
+- **どちらも空**にすると、デプロイは従来どおり `SESSION_SECRET` のみを Secret 参照し、1Password 用の参照は付けない。
 - Secret Manager に **`vault-share-onepassword-connect-token`** を用意し、GitHub Actions SA / Cloud Run SA に `secretAccessor` を付ける手順は [`05-onepassword-connect-cloud-run.md`](./05-onepassword-connect-cloud-run.md) と `scripts/gcp/setup-onepassword-connect-secret.sh` を参照。
 
 ---
@@ -55,7 +56,7 @@ Cloud Run で「1Passwordからインポート」を使う場合のみ、次の 
 1. **固定値**: `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `GOOGLE_CLOUD_PROJECT` は自動設定
 2. **GitHub Secrets**: `NEXT_PUBLIC_FIREBASE_API_KEY`, `ALLOWED_EMAILS` が設定されている場合は自動設定
 3. **Secret Manager**: `vault-share-session-secret` を `SESSION_SECRET` として参照（必須）
-4. **任意**: リポジトリ変数 `ONEPASSWORD_CONNECT_URL` が設定されているとき、`vault-share-onepassword-connect-token` を `ONEPASSWORD_CONNECT_TOKEN` として参照（[`05-onepassword-connect-cloud-run.md`](./05-onepassword-connect-cloud-run.md)）
+4. **任意**: `ONEPASSWORD_CONNECT_URL`（Secret または Variable）が設定されているとき、`vault-share-onepassword-connect-token` を `ONEPASSWORD_CONNECT_TOKEN` として参照（[`05-onepassword-connect-cloud-run.md`](./05-onepassword-connect-cloud-run.md)）
 
 **設定手順:**
 
