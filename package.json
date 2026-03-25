@@ -10,7 +10,9 @@
     "test": "pnpm -r run test",
     "connect:up": "docker compose --project-directory infra/1password-connect -f infra/1password-connect/docker-compose.yaml up -d",
     "connect:down": "docker compose --project-directory infra/1password-connect -f infra/1password-connect/docker-compose.yaml down",
-    "connect:logs": "docker compose --project-directory infra/1password-connect -f infra/1password-connect/docker-compose.yaml logs -f"
+    "connect:logs": "docker compose --project-directory infra/1password-connect -f infra/1password-connect/docker-compose.yaml logs -f",
+    "gcp:provision-connect-vm": "bash scripts/gcp/provision-onepassword-connect-vm.sh",
+    "gcp:install-connect-vm": "bash scripts/gcp/install-connect-on-vm.sh"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.0.0",
