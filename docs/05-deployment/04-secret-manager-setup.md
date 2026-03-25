@@ -116,6 +116,13 @@ echo -n "NEW_SESSION_SECRET_VALUE" | gcloud secrets versions add vault-share-ses
   --project=vault-share-dev
 ```
 
+## 1Password Connect 用シークレット（任意）
+
+Cloud Run で 1Password からのインポートを有効にする場合、別シークレット **`vault-share-onepassword-connect-token`** を使います。作成・IAM・GitHub 変数は次を参照してください。
+
+- [`05-onepassword-connect-cloud-run.md`](./05-onepassword-connect-cloud-run.md)
+- `scripts/gcp/setup-onepassword-connect-secret.sh`
+
 ## セキュリティのベストプラクティス
 
 1. **シークレットの値は絶対にコミットしない**: `.env.local` は `.gitignore` に含まれていることを確認
