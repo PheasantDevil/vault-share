@@ -96,7 +96,8 @@ ONEPASSWORD_CONNECT_TOKEN=<1-3 のトークン>
 
 ## Cloud Run（本番）で使う
 
-ローカルの `localhost` は本番からは見えない。**HTTPS で公開した Connect** と Secret Manager・GitHub 変数の手順は [`docs/05-deployment/05-onepassword-connect-cloud-run.md`](../../docs/05-deployment/05-onepassword-connect-cloud-run.md) を参照。
+ローカルの `localhost` は本番からは見えない。**当面は VM の `http://<外部IP>:8080`** を `ONEPASSWORD_CONNECT_URL` に設定する手順は [`docs/05-deployment/05-onepassword-connect-cloud-run.md`](../../docs/05-deployment/05-onepassword-connect-cloud-run.md)。  
+ドメイン取得後に **HTTPS（Caddy）** する場合は [`docs/05-deployment/07-onepassword-connect-caddy-https.md`](../../docs/05-deployment/07-onepassword-connect-caddy-https.md)。
 
 ## 停止・ログ
 

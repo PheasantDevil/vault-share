@@ -1,6 +1,10 @@
 # vault-share-dev 上の 1Password Connect 用 GCE VM（参考）
 
-自動構築で作成したリソースのメモ。**本番運用前にドメイン＋HTTPS（Caddy 等）とファイアウォールの見直し**を推奨する。
+自動構築で作成したリソースのメモ。
+
+**当面（ドメイン費用をかけない場合）:** Cloud Run の `ONEPASSWORD_CONNECT_URL` は **`http://<外部IP>:8080`** でよい（[05-onepassword-connect-cloud-run.md](./05-onepassword-connect-cloud-run.md)）。
+
+**HTTPS に移行する場合（ドメイン年額が発生）:** [07-onepassword-connect-caddy-https.md](./07-onepassword-connect-caddy-https.md) の Caddy 手順を参照する。
 
 ## インスタンス
 
@@ -39,9 +43,11 @@ gcloud compute firewall-rules delete allow-connect-ssh-bootstrap --project=vault
 - `docker-compose.yaml` と `1password-credentials.json`
 - `sudo docker compose up -d`（`~/connect` で実行）
 
-## Cloud Run 向け URL（HTTP の場合）
+## Cloud Run 向け URL（標準・HTTP）
 
-検証では **`http://<外部IP>:8080`** を `ONEPASSWORD_CONNECT_URL`（GitHub Secret または Variable）に設定できる。本番では **HTTPS + 固定ドメイン**に切り替えること。
+**`http://<外部IP>:8080`** を `ONEPASSWORD_CONNECT_URL`（GitHub Secret または Variable）に設定する（当面の正式運用で可）。
+
+HTTPS 化は任意: [07-onepassword-connect-caddy-https.md](./07-onepassword-connect-caddy-https.md)
 
 ## トークン
 
@@ -50,3 +56,4 @@ Cloud Run 用の **`ONEPASSWORD_CONNECT_TOKEN`** は GCP Secret Manager の `vau
 ## 関連
 
 - [05-onepassword-connect-cloud-run.md](./05-onepassword-connect-cloud-run.md)
+- [07-onepassword-connect-caddy-https.md](./07-onepassword-connect-caddy-https.md)
