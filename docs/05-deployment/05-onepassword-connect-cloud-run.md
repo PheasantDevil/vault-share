@@ -15,7 +15,15 @@
 
 ### 1. Connect を Cloud Run から届く場所で動かす
 
-例: GCE VM ＋ Docker Compose（`infra/1password-connect` と同型）。  
+**ゼロから GCE に載せる場合（推奨スクリプト）:**
+
+```bash
+export GCP_PROJECT_ID=vault-share-dev
+pnpm run gcp:provision-connect-vm
+pnpm run gcp:install-connect-vm -- /path/to/1password-credentials.json
+```
+
+手動でも可: GCE VM ＋ Docker Compose（`infra/1password-connect` と同型）。  
 VM の外部 IP は次で確認できる:
 
 ```bash
