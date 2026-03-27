@@ -221,7 +221,9 @@ function OnePasswordImportContent() {
       {loading && <p>読み込み中...</p>}
 
       {!loading && !error && vaults.length === 0 && (
-        <Alert type="warning">1Password Connect設定がありません。管理者に連絡してください。</Alert>
+        <Alert type="warning">
+          利用可能な Vault がありません。1Password で Vault を作成するか、Connect のアクセストークンが正しいアカウントを指しているか確認してください。
+        </Alert>
       )}
 
       {!loading && vaults.length > 0 && (

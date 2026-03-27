@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     const client = new OnePasswordConnectClient({ connectUrl, accessToken });
     const vaults = await client.listVaults();
 
-    return NextResponse.json({ vaults });
+    return NextResponse.json({ vaults: vaults ?? [] });
   } catch (err) {
     console.error('1Password Connect vaults error:', err);
     return NextResponse.json(
