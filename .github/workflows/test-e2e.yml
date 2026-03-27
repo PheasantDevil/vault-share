@@ -91,11 +91,16 @@ jobs:
 
       - name: Build application
         env:
+          NEXT_E2E_BUILD: "1"
           NEXT_PUBLIC_FIREBASE_API_KEY: dummy-key-for-e2e
           NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: localhost
           NEXT_PUBLIC_FIREBASE_PROJECT_ID: test-project
           NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST: http://localhost:9099
           GOOGLE_CLOUD_PROJECT: test-project
+          # /api/config がサーバーで FIREBASE_WEB_* を参照するため E2E でも揃える
+          FIREBASE_WEB_API_KEY: dummy-key-for-e2e
+          FIREBASE_WEB_AUTH_DOMAIN: localhost
+          FIREBASE_WEB_PROJECT_ID: test-project
         run: |
           cd apps/web
           pnpm build
@@ -114,6 +119,9 @@ jobs:
           NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: localhost
           NEXT_PUBLIC_FIREBASE_PROJECT_ID: test-project
           NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST: http://localhost:9099
+          FIREBASE_WEB_API_KEY: dummy-key-for-e2e
+          FIREBASE_WEB_AUTH_DOMAIN: localhost
+          FIREBASE_WEB_PROJECT_ID: test-project
         run: |
           cd apps/web
           pnpm start > /tmp/nextjs.log 2>&1 &

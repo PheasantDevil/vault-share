@@ -90,9 +90,9 @@ export class OnePasswordConnectClient {
    * @see https://developer.1password.com/docs/connect/api-reference/#list-vaults
    */
   async listVaults(): Promise<OnePasswordVault[]> {
-    const response = await this.request<
-      OnePasswordVault[] | { vaults?: OnePasswordVault[] }
-    >('/v1/vaults');
+    const response = await this.request<OnePasswordVault[] | { vaults?: OnePasswordVault[] }>(
+      '/v1/vaults'
+    );
     if (Array.isArray(response)) {
       return response;
     }
@@ -105,9 +105,9 @@ export class OnePasswordConnectClient {
    * @see https://developer.1password.com/docs/connect/api-reference/#list-items
    */
   async listItems(vaultId: string): Promise<OnePasswordItem[]> {
-    const response = await this.request<
-      OnePasswordItem[] | { items?: OnePasswordItem[] }
-    >(`/v1/vaults/${vaultId}/items`);
+    const response = await this.request<OnePasswordItem[] | { items?: OnePasswordItem[] }>(
+      `/v1/vaults/${vaultId}/items`
+    );
     if (Array.isArray(response)) {
       return response;
     }
