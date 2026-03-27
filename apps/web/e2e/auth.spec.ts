@@ -23,9 +23,11 @@ test.describe('Authentication Flow', () => {
     await page.fill('input[type="password"]', 'wrongpassword');
     await page.click('button[type="submit"]');
 
-    // エラーメッセージ（認証失敗は Alert 1 件。strict モード回避のため getByRole を使用）
+    // role=alert は本文が accessible name にならないことがあるため、テキストで検証する
     await expect(
-      page.getByRole('alert', { name: /メールアドレスまたはパスワードが正しくありません/ })
+      page
+        .getByRole('alert')
+        .filter({ hasText: /メールアドレスまたはパスワードが正しくありません/ })
     ).toBeVisible();
   });
 

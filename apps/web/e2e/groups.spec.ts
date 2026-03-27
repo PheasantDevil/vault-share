@@ -28,7 +28,7 @@ test.describe('Group Operations', () => {
   test('should display group list on dashboard', async ({ page }) => {
     await page.goto('/dashboard');
 
-    // グループ一覧が表示されることを確認
-    await expect(page.locator('text=/グループ/')).toBeVisible();
+    // グループ一覧が表示されることを確認（「グループ」単独だとツールバーの「グループを作成」と重複する）
+    await expect(page.getByText('参加中のグループ一覧')).toBeVisible();
   });
 });
