@@ -2,24 +2,20 @@
  * 公開設定（Firebase クライアント用）を返す。Cloud Run 等でランタイムに環境変数を渡している場合に使用。
  */
 import { NextResponse } from 'next/server';
+import { getFirebaseWebConfigFromEnv } from '@/lib/firebase/server-public-config';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  // Next.js standaloneモードでは NEXT_PUBLIC_* がビルド時に埋め込まれるが、
-  // Cloud Run のランタイム環境変数と一致しない場合に空になることがある。
-  // サーバーサイドでは process.env を直接参照してバリデーションする。
+  // NEXT_PUBLIC_* はビルド時インライン化されるため、本番では FIREBASE_WEB_* を参照する。
+  const cfg = getFirebaseWebConfigFromEnv();
 
-  const apiKey = (process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? '').trim();
-  const authDomain = (process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? '').trim();
-  const projectId = (process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? '').trim();
+  if (!cfg) {
+    const missing: string[] = [];
+    if (!(process.env.FIREBASE_WEB_API_KEY ?? '').trim()) missing.push('FIREBASE_WEB_API_KEY');
+    if (!(process.env.FIREBASE_WEB_AUTH_DOMAIN ?? '').trim()) missing.push('FIREBASE_WEB_AUTH_DOMAIN');
+    if (!(process.env.FIREBASE_WEB_PROJECT_ID ?? '').trim()) missing.push('FIREBASE_WEB_PROJECT_ID');
 
-  const missing: string[] = [];
-  if (!apiKey) missing.push('NEXT_PUBLIC_FIREBASE_API_KEY');
-  if (!authDomain) missing.push('NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN');
-  if (!projectId) missing.push('NEXT_PUBLIC_FIREBASE_PROJECT_ID');
-
-  if (missing.length > 0) {
     // 失敗理由をレスポンス本文に出し過ぎず、ただし何が欠けているかはログに残す
     console.error('Firebase config missing in Cloud Run:', { missing });
     return NextResponse.json(
@@ -37,6 +33,8 @@ export async function GET() {
   }
 
   const buildSha = (process.env.BUILD_SHA ?? '').trim();
+
+  const { apiKey, authDomain, projectId } = cfg;
 
   return NextResponse.json(
     {
