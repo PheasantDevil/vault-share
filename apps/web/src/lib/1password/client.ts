@@ -11,7 +11,8 @@ export interface OnePasswordVault {
   contentVersion: number;
   createdAt: string;
   updatedAt: string;
-  type: 'USER_CREATED' | 'SYSTEM';
+  /** Connect API は USER_CREATED / PERSONAL / EVERYONE などを返す */
+  type: string;
 }
 
 export interface OnePasswordItem {
@@ -85,20 +86,32 @@ export class OnePasswordConnectClient {
 
   /**
    * Vault一覧を取得
+   * Connect API は JSON 配列をそのまま返す（{ vaults: [] } 形式ではない）
+   * @see https://developer.1password.com/docs/connect/api-reference/#list-vaults
    */
   async listVaults(): Promise<OnePasswordVault[]> {
-    const response = await this.request<{ vaults: OnePasswordVault[] }>('/v1/vaults');
-    return response.vaults;
+    const response = await this.request<
+      OnePasswordVault[] | { vaults?: OnePasswordVault[] }
+    >('/v1/vaults');
+    if (Array.isArray(response)) {
+      return response;
+    }
+    return response.vaults ?? [];
   }
 
   /**
    * Vault内のアイテム一覧を取得
+   * Connect API は JSON 配列をそのまま返す
+   * @see https://developer.1password.com/docs/connect/api-reference/#list-items
    */
   async listItems(vaultId: string): Promise<OnePasswordItem[]> {
-    const response = await this.request<{ items: OnePasswordItem[] }>(
-      `/v1/vaults/${vaultId}/items`
-    );
-    return response.items;
+    const response = await this.request<
+      OnePasswordItem[] | { items?: OnePasswordItem[] }
+    >(`/v1/vaults/${vaultId}/items`);
+    if (Array.isArray(response)) {
+      return response;
+    }
+    return response.items ?? [];
   }
 
   /**
