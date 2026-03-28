@@ -16,6 +16,10 @@ interface GroupResponse {
   updatedAt: string;
 }
 
+export type OnePasswordConnectionStatus =
+  | { available: true }
+  | { available: false; reason: 'not_configured' };
+
 interface ItemsResponse {
   items: Array<{
     id: string;
@@ -83,6 +87,28 @@ export function useGroup(groupId: string | null) {
 /**
  * アイテム一覧を取得するフック
  */
+/**
+ * 1Password Connect が環境で利用可能か（URL / トークン設定の有無）
+ */
+export function useOnePasswordConnectionStatus() {
+  const { data, error, isLoading, mutate } = useSWR<OnePasswordConnectionStatus>(
+    '/api/1password/connection-status',
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 10_000,
+    }
+  );
+
+  return {
+    available: data?.available,
+    reason: data && 'reason' in data ? data.reason : undefined,
+    isLoading,
+    isError: Boolean(error),
+    mutate,
+  };
+}
+
 export function useItems(
   groupId: string | null,
   options?: {

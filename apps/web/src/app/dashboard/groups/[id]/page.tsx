@@ -11,6 +11,7 @@ import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Pagination } from '@/components/ui/Pagination';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { useToast } from '@/components/ui/Toast';
+import { useOnePasswordConnectionStatus } from '@/lib/swr/hooks';
 
 type Group = { id: string; name: string };
 type Member = { userId: string; role: 'owner' | 'member'; displayName?: string; email?: string };
@@ -54,6 +55,17 @@ export default function GroupDetailPage() {
   const [itemsPerPage] = useState(20);
   const [itemsLoading, setItemsLoading] = useState(false);
   const toast = useToast();
+  const { available: connectAvailable, isLoading: connectHintLoading } =
+    useOnePasswordConnectionStatus();
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !id || loading) return;
+    if (window.location.hash !== '#csv-import') return;
+    const timer = window.setTimeout(() => {
+      document.getElementById('csv-import')?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+    return () => window.clearTimeout(timer);
+  }, [id, loading]);
 
   useEffect(() => {
     if (!id) return;
@@ -386,8 +398,26 @@ export default function GroupDetailPage() {
         </button>
       )}
       <h2 style={{ marginTop: '1.5rem', marginBottom: 0.5 }}>アイテム</h2>
-      <div style={{ marginBottom: '0.5rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-        <Link href={`/dashboard/groups/${id}/1password`}>1Passwordからインポート</Link>
+      {!connectHintLoading && connectAvailable === false && (
+        <p
+          style={{
+            fontSize: '0.875rem',
+            color: 'var(--muted, #666)',
+            marginBottom: '0.5rem',
+            lineHeight: 1.5,
+          }}
+        >
+          この環境では 1Password Connect
+          が未設定のため、Connect
+          経由の取り込みはできません。1Passwordからインポートを開くと CSV
+          への案内があります。
+        </p>
+      )}
+      <div
+        id="csv-import"
+        style={{ marginBottom: '0.5rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}
+      >
+        <Link href={`/dashboard/groups/${id}/import/1password`}>1Passwordからインポート</Link>
         <span>|</span>
         <label style={{ cursor: 'pointer' }}>
           <input
