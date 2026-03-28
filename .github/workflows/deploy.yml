@@ -178,10 +178,11 @@ jobs:
             EXTRA_OP_SECRET=""
           fi
 
-          # Secret Managerからシークレットを読み込む（存在する場合）
-          # SESSION_SECRET は Cookie 署名に必須のため、存在チェックを行わず常に参照を設定する
-          # （このワークフローの権限不足等で存在チェックが失敗すると、実行環境に SESSION_SECRET が注入されずログインが落ちるため）
-          SECRETS="SESSION_SECRET=vault-share-session-secret:latest${EXTRA_OP_SECRET}"
+          # Secret Manager からシークレットを読み込む（必須）
+          # SESSION_SECRET: Cookie 署名
+          # ITEM_ENCRYPTION_KEY: アイテム本文の AES-256-GCM（32 バイト base64）。未設定だと /api/groups/.../items が 500 になる
+          # （権限不足で参照できないとデプロイ失敗とするため、先に setup-item-encryption-key-secret.sh でシークレットと IAM を用意すること）
+          SECRETS="SESSION_SECRET=vault-share-session-secret:latest,ITEM_ENCRYPTION_KEY=vault-share-item-encryption-key:latest${EXTRA_OP_SECRET}"
 
           if [ "$IS_PR_PREVIEW" = "true" ] && [ -n "$PR_NUMBER" ]; then
             TAG="pr-$PR_NUMBER"
