@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { PageLayout } from '@/components/ui/PageLayout';
-import { FormField } from '@/components/ui/FormField';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
+import { ItemImportFilters } from './ItemImportFilters';
+import { ItemImportList } from './ItemImportList';
+import { filterImportItems } from './filter-items';
 
 type OnePasswordVault = {
   id: string;
@@ -37,6 +38,8 @@ function OnePasswordImportContent() {
   const [selectedVaultId, setSelectedVaultId] = useState<string | null>(null);
   const [items, setItems] = useState<OnePasswordItem[]>([]);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
@@ -52,7 +55,24 @@ function OnePasswordImportContent() {
       setItems([]);
       setSelectedItems(new Set());
     }
+    setSearchQuery('');
+    setCategoryFilter('');
   }, [selectedVaultId]);
+
+  const categoryOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const item of items) {
+      if (item.category?.trim()) {
+        set.add(item.category);
+      }
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'ja'));
+  }, [items]);
+
+  const filteredItems = useMemo(
+    () => filterImportItems(items, searchQuery, categoryFilter),
+    [items, searchQuery, categoryFilter]
+  );
 
   async function loadVaults() {
     try {
@@ -98,6 +118,21 @@ function OnePasswordImportContent() {
       newSelected.add(itemId);
     }
     setSelectedItems(newSelected);
+  }
+
+  function handleToggleAllVisible() {
+    const visibleIds = filteredItems.map((i) => i.id);
+    if (visibleIds.length === 0) {
+      return;
+    }
+    const allSelected = visibleIds.every((id) => selectedItems.has(id));
+    const next = new Set(selectedItems);
+    if (allSelected) {
+      visibleIds.forEach((id) => next.delete(id));
+    } else {
+      visibleIds.forEach((id) => next.add(id));
+    }
+    setSelectedItems(next);
   }
 
   async function handleImport() {
@@ -222,7 +257,8 @@ function OnePasswordImportContent() {
 
       {!loading && !error && vaults.length === 0 && (
         <Alert type="warning">
-          利用可能な Vault がありません。1Password で Vault を作成するか、Connect のアクセストークンが正しいアカウントを指しているか確認してください。
+          利用可能な Vault がありません。1Password で Vault を作成するか、Connect
+          のアクセストークンが正しいアカウントを指しているか確認してください。
         </Alert>
       )}
 
@@ -274,37 +310,20 @@ function OnePasswordImportContent() {
 
           {selectedVaultId && items.length > 0 && (
             <>
-              <div style={{ marginBottom: '1rem' }}>
-                <p style={{ marginBottom: '0.5rem', fontWeight: 500 }}>
-                  インポートするアイテムを選択してください:
-                </p>
-                <ul
-                  style={{
-                    listStyle: 'none',
-                    padding: '0.5rem',
-                    maxHeight: '400px',
-                    overflowY: 'auto',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
-                  }}
-                >
-                  {items.map((item) => (
-                    <li key={item.id} style={{ marginBottom: '0.5rem' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                        <input
-                          type="checkbox"
-                          checked={selectedItems.has(item.id)}
-                          onChange={() => toggleItemSelection(item.id)}
-                          style={{ marginRight: '0.5rem' }}
-                        />
-                        <span>
-                          {item.title} ({item.category})
-                        </span>
-                      </label>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              <ItemImportFilters
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                categoryFilter={categoryFilter}
+                onCategoryChange={setCategoryFilter}
+                categories={categoryOptions}
+              />
+              <ItemImportList
+                filteredItems={filteredItems}
+                totalCount={items.length}
+                selectedIds={selectedItems}
+                onToggle={toggleItemSelection}
+                onToggleAllVisible={handleToggleAllVisible}
+              />
 
               {selectedItems.size > 0 && (
                 <div>

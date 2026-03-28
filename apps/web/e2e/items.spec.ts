@@ -14,29 +14,26 @@ test.describe('Item Operations', () => {
   });
 
   test('should create a new item', async ({ page }) => {
-    // グループ詳細ページに移動（グループIDは事前に作成されていることを前提）
-    // 実際のテストでは、グループを作成してからそのIDを使用
-    await page.goto('/dashboard');
+    // ダッシュボードの先頭リンクは /dashboard/groups/new のため、必ずグループを新規作成してから詳細へ進む
+    const groupName = `E2E Item ${Date.now()}`;
+    await page.goto('/dashboard/groups/new');
+    await page.fill('input[type="text"]', groupName);
+    await page.click('button[type="submit"]');
+    await page.waitForURL(/\/dashboard\/groups\/[^/]+$/);
+    await expect(page.locator('h1')).toContainText(groupName);
 
-    // 最初のグループをクリック（存在する場合）
-    const groupLink = page.locator('a[href^="/dashboard/groups/"]').first();
-    if ((await groupLink.count()) > 0) {
-      await groupLink.click();
-      await page.waitForURL(/\/dashboard\/groups\/[^/]+$/);
+    // アイテム作成フォームを開く
+    await page.getByRole('button', { name: /新しいアイテムを追加/ }).click();
 
-      // アイテム作成フォームを開く
-      await page.click('text=/新しいアイテムを追加/');
+    // フォームに入力（一覧の検索・フィルタ用 select とは区別する）
+    await page.getByLabel('タイトル').fill('Test Item');
+    await page.getByLabel('種別').selectOption('password');
+    await page.getByLabel('内容').fill('test-value');
 
-      // フォームに入力
-      await page.fill('input[type="text"]', 'Test Item');
-      await page.selectOption('select', 'password');
-      await page.fill('textarea', 'test-value');
+    // 保存
+    await page.getByRole('button', { name: '保存' }).click();
 
-      // 保存
-      await page.click('button[type="submit"]');
-
-      // アイテムが表示されることを確認
-      await expect(page.locator('text=Test Item')).toBeVisible();
-    }
+    // アイテムが表示されることを確認
+    await expect(page.getByText('Test Item')).toBeVisible();
   });
 });

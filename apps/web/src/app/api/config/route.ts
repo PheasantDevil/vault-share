@@ -13,8 +13,10 @@ export async function GET() {
   if (!cfg) {
     const missing: string[] = [];
     if (!(process.env.FIREBASE_WEB_API_KEY ?? '').trim()) missing.push('FIREBASE_WEB_API_KEY');
-    if (!(process.env.FIREBASE_WEB_AUTH_DOMAIN ?? '').trim()) missing.push('FIREBASE_WEB_AUTH_DOMAIN');
-    if (!(process.env.FIREBASE_WEB_PROJECT_ID ?? '').trim()) missing.push('FIREBASE_WEB_PROJECT_ID');
+    if (!(process.env.FIREBASE_WEB_AUTH_DOMAIN ?? '').trim())
+      missing.push('FIREBASE_WEB_AUTH_DOMAIN');
+    if (!(process.env.FIREBASE_WEB_PROJECT_ID ?? '').trim())
+      missing.push('FIREBASE_WEB_PROJECT_ID');
 
     // 失敗理由をレスポンス本文に出し過ぎず、ただし何が欠けているかはログに残す
     console.error('Firebase config missing in Cloud Run:', { missing });
