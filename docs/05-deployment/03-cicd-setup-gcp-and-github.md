@@ -43,6 +43,24 @@ Cloud Run で「1Passwordからインポート」を使う場合のみ、次の 
 - **どちらも空**にすると、デプロイは従来どおり `SESSION_SECRET` のみを Secret 参照し、1Password 用の参照は付けない。
 - Secret Manager に **`vault-share-onepassword-connect-token`** を用意し、GitHub Actions SA / Cloud Run SA に `secretAccessor` を付ける手順は [`05-onepassword-connect-cloud-run.md`](./05-onepassword-connect-cloud-run.md) と `scripts/gcp/setup-onepassword-connect-secret.sh` を参照。
 
+### 1.2 Firestore インデックスのデプロイ（自動・失敗時）
+
+`deploy.yml` の `main` 向けステップで `firebase deploy --only firestore:indexes` を実行します。GitHub Actions 用サービスアカウント（上表の `SERVICE_ACCOUNT`）に **Firestore のインデックス作成権限**がないと、`403 The caller does not have permission` で失敗します。
+
+**この場合でもワークフローは Cloud Run のデプロイを続行します**（インデックス失敗でブロックしない）。本番のインデックス定義と `firestore.indexes.json` を一致させるには、次のいずれかを行ってください。
+
+1. **IAM を付与**（推奨）  
+   プロジェクトで次を実行する（例）:
+
+   ```bash
+   gcloud projects add-iam-policy-binding vault-share-dev \
+     --member="serviceAccount:github-actions@vault-share-dev.iam.gserviceaccount.com" \
+     --role="roles/datastore.indexAdmin"
+   ```
+
+2. **手動デプロイ**  
+   ローカルで `firebase deploy --only firestore:indexes --project vault-share-dev` を実行できるアカウントを使う。
+
 ---
 
 ## 2. Cloud Run の環境変数（自動設定）
