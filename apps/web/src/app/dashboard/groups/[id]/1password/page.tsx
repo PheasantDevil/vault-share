@@ -1,10 +1,13 @@
 'use client';
 
-import { useState, useEffect, useMemo, Suspense } from 'react';
+import { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { PageLayout } from '@/components/ui/PageLayout';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
+import { CsvImportGuidance } from '@/components/onepassword-import/CsvImportGuidance';
+import { useOnePasswordConnectionStatus } from '@/lib/swr/hooks';
 import { ItemImportFilters } from './ItemImportFilters';
 import { ItemImportList } from './ItemImportList';
 import { filterImportItems } from './filter-items';
@@ -34,6 +37,11 @@ function OnePasswordImportContent() {
   const params = useParams();
   const router = useRouter();
   const groupId = typeof params.id === 'string' ? params.id : '';
+  const {
+    available: connectAvailable,
+    isLoading: connectStatusLoading,
+    isError: connectStatusError,
+  } = useOnePasswordConnectionStatus();
   const [vaults, setVaults] = useState<OnePasswordVault[]>([]);
   const [selectedVaultId, setSelectedVaultId] = useState<string | null>(null);
   const [items, setItems] = useState<OnePasswordItem[]>([]);
@@ -44,9 +52,30 @@ function OnePasswordImportContent() {
   const [error, setError] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
 
-  useEffect(() => {
-    loadVaults();
+  const loadVaults = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await fetch('/api/1password/vaults');
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? 'Vault一覧の取得に失敗しました');
+        return;
+      }
+      setVaults(data.vaults || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Vault一覧の取得に失敗しました');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    if (connectAvailable !== true) {
+      return;
+    }
+    void loadVaults();
+  }, [connectAvailable, loadVaults]);
 
   useEffect(() => {
     if (selectedVaultId) {
@@ -73,24 +102,6 @@ function OnePasswordImportContent() {
     () => filterImportItems(items, searchQuery, categoryFilter),
     [items, searchQuery, categoryFilter]
   );
-
-  async function loadVaults() {
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await fetch('/api/1password/vaults');
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? 'Vault一覧の取得に失敗しました');
-        return;
-      }
-      setVaults(data.vaults || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Vault一覧の取得に失敗しました');
-    } finally {
-      setLoading(false);
-    }
-  }
 
   async function loadItems(vaultId: string) {
     try {
@@ -244,6 +255,59 @@ function OnePasswordImportContent() {
     return notes.join('\n');
   }
 
+  const choiceHref = `/dashboard/groups/${groupId}/import/1password`;
+
+  if (connectStatusLoading) {
+    return (
+      <PageLayout
+        title="1Passwordからインポート"
+        description="接続状態を確認しています"
+        maxWidth={720}
+        backLink={{ href: `/dashboard/groups/${groupId}`, label: 'グループ詳細' }}
+      >
+        <p>読み込み中...</p>
+      </PageLayout>
+    );
+  }
+
+  if (connectStatusError) {
+    return (
+      <PageLayout
+        title="1Passwordからインポート"
+        description="1Password Connect からアイテムをインポートします"
+        maxWidth={720}
+        backLink={{ href: `/dashboard/groups/${groupId}`, label: 'グループ詳細' }}
+      >
+        <Alert type="error">
+          1Password Connect の利用可否を確認できませんでした。ネットワークを確認するか、しばらくしてから再度お試しください。
+        </Alert>
+        <CsvImportGuidance groupId={groupId} />
+        <p style={{ marginTop: '1rem' }}>
+          <Link href={choiceHref}>インポート方法の選択に戻る</Link>
+        </p>
+      </PageLayout>
+    );
+  }
+
+  if (connectAvailable === false) {
+    return (
+      <PageLayout
+        title="1Passwordからインポート"
+        description="この環境では 1Password Connect は利用できません"
+        maxWidth={720}
+        backLink={{ href: `/dashboard/groups/${groupId}`, label: 'グループ詳細' }}
+      >
+        <Alert type="info">
+          この環境では 1Password Connect が設定されていません。1Password から CSV をエクスポートし、グループ詳細の「CSVからインポート」で取り込んでください。
+        </Alert>
+        <CsvImportGuidance groupId={groupId} showAdminHints />
+        <p style={{ marginTop: '1rem' }}>
+          <Link href={choiceHref}>インポート方法の選択に戻る</Link>
+        </p>
+      </PageLayout>
+    );
+  }
+
   return (
     <PageLayout
       title="1Passwordからインポート"
@@ -251,7 +315,14 @@ function OnePasswordImportContent() {
       maxWidth={720}
       backLink={{ href: `/dashboard/groups/${groupId}`, label: 'グループ詳細' }}
     >
-      {error && <Alert type="error">{error}</Alert>}
+      {error && (
+        <>
+          <Alert type="error">{error}</Alert>
+          <p style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+            <Link href={choiceHref}>インポート方法の選択に戻る（CSV など）</Link>
+          </p>
+        </>
+      )}
 
       {loading && <p>読み込み中...</p>}
 
