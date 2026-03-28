@@ -4,6 +4,7 @@ import type { ItemDoc } from '@vault-share/db';
 import { getSessionFromRequest } from '@/lib/auth/get-session';
 import { decryptItemPayload, encryptItemPayload } from '@/lib/items/encryption';
 import type { ItemPayload } from '@/lib/items/types';
+import { normalizeItemPayloadFromRequest } from '@/lib/items/normalize-item-payload';
 import { writeAuditLog } from '@/lib/audit/log';
 import { getGroupMembership } from '@/lib/groups/get-group-membership';
 
@@ -75,20 +76,13 @@ export async function PATCH(
     return NextResponse.json({ error: 'アイテムが見つかりません' }, { status: 404 });
   }
 
-  const body = (await request.json()) as Partial<ItemPayload>;
-  const title = typeof body.title === 'string' ? body.title.trim() : '';
-  const type =
-    body.type === 'password' || body.type === 'note' || body.type === 'key' || body.type === 'other'
-      ? body.type
-      : 'other';
-  const value = typeof body.value === 'string' ? body.value : '';
-  const note = typeof body.note === 'string' ? body.note : undefined;
-
-  if (!title || !value) {
-    return NextResponse.json({ error: 'タイトルと内容は必須です' }, { status: 400 });
+  const body = await request.json();
+  const normalized = normalizeItemPayloadFromRequest(body);
+  if (!normalized.ok) {
+    return NextResponse.json({ error: normalized.message }, { status: 400 });
   }
 
-  const payload: ItemPayload = { title, type, value, note };
+  const payload: ItemPayload = normalized.payload;
   const { ciphertext, iv } = encryptItemPayload(payload);
   const now = new Date().toISOString();
 
@@ -102,7 +96,7 @@ export async function PATCH(
     actorUid: session.uid,
     action: 'item.update',
     itemId: params.itemId,
-    details: { title, type },
+    details: { title: payload.title, type: payload.type },
     request,
   });
 

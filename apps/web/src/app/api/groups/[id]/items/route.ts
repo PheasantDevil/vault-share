@@ -4,6 +4,7 @@ import type { ItemDoc } from '@vault-share/db';
 import { getSessionFromRequest } from '@/lib/auth/get-session';
 import { encryptItemPayload, decryptItemPayload } from '@/lib/items/encryption';
 import type { ItemPayload } from '@/lib/items/types';
+import { normalizeItemPayloadFromRequest } from '@/lib/items/normalize-item-payload';
 import { writeAuditLog } from '@/lib/audit/log';
 import { createErrorResponse, ErrorCode } from '@/lib/api/error-response';
 import { getGroupMembership } from '@/lib/groups/get-group-membership';
@@ -132,31 +133,18 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   }
 
   try {
-    const body = (await request.json()) as Partial<ItemPayload>;
-    const title = typeof body.title === 'string' ? body.title.trim() : '';
-    const type =
-      body.type === 'password' ||
-      body.type === 'note' ||
-      body.type === 'key' ||
-      body.type === 'other'
-        ? body.type
-        : 'other';
-    const value = typeof body.value === 'string' ? body.value : '';
-    const note = typeof body.note === 'string' ? body.note : undefined;
-
-    if (!title || !value) {
+    const body = await request.json();
+    const normalized = normalizeItemPayloadFromRequest(body);
+    if (!normalized.ok) {
       return NextResponse.json(
-        createErrorResponse(ErrorCode.VALIDATION_ERROR, 'タイトルと内容は必須です', {
-          fields: {
-            title: title ? undefined : 'タイトルは必須です',
-            value: value ? undefined : '内容は必須です',
-          },
+        createErrorResponse(ErrorCode.VALIDATION_ERROR, normalized.message, {
+          fields: normalized.fields,
         }),
         { status: 400 }
       );
     }
 
-    const payload: ItemPayload = { title, type, value, note };
+    const payload: ItemPayload = normalized.payload;
     const { ciphertext, iv } = encryptItemPayload(payload);
     const now = new Date().toISOString();
     const docRef = db.collection(COLLECTIONS.items).doc();
