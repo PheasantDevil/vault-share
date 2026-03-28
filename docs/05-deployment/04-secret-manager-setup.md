@@ -81,13 +81,26 @@ gcloud secrets describe vault-share-session-secret --project=vault-share-dev
 gcloud secrets get-iam-policy vault-share-session-secret --project=vault-share-dev
 ```
 
+## ITEM_ENCRYPTION_KEY（アイテム本文の暗号化）
+
+グループ内アイテムの本文は AES-256-GCM で暗号化されます。本番では **32 バイトを base64 エンコードした値**を `ITEM_ENCRYPTION_KEY` として渡します（`apps/web/env.example` 参照）。
+
+GitHub Actions のデプロイは **`vault-share-item-encryption-key`** を Secret Manager から `ITEM_ENCRYPTION_KEY` としてマウントします。**未作成のままデプロイすると `--set-secrets` が失敗する**ため、初回は次を実行してください。
+
+```bash
+export GCP_PROJECT_ID=vault-share-dev
+./scripts/gcp/setup-item-encryption-key-secret.sh
+```
+
+ローカル開発と同じキーを使う場合は、事前に `export ITEM_ENCRYPTION_KEY=...`（`.env.local` の値）を設定してから実行します。キーを変更すると **既存アイテムは復号できなくなる**ため、本番ではローテーション時にデータ移行戦略が必要です。
+
 ## デプロイ時の動作
 
-デプロイワークフロー（`.github/workflows/deploy.yml`）は以下のように動作します：
+デプロイワークフロー（`.github/workflows/deploy.yml`）は Cloud Run に次をマウントします（いずれも Secret Manager の `latest`）。
 
-1. `vault-share-session-secret` が存在するか確認
-2. 存在する場合、Cloud Run デプロイ時に `--set-secrets="SESSION_SECRET=vault-share-session-secret:latest"` を追加
-3. Cloud Run サービスが起動時に Secret Manager から `SESSION_SECRET` を読み込む
+1. `SESSION_SECRET` ← `vault-share-session-secret`
+2. `ITEM_ENCRYPTION_KEY` ← `vault-share-item-encryption-key`
+3. （任意）`ONEPASSWORD_CONNECT_TOKEN` ← `vault-share-onepassword-connect-token`
 
 ## トラブルシューティング
 
