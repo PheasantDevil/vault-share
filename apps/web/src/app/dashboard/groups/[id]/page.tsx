@@ -12,18 +12,19 @@ import { Pagination } from '@/components/ui/Pagination';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { useToast } from '@/components/ui/Toast';
 import { useOnePasswordConnectionStatus } from '@/lib/swr/hooks';
+import type { DetailTemplateId, ItemPayload } from '@/lib/items/types';
+import {
+  STRUCTURED_TEMPLATES,
+  getTemplateDefinition,
+  initialEmptyFieldsForTemplate,
+} from '@/lib/items/template-definitions';
 
 type Group = { id: string; name: string };
 type Member = { userId: string; role: 'owner' | 'member'; displayName?: string; email?: string };
 type ItemSummary = { id: string; title: string; type: string; updatedAt: string };
 type ItemDetail = {
   id: string;
-  payload: {
-    title: string;
-    type: string;
-    value: string;
-    note?: string;
-  };
+  payload: ItemPayload;
   updatedAt: string;
 };
 
@@ -43,6 +44,10 @@ export default function GroupDetailPage() {
   const [editing, setEditing] = useState(false);
   const [itemFormOpen, setItemFormOpen] = useState(false);
   const [itemTitle, setItemTitle] = useState('');
+  const [itemDetailTemplate, setItemDetailTemplate] = useState<DetailTemplateId>('login');
+  const [itemDetailFields, setItemDetailFields] = useState<Record<string, string>>(() =>
+    initialEmptyFieldsForTemplate('login')
+  );
   const [itemType, setItemType] = useState<'password' | 'note' | 'key' | 'other'>('password');
   const [itemValue, setItemValue] = useState('');
   const [itemNote, setItemNote] = useState('');
@@ -181,27 +186,51 @@ export default function GroupDetailPage() {
     }
   }
 
+  function resetItemForm() {
+    setItemTitle('');
+    setItemDetailTemplate('login');
+    setItemDetailFields(initialEmptyFieldsForTemplate('login'));
+    setItemType('password');
+    setItemValue('');
+    setItemNote('');
+  }
+
+  function handleItemTemplateChange(next: DetailTemplateId) {
+    setItemDetailTemplate(next);
+    if (next !== 'generic') {
+      setItemDetailFields(
+        initialEmptyFieldsForTemplate(next as 'login' | 'credit_card' | 'bank_account')
+      );
+    }
+  }
+
   async function submitItem(e: React.FormEvent) {
     e.preventDefault();
     try {
+      const body =
+        itemDetailTemplate !== 'generic'
+          ? {
+              title: itemTitle.trim(),
+              note: itemNote.trim() || undefined,
+              detailTemplate: itemDetailTemplate as 'login' | 'credit_card' | 'bank_account',
+              detailFields: itemDetailFields,
+            }
+          : {
+              title: itemTitle.trim(),
+              type: itemType,
+              value: itemValue,
+              note: itemNote.trim() || undefined,
+            };
       const res = await fetch(`/api/groups/${id}/items`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: itemTitle.trim(),
-          type: itemType,
-          value: itemValue,
-          note: itemNote.trim() || undefined,
-        }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error?.message ?? 'アイテムの作成に失敗しました');
       }
-      setItemTitle('');
-      setItemType('password');
-      setItemValue('');
-      setItemNote('');
+      resetItemForm();
       setItemFormOpen(false);
       toast.showToast('success', 'アイテムを作成しました');
       await reloadItems();
@@ -608,33 +637,94 @@ export default function GroupDetailPage() {
           </div>
           <div style={{ marginBottom: '0.5rem' }}>
             <label>
-              種別
+              テンプレート
               <select
-                value={itemType}
-                onChange={(e) =>
-                  setItemType(e.target.value as 'password' | 'note' | 'key' | 'other')
-                }
-                style={{ display: 'block', padding: 0.5 }}
+                value={itemDetailTemplate}
+                onChange={(e) => handleItemTemplateChange(e.target.value as DetailTemplateId)}
+                style={{ display: 'block', padding: 0.5, marginTop: '0.25rem' }}
               >
-                <option value="password">パスワード</option>
-                <option value="note">メモ</option>
-                <option value="key">キー</option>
-                <option value="other">その他</option>
+                {STRUCTURED_TEMPLATES.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.label}
+                  </option>
+                ))}
+                <option value="generic">汎用（従来どおり）</option>
               </select>
             </label>
+            <p
+              style={{
+                fontSize: '0.875rem',
+                color: 'var(--muted, #666)',
+                marginTop: '0.25rem',
+                marginBottom: 0,
+              }}
+            >
+              1Password のログイン・カード・口座などに近い入力欄です。汎用では従来の「種別＋内容」です。
+            </p>
           </div>
-          <div style={{ marginBottom: '0.5rem' }}>
-            <label>
-              内容
-              <textarea
-                value={itemValue}
-                onChange={(e) => setItemValue(e.target.value)}
-                required
-                rows={4}
-                style={{ display: 'block', width: '100%', padding: 0.5 }}
-              />
-            </label>
-          </div>
+          {itemDetailTemplate !== 'generic' &&
+            getTemplateDefinition(
+              itemDetailTemplate as 'login' | 'credit_card' | 'bank_account'
+            )?.fields.map((f) => (
+              <div key={f.key} style={{ marginBottom: '0.5rem' }}>
+                <label style={{ display: 'block' }}>
+                  {f.label}
+                  {f.input === 'textarea' ? (
+                    <textarea
+                      value={itemDetailFields[f.key] ?? ''}
+                      onChange={(e) =>
+                        setItemDetailFields((prev) => ({ ...prev, [f.key]: e.target.value }))
+                      }
+                      rows={3}
+                      style={{ display: 'block', width: '100%', padding: 0.5, marginTop: '0.25rem' }}
+                    />
+                  ) : (
+                    <input
+                      type={f.input === 'password' ? 'password' : 'text'}
+                      value={itemDetailFields[f.key] ?? ''}
+                      onChange={(e) =>
+                        setItemDetailFields((prev) => ({ ...prev, [f.key]: e.target.value }))
+                      }
+                      autoComplete="off"
+                      style={{ display: 'block', width: '100%', padding: 0.5, marginTop: '0.25rem' }}
+                    />
+                  )}
+                </label>
+              </div>
+            ))}
+          {itemDetailTemplate === 'generic' && (
+            <>
+              <div style={{ marginBottom: '0.5rem' }}>
+                <label>
+                  種別
+                  <select
+                    value={itemType}
+                    onChange={(e) =>
+                      setItemType(e.target.value as 'password' | 'note' | 'key' | 'other')
+                    }
+                    style={{ display: 'block', padding: 0.5, marginTop: '0.25rem' }}
+                  >
+                    <option value="password">パスワード</option>
+                    <option value="note">メモ</option>
+                    <option value="key">キー</option>
+                    <option value="other">その他</option>
+                  </select>
+                </label>
+              </div>
+              <div style={{ marginBottom: '0.5rem' }}>
+                <label>
+                  内容
+                  <textarea
+                    value={itemValue}
+                    onChange={(e) => setItemValue(e.target.value)}
+                    required
+                    rows={4}
+                    style={{ display: 'block', width: '100%', padding: 0.5, marginTop: '0.25rem' }}
+                  />
+                </label>
+              </div>
+            </>
+          )}
           <div style={{ marginBottom: '0.5rem' }}>
             <label>
               補足メモ（任意）
@@ -642,14 +732,21 @@ export default function GroupDetailPage() {
                 value={itemNote}
                 onChange={(e) => setItemNote(e.target.value)}
                 rows={3}
-                style={{ display: 'block', width: '100%', padding: 0.5 }}
+                style={{ display: 'block', width: '100%', padding: 0.5, marginTop: '0.25rem' }}
               />
             </label>
           </div>
           <button type="submit" style={{ marginRight: 0.5 }}>
             保存
           </button>
-          <button type="button" onClick={() => setItemFormOpen(false)} style={{ marginLeft: 0.5 }}>
+          <button
+            type="button"
+            onClick={() => {
+              setItemFormOpen(false);
+              resetItemForm();
+            }}
+            style={{ marginLeft: 0.5 }}
+          >
             キャンセル
           </button>
         </form>
@@ -703,23 +800,93 @@ export default function GroupDetailPage() {
           <h3 style={{ marginTop: 0, marginBottom: '0.5rem' }}>{selectedItem.payload.title}</h3>
           <p style={{ marginBottom: '0.5rem' }}>
             種別: <code>{selectedItem.payload.type}</code>
+            {selectedItem.payload.detailTemplate &&
+              selectedItem.payload.detailTemplate !== 'generic' && (
+                <>
+                  {' '}
+                  · テンプレート:{' '}
+                  <code>
+                    {getTemplateDefinition(
+                      selectedItem.payload.detailTemplate as 'login' | 'credit_card' | 'bank_account'
+                    )?.label ?? selectedItem.payload.detailTemplate}
+                  </code>
+                </>
+              )}
           </p>
-          <p style={{ marginBottom: '0.5rem' }}>
-            値:
-            <span
-              style={{
-                display: 'inline-block',
-                marginLeft: 4,
-                padding: '0.25rem 0.5rem',
-                background: '#f5f5f5',
-                wordBreak: 'break-all',
-              }}
-            >
-              {selectedItem.payload.value}
-            </span>
-          </p>
+          {selectedItem.payload.detailTemplate &&
+            selectedItem.payload.detailTemplate !== 'generic' &&
+            selectedItem.payload.detailFields &&
+            getTemplateDefinition(
+              selectedItem.payload.detailTemplate as 'login' | 'credit_card' | 'bank_account'
+            ) && (
+              <dl
+                style={{
+                  marginBottom: '0.75rem',
+                  padding: '0.5rem',
+                  background: '#f9f9f9',
+                  borderRadius: 4,
+                }}
+              >
+                {getTemplateDefinition(
+                  selectedItem.payload.detailTemplate as 'login' | 'credit_card' | 'bank_account'
+                )!.fields.map((f) => {
+                  const raw = selectedItem.payload.detailFields?.[f.key] ?? '';
+                  return (
+                    <div
+                      key={f.key}
+                      style={{
+                        marginBottom: '0.5rem',
+                        display: 'grid',
+                        gridTemplateColumns: 'minmax(8rem, 30%) 1fr',
+                        gap: '0.5rem',
+                        alignItems: 'start',
+                      }}
+                    >
+                      <dt style={{ fontWeight: 600, fontSize: '0.875rem' }}>{f.label}</dt>
+                      <dd style={{ margin: 0, wordBreak: 'break-all' }}>
+                        {f.input === 'password' ? (
+                          <input
+                            type="password"
+                            readOnly
+                            value={raw}
+                            style={{
+                              width: '100%',
+                              padding: '0.25rem 0.5rem',
+                              fontFamily: 'inherit',
+                              border: '1px solid #ddd',
+                              borderRadius: 4,
+                            }}
+                          />
+                        ) : (
+                          <span style={{ whiteSpace: 'pre-wrap' }}>{raw || '—'}</span>
+                        )}
+                      </dd>
+                    </div>
+                  );
+                })}
+              </dl>
+            )}
+          {(!selectedItem.payload.detailTemplate ||
+            selectedItem.payload.detailTemplate === 'generic' ||
+            !selectedItem.payload.detailFields) && (
+            <p style={{ marginBottom: '0.5rem' }}>
+              値:
+              <span
+                style={{
+                  display: 'inline-block',
+                  marginLeft: 4,
+                  padding: '0.25rem 0.5rem',
+                  background: '#f5f5f5',
+                  wordBreak: 'break-all',
+                  whiteSpace: 'pre-wrap',
+                }}
+              >
+                {selectedItem.payload.value}
+              </span>
+            </p>
+          )}
           {selectedItem.payload.note && (
-            <p style={{ whiteSpace: 'pre-wrap' }}>{selectedItem.payload.note}</p>
+            <p style={{ whiteSpace: 'pre-wrap' }}>補足: {selectedItem.payload.note}</p>
           )}
         </section>
       )}
