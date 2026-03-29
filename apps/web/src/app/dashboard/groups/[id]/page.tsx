@@ -24,7 +24,7 @@ import {
   itemPayloadToEditFormState,
 } from '@/lib/items/payload-edit';
 
-type Group = { id: string; name: string };
+type Group = { id: string; name: string; myRole?: 'owner' | 'member' };
 type Member = { userId: string; role: 'owner' | 'member'; displayName?: string; email?: string };
 type ItemSummary = {
   id: string;
@@ -151,6 +151,29 @@ export default function GroupDetailPage() {
 
   async function reloadItems() {
     await loadItemsPage(currentPage);
+  }
+
+  /** メンバー操作後に myRole 等をサーバーと一致させる（自己降格・削除時の UI ずれ防止） */
+  async function refreshGroupFromApi() {
+    if (!id) return;
+    try {
+      const res = await fetch(`/api/groups/${id}`);
+      const data = await res.json();
+      if (res.status === 403) {
+        router.push('/dashboard');
+        router.refresh();
+        return;
+      }
+      if (!res.ok) {
+        throw new Error(
+          typeof data.error === 'string' ? data.error : 'グループ情報の取得に失敗しました'
+        );
+      }
+      setGroup(data);
+      setEditName(data.name);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'エラー');
+    }
   }
 
   async function createInvite() {
@@ -319,6 +342,8 @@ export default function GroupDetailPage() {
     );
   }
 
+  const isOwner = group.myRole === 'owner';
+
   return (
     <PageLayout
       title={group.name}
@@ -326,38 +351,39 @@ export default function GroupDetailPage() {
       backLink={{ href: '/dashboard', label: 'ダッシュボード' }}
     >
       {error && <Alert type="error">{error}</Alert>}
-      {editing ? (
-        <form onSubmit={updateGroup} style={{ marginBottom: '1rem' }}>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-            <FormField
-              label="グループ名"
-              id="group-name"
-              type="text"
-              value={editName}
-              onChange={(e) => setEditName(e.target.value)}
-              required
-              style={{ flex: 1, marginBottom: 0 }}
-            />
-            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
-              <Button type="submit" variant="primary">
-                保存
-              </Button>
-              <Button type="button" onClick={() => setEditing(false)} variant="secondary">
-                キャンセル
-              </Button>
+      {isOwner &&
+        (editing ? (
+          <form onSubmit={updateGroup} style={{ marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
+              <FormField
+                label="グループ名"
+                id="group-name"
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                required
+                style={{ flex: 1, marginBottom: 0 }}
+              />
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
+                <Button type="submit" variant="primary">
+                  保存
+                </Button>
+                <Button type="button" onClick={() => setEditing(false)} variant="secondary">
+                  キャンセル
+                </Button>
+              </div>
             </div>
+          </form>
+        ) : (
+          <div style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
+            <Button type="button" onClick={() => setEditing(true)} variant="secondary">
+              編集
+            </Button>
+            <Button type="button" onClick={deleteGroup} variant="danger">
+              削除
+            </Button>
           </div>
-        </form>
-      ) : (
-        <div style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
-          <Button type="button" onClick={() => setEditing(true)} variant="secondary">
-            編集
-          </Button>
-          <Button type="button" onClick={deleteGroup} variant="danger">
-            削除
-          </Button>
-        </div>
-      )}
+        ))}
       <SectionHeader title="メンバー" />
       <ul style={{ listStyle: 'none', padding: 0 }}>
         {members.map((m) => (
@@ -366,102 +392,109 @@ export default function GroupDetailPage() {
               {m.displayName || m.email || m.userId}{' '}
               {m.role === 'owner' ? '(オーナー)' : '(メンバー)'}
             </span>
-            {/* メンバー管理: とりあえず全員にボタンを表示し、権限はサーバー側でチェック */}
-            <span style={{ marginLeft: '0.5rem' }}>
-              {m.role === 'owner' ? (
+            {isOwner ? (
+              <span style={{ marginLeft: '0.5rem' }}>
+                {m.role === 'owner' ? (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const res = await fetch(`/api/groups/${id}/members`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ userId: m.userId, role: 'member' }),
+                        });
+                        const data = await res.json().catch(() => ({}));
+                        if (!res.ok) {
+                          throw new Error(data.error ?? 'ロールの更新に失敗しました');
+                        }
+                        setMembers((prev) =>
+                          prev.map((x) => (x.userId === m.userId ? { ...x, role: 'member' } : x))
+                        );
+                        await refreshGroupFromApi();
+                      } catch (err) {
+                        setError(err instanceof Error ? err.message : 'エラー');
+                      }
+                    }}
+                    style={{ marginRight: 4 }}
+                  >
+                    メンバーにする
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const res = await fetch(`/api/groups/${id}/members`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ userId: m.userId, role: 'owner' }),
+                        });
+                        const data = await res.json().catch(() => ({}));
+                        if (!res.ok) {
+                          throw new Error(data.error ?? 'ロールの更新に失敗しました');
+                        }
+                        setMembers((prev) =>
+                          prev.map((x) => (x.userId === m.userId ? { ...x, role: 'owner' } : x))
+                        );
+                      } catch (err) {
+                        setError(err instanceof Error ? err.message : 'エラー');
+                      }
+                    }}
+                    style={{ marginRight: 4 }}
+                  >
+                    オーナーにする
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={async () => {
+                    if (!confirm('このメンバーをグループから削除しますか？')) return;
                     try {
                       const res = await fetch(`/api/groups/${id}/members`, {
-                        method: 'PATCH',
+                        method: 'DELETE',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ userId: m.userId, role: 'member' }),
+                        body: JSON.stringify({ userId: m.userId }),
                       });
                       const data = await res.json().catch(() => ({}));
                       if (!res.ok) {
-                        throw new Error(data.error ?? 'ロールの更新に失敗しました');
+                        throw new Error(data.error ?? 'メンバーの削除に失敗しました');
                       }
-                      setMembers((prev) =>
-                        prev.map((x) => (x.userId === m.userId ? { ...x, role: 'member' } : x))
-                      );
+                      setMembers((prev) => prev.filter((x) => x.userId !== m.userId));
+                      await refreshGroupFromApi();
                     } catch (err) {
                       setError(err instanceof Error ? err.message : 'エラー');
                     }
                   }}
-                  style={{ marginRight: 4 }}
                 >
-                  メンバーにする
+                  削除
                 </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    try {
-                      const res = await fetch(`/api/groups/${id}/members`, {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ userId: m.userId, role: 'owner' }),
-                      });
-                      const data = await res.json().catch(() => ({}));
-                      if (!res.ok) {
-                        throw new Error(data.error ?? 'ロールの更新に失敗しました');
-                      }
-                      setMembers((prev) =>
-                        prev.map((x) => (x.userId === m.userId ? { ...x, role: 'owner' } : x))
-                      );
-                    } catch (err) {
-                      setError(err instanceof Error ? err.message : 'エラー');
-                    }
-                  }}
-                  style={{ marginRight: 4 }}
-                >
-                  オーナーにする
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={async () => {
-                  if (!confirm('このメンバーをグループから削除しますか？')) return;
-                  try {
-                    const res = await fetch(`/api/groups/${id}/members`, {
-                      method: 'DELETE',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ userId: m.userId }),
-                    });
-                    const data = await res.json().catch(() => ({}));
-                    if (!res.ok) {
-                      throw new Error(data.error ?? 'メンバーの削除に失敗しました');
-                    }
-                    setMembers((prev) => prev.filter((x) => x.userId !== m.userId));
-                  } catch (err) {
-                    setError(err instanceof Error ? err.message : 'エラー');
-                  }
-                }}
-              >
-                削除
-              </button>
-            </span>
+              </span>
+            ) : null}
           </li>
         ))}
       </ul>
-      <h2 style={{ marginTop: '1.5rem', marginBottom: 0.5 }}>招待</h2>
-      {inviteLink ? (
-        <p>
-          招待リンク: <a href={inviteLink}>{inviteLink}</a>
-          <button
-            type="button"
-            onClick={() => navigator.clipboard.writeText(inviteLink)}
-            style={{ marginLeft: 0.5 }}
-          >
-            コピー
-          </button>
-        </p>
-      ) : (
-        <button type="button" onClick={createInvite}>
-          招待リンクを発行
-        </button>
-      )}
+      {isOwner ? (
+        <>
+          <h2 style={{ marginTop: '1.5rem', marginBottom: 0.5 }}>招待</h2>
+          {inviteLink ? (
+            <p>
+              招待リンク: <a href={inviteLink}>{inviteLink}</a>
+              <button
+                type="button"
+                onClick={() => navigator.clipboard.writeText(inviteLink)}
+                style={{ marginLeft: 0.5 }}
+              >
+                コピー
+              </button>
+            </p>
+          ) : (
+            <button type="button" onClick={createInvite}>
+              招待リンクを発行
+            </button>
+          )}
+        </>
+      ) : null}
       <h2 style={{ marginTop: '1.5rem', marginBottom: 0.5 }}>アイテム</h2>
       {!connectHintLoading && connectAvailable === false && (
         <p

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { getFirebaseAuthAsync } from '@/lib/firebase/client';
 import { signInWithEmailAndPassword, getMultiFactorResolver } from 'firebase/auth';
 import type { MultiFactorError } from 'firebase/auth';
+import { getSafePostLoginPath } from '@/lib/auth/safe-post-login-path';
 import { PageLayout } from '@/components/ui/PageLayout';
 import { FormField } from '@/components/ui/FormField';
 import { Button } from '@/components/ui/Button';
@@ -53,7 +54,8 @@ export default function LoginPage() {
         setError(parseSessionApiError(data));
         return;
       }
-      window.location.href = '/dashboard';
+      const from = new URLSearchParams(window.location.search).get('from');
+      window.location.href = getSafePostLoginPath(from);
     } catch (err: unknown) {
       // MFAエラーの場合、MFAログインページにリダイレクト
       if (
