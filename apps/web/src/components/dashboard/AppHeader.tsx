@@ -22,13 +22,13 @@ export function AppHeader({ userLabel, onMenuToggle, menuOpen }: Props) {
             aria-controls="app-dashboard-sidebar"
             aria-label={menuOpen ? 'ナビゲーションを閉じる' : 'ナビゲーションを開く'}
           >
-            <span className="app-dashboard-header__menu-icon" aria-hidden>
+            <span className="app-dashboard-header__menu-icon" aria-hidden="true">
               {menuOpen ? '✕' : '☰'}
             </span>
           </button>
         ) : null}
         <Link href="/" className="app-dashboard-header__brand" title="トップへ">
-          <span className="app-dashboard-header__logo" aria-hidden>
+          <span className="app-dashboard-header__logo" aria-hidden="true">
             VS
           </span>
           <span className="app-dashboard-header__title">Vault Share</span>

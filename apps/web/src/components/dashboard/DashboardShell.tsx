@@ -34,9 +34,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const err = error as Error & { status?: number };
-    if (err?.status === 401) {
-      router.replace('/login?from=/dashboard');
-    }
+    if (err?.status !== 401) return;
+    const from =
+      typeof window !== 'undefined'
+        ? `${window.location.pathname}${window.location.search}${window.location.hash}`
+        : '/dashboard';
+    router.replace(`/login?from=${encodeURIComponent(from)}`);
   }, [error, router]);
 
   const navItems = useMemo((): SidebarNavItem[] => {

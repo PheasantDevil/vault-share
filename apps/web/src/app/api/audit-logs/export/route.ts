@@ -98,15 +98,23 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    if (!groupId && ownedGroupIds.length > 30) {
+      return NextResponse.json(
+        createErrorResponse(
+          ErrorCode.VALIDATION_ERROR,
+          'エクスポート対象のグループが多すぎます。グループを指定してフィルタしてください。'
+        ),
+        { status: 400 }
+      );
+    }
+
     // クエリ構築（エクスポートは最大1000件まで）
     let query: Query = db.collection(COLLECTIONS.auditLogs);
 
     if (groupId && ownedGroupIds.includes(groupId)) {
       query = query.where('groupId', '==', groupId);
-    } else if (ownedGroupIds.length <= 10) {
-      query = query.where('groupId', 'in', ownedGroupIds);
     } else {
-      query = query.where('groupId', 'in', ownedGroupIds.slice(0, 10));
+      query = query.where('groupId', 'in', ownedGroupIds);
     }
     if (actorUid) {
       query = query.where('actorUid', '==', actorUid);

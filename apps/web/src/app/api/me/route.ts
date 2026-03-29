@@ -45,13 +45,20 @@ export async function GET(request: NextRequest) {
   const userSnap = await db.collection(COLLECTIONS.users).doc(session.uid).get();
   const userData = userSnap.exists ? (userSnap.data() as UserDoc) : null;
 
-  return NextResponse.json({
-    user: {
-      uid: session.uid,
-      email: session.email ?? userData?.email ?? null,
-      displayName: userData?.displayName ?? null,
+  return NextResponse.json(
+    {
+      user: {
+        uid: session.uid,
+        email: session.email ?? userData?.email ?? null,
+        displayName: userData?.displayName ?? null,
+      },
+      groups,
+      isOwnerOfAnyGroup,
     },
-    groups,
-    isOwnerOfAnyGroup,
-  });
+    {
+      headers: {
+        'Cache-Control': 'private, max-age=30, stale-while-revalidate=60',
+      },
+    }
+  );
 }

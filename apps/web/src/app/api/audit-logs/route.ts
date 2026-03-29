@@ -61,19 +61,24 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Firestore の in は最大 30 要素。それを超えるオーナーグループがある場合は groupId で絞り込み必須
+    if (!groupId && ownedGroupIds.length > 30) {
+      return NextResponse.json(
+        createErrorResponse(
+          ErrorCode.VALIDATION_ERROR,
+          '監査ログを閲覧するグループが多すぎます。グループを指定してフィルタしてください。'
+        ),
+        { status: 400 }
+      );
+    }
+
     // クエリ構築
     // グループIDでフィルタ（指定されている場合）
     let query: Query = db.collection(COLLECTIONS.auditLogs);
     if (groupId && ownedGroupIds.includes(groupId)) {
       query = query.where('groupId', '==', groupId);
     } else {
-      // オーナーグループが10件以下の場合のみ'in'を使用
-      if (ownedGroupIds.length <= 10) {
-        query = query.where('groupId', 'in', ownedGroupIds);
-      } else {
-        // 10件を超える場合は、最初の10件のみフィルタ（簡略化）
-        query = query.where('groupId', 'in', ownedGroupIds.slice(0, 10));
-      }
+      query = query.where('groupId', 'in', ownedGroupIds);
     }
 
     // ユーザーIDでフィルタ

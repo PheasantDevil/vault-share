@@ -153,6 +153,29 @@ export default function GroupDetailPage() {
     await loadItemsPage(currentPage);
   }
 
+  /** メンバー操作後に myRole 等をサーバーと一致させる（自己降格・削除時の UI ずれ防止） */
+  async function refreshGroupFromApi() {
+    if (!id) return;
+    try {
+      const res = await fetch(`/api/groups/${id}`);
+      const data = await res.json();
+      if (res.status === 403) {
+        router.push('/dashboard');
+        router.refresh();
+        return;
+      }
+      if (!res.ok) {
+        throw new Error(
+          typeof data.error === 'string' ? data.error : 'グループ情報の取得に失敗しました'
+        );
+      }
+      setGroup(data);
+      setEditName(data.name);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'エラー');
+    }
+  }
+
   async function createInvite() {
     try {
       const res = await fetch(`/api/groups/${id}/invitations`, { method: 'POST' });
@@ -388,6 +411,7 @@ export default function GroupDetailPage() {
                         setMembers((prev) =>
                           prev.map((x) => (x.userId === m.userId ? { ...x, role: 'member' } : x))
                         );
+                        await refreshGroupFromApi();
                       } catch (err) {
                         setError(err instanceof Error ? err.message : 'エラー');
                       }
@@ -437,6 +461,7 @@ export default function GroupDetailPage() {
                         throw new Error(data.error ?? 'メンバーの削除に失敗しました');
                       }
                       setMembers((prev) => prev.filter((x) => x.userId !== m.userId));
+                      await refreshGroupFromApi();
                     } catch (err) {
                       setError(err instanceof Error ? err.message : 'エラー');
                     }

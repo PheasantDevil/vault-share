@@ -11,7 +11,7 @@ import { SectionHeader } from '@/components/ui/SectionHeader';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { useToast } from '@/components/ui/Toast';
 import type { AuditLogDoc } from '@vault-share/db';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface AuditLogFilters {
   groupId?: string;
@@ -41,7 +41,7 @@ export default function AuditLogsPage() {
   const [totalItems, setTotalItems] = useState(0);
   const { showToast } = useToast();
 
-  const loadLogs = async () => {
+  const loadLogs = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -58,15 +58,14 @@ export default function AuditLogsPage() {
       params.append('sortOrder', 'desc');
 
       const response = await fetch(`/api/audit-logs?${params.toString()}`);
-      if (response.status === 403) {
+      if (!response.ok) {
         const body = await response.json().catch(() => ({}));
         const msg =
           body?.error?.message ??
-          '監査ログを閲覧する権限がありません（グループのオーナーのみ閲覧できます）';
+          (response.status === 403
+            ? '監査ログを閲覧する権限がありません（グループのオーナーのみ閲覧できます）'
+            : '監査ログの取得に失敗しました');
         throw new Error(msg);
-      }
-      if (!response.ok) {
-        throw new Error('監査ログの取得に失敗しました');
       }
 
       const data: AuditLogResponse = await response.json();
@@ -79,11 +78,11 @@ export default function AuditLogsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, filters, itemsPerPage, showToast]);
 
   useEffect(() => {
     loadLogs();
-  }, [currentPage, filters]);
+  }, [loadLogs]);
 
   const handleExport = async () => {
     try {
