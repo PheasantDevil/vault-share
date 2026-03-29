@@ -3,11 +3,12 @@ import { getSessionFromRequest } from '@/lib/auth/get-session';
 import { getDb, COLLECTIONS } from '@vault-share/db';
 import type { ItemDoc } from '@vault-share/db';
 import { parse1PuxToItems } from '@/lib/1pux/parser';
+import type { ParsedItem } from '@/lib/1pux/parser';
+import { finalizeParsedItemForStorage } from '@/lib/items/finalize-parsed-item';
 import { encryptItemPayload } from '@/lib/items/encryption';
 import { writeAuditLog } from '@/lib/audit/log';
 import { checkRateLimit, createRateLimitResponse, createUserRateLimitKey } from '@/lib/rate-limit';
 import { processBatch } from '@/lib/batch/processor';
-import type { ItemPayload } from '@/lib/items/types';
 import { getGroupMembership } from '@/lib/groups/get-group-membership';
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
@@ -79,7 +80,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     await processBatch(
       parsedItems,
-      (batch, itemPayload: ItemPayload, index) => {
+      (batch, parsed: ParsedItem) => {
+        const itemPayload = finalizeParsedItemForStorage(parsed);
         const itemRef = db.collection(COLLECTIONS.items).doc();
         const { ciphertext, iv } = encryptItemPayload(itemPayload);
 

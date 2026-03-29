@@ -2,7 +2,7 @@
  * SWRカスタムフック
  */
 import useSWR from 'swr';
-import type { GroupDoc, ItemDoc } from '@vault-share/db';
+import type { GroupDoc } from '@vault-share/db';
 
 interface GroupsResponse {
   groups: GroupDoc[];
@@ -26,6 +26,7 @@ interface ItemsResponse {
     title: string;
     type: string;
     updatedAt: string;
+    subtitle?: string;
   }>;
   pagination: {
     total: number;

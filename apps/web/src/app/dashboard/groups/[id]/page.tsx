@@ -12,16 +12,27 @@ import { Pagination } from '@/components/ui/Pagination';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { useToast } from '@/components/ui/Toast';
 import { useOnePasswordConnectionStatus } from '@/lib/swr/hooks';
-import type { DetailTemplateId, ItemPayload } from '@/lib/items/types';
+import type { DetailTemplateId, ItemPayload, ItemType } from '@/lib/items/types';
 import {
   STRUCTURED_TEMPLATES,
   getTemplateDefinition,
   initialEmptyFieldsForTemplate,
 } from '@/lib/items/template-definitions';
+import {
+  type EditFormState,
+  editFormStateToRequestBody,
+  itemPayloadToEditFormState,
+} from '@/lib/items/payload-edit';
 
 type Group = { id: string; name: string };
 type Member = { userId: string; role: 'owner' | 'member'; displayName?: string; email?: string };
-type ItemSummary = { id: string; title: string; type: string; updatedAt: string };
+type ItemSummary = {
+  id: string;
+  title: string;
+  type: string;
+  updatedAt: string;
+  subtitle?: string;
+};
 type ItemDetail = {
   id: string;
   payload: ItemPayload;
@@ -59,6 +70,7 @@ export default function GroupDetailPage() {
   const [totalItems, setTotalItems] = useState(0);
   const [itemsPerPage] = useState(20);
   const [itemsLoading, setItemsLoading] = useState(false);
+  const [editForm, setEditForm] = useState<EditFormState | null>(null);
   const toast = useToast();
   const { available: connectAvailable, isLoading: connectHintLoading } =
     useOnePasswordConnectionStatus();
@@ -130,13 +142,11 @@ export default function GroupDetailPage() {
     if (!id) return;
     setCurrentPage(1); // 検索・フィルタ変更時は最初のページに戻す
     loadItemsPage(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [itemSearchQuery, itemFilter, id]);
 
   useEffect(() => {
     if (!id) return;
     loadItemsPage(currentPage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, id]);
 
   async function reloadItems() {
@@ -241,7 +251,33 @@ export default function GroupDetailPage() {
     }
   }
 
+  async function submitEditItem(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedItem || !editForm) return;
+    try {
+      const body = editFormStateToRequestBody(editForm);
+      const res = await fetch(`/api/groups/${id}/items/${selectedItem.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error ?? '更新に失敗しました');
+      }
+      setEditForm(null);
+      toast.showToast('success', 'アイテムを更新しました');
+      await loadItemDetail(selectedItem.id);
+      await reloadItems();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'エラー';
+      setError(errorMessage);
+      toast.showToast('error', errorMessage);
+    }
+  }
+
   async function loadItemDetail(itemId: string) {
+    setEditForm(null);
     setItemLoading(true);
     setSelectedItem(null);
     try {
@@ -436,15 +472,19 @@ export default function GroupDetailPage() {
             lineHeight: 1.5,
           }}
         >
-          この環境では 1Password Connect
-          が未設定のため、Connect
-          経由の取り込みはできません。1Passwordからインポートを開くと CSV
-          への案内があります。
+          この環境では 1Password Connect が未設定のため、Connect
+          経由の取り込みはできません。1Passwordからインポートを開くと CSV への案内があります。
         </p>
       )}
       <div
         id="csv-import"
-        style={{ marginBottom: '0.5rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}
+        style={{
+          marginBottom: '0.5rem',
+          display: 'flex',
+          gap: '0.5rem',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+        }}
       >
         <Link href={`/dashboard/groups/${id}/import/1password`}>1Passwordからインポート</Link>
         <span>|</span>
@@ -597,7 +637,7 @@ export default function GroupDetailPage() {
             type="text"
             value={itemSearchQuery}
             onChange={(e) => setItemSearchQuery(e.target.value)}
-            placeholder="タイトルで検索"
+            placeholder="タイトル・内容で検索"
             style={{ marginLeft: '0.25rem', padding: '0.25rem', width: '200px' }}
           />
         </label>
@@ -659,7 +699,8 @@ export default function GroupDetailPage() {
                 marginBottom: 0,
               }}
             >
-              1Password のログイン・カード・口座などに近い入力欄です。汎用では従来の「種別＋内容」です。
+              1Password
+              のログイン・カード・口座などに近い入力欄です。汎用では従来の「種別＋内容」です。
             </p>
           </div>
           {itemDetailTemplate !== 'generic' &&
@@ -676,7 +717,12 @@ export default function GroupDetailPage() {
                         setItemDetailFields((prev) => ({ ...prev, [f.key]: e.target.value }))
                       }
                       rows={3}
-                      style={{ display: 'block', width: '100%', padding: 0.5, marginTop: '0.25rem' }}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        padding: 0.5,
+                        marginTop: '0.25rem',
+                      }}
                     />
                   ) : (
                     <input
@@ -686,7 +732,12 @@ export default function GroupDetailPage() {
                         setItemDetailFields((prev) => ({ ...prev, [f.key]: e.target.value }))
                       }
                       autoComplete="off"
-                      style={{ display: 'block', width: '100%', padding: 0.5, marginTop: '0.25rem' }}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        padding: 0.5,
+                        marginTop: '0.25rem',
+                      }}
                     />
                   )}
                 </label>
@@ -770,6 +821,18 @@ export default function GroupDetailPage() {
                   style={{ textAlign: 'left', width: '100%', padding: 0.5 }}
                 >
                   <strong>{it.title}</strong> <span style={{ marginLeft: 4 }}>({it.type})</span>
+                  {it.subtitle ? (
+                    <span
+                      style={{
+                        marginLeft: 8,
+                        fontSize: '0.875rem',
+                        color: 'var(--muted, #666)',
+                        fontWeight: 'normal',
+                      }}
+                    >
+                      {it.subtitle}
+                    </span>
+                  ) : null}
                 </button>
               </li>
             ))}
@@ -797,96 +860,273 @@ export default function GroupDetailPage() {
             marginBottom: '1rem',
           }}
         >
-          <h3 style={{ marginTop: 0, marginBottom: '0.5rem' }}>{selectedItem.payload.title}</h3>
-          <p style={{ marginBottom: '0.5rem' }}>
-            種別: <code>{selectedItem.payload.type}</code>
-            {selectedItem.payload.detailTemplate &&
-              selectedItem.payload.detailTemplate !== 'generic' && (
-                <>
-                  {' '}
-                  · テンプレート:{' '}
-                  <code>
-                    {getTemplateDefinition(
-                      selectedItem.payload.detailTemplate as 'login' | 'credit_card' | 'bank_account'
-                    )?.label ?? selectedItem.payload.detailTemplate}
-                  </code>
-                </>
-              )}
-          </p>
-          {selectedItem.payload.detailTemplate &&
-            selectedItem.payload.detailTemplate !== 'generic' &&
-            selectedItem.payload.detailFields &&
-            getTemplateDefinition(
-              selectedItem.payload.detailTemplate as 'login' | 'credit_card' | 'bank_account'
-            ) && (
-              <dl
-                style={{
-                  marginBottom: '0.75rem',
-                  padding: '0.5rem',
-                  background: '#f9f9f9',
-                  borderRadius: 4,
-                }}
-              >
-                {getTemplateDefinition(
+          {!editForm && (
+            <>
+              <h3 style={{ marginTop: 0, marginBottom: '0.5rem' }}>{selectedItem.payload.title}</h3>
+              <p style={{ marginBottom: '0.5rem' }}>
+                種別: <code>{selectedItem.payload.type}</code>
+                {selectedItem.payload.detailTemplate &&
+                  selectedItem.payload.detailTemplate !== 'generic' && (
+                    <>
+                      {' '}
+                      · テンプレート:{' '}
+                      <code>
+                        {getTemplateDefinition(
+                          selectedItem.payload.detailTemplate as
+                            | 'login'
+                            | 'credit_card'
+                            | 'bank_account'
+                        )?.label ?? selectedItem.payload.detailTemplate}
+                      </code>
+                    </>
+                  )}
+              </p>
+              {selectedItem.payload.detailTemplate &&
+                selectedItem.payload.detailTemplate !== 'generic' &&
+                selectedItem.payload.detailFields &&
+                getTemplateDefinition(
                   selectedItem.payload.detailTemplate as 'login' | 'credit_card' | 'bank_account'
-                )!.fields.map((f) => {
-                  const raw = selectedItem.payload.detailFields?.[f.key] ?? '';
-                  return (
-                    <div
-                      key={f.key}
-                      style={{
-                        marginBottom: '0.5rem',
-                        display: 'grid',
-                        gridTemplateColumns: 'minmax(8rem, 30%) 1fr',
-                        gap: '0.5rem',
-                        alignItems: 'start',
-                      }}
-                    >
-                      <dt style={{ fontWeight: 600, fontSize: '0.875rem' }}>{f.label}</dt>
-                      <dd style={{ margin: 0, wordBreak: 'break-all' }}>
-                        {f.input === 'password' ? (
-                          <input
-                            type="password"
-                            readOnly
-                            value={raw}
+                ) && (
+                  <dl
+                    style={{
+                      marginBottom: '0.75rem',
+                      padding: '0.5rem',
+                      background: '#f9f9f9',
+                      borderRadius: 4,
+                    }}
+                  >
+                    {getTemplateDefinition(
+                      selectedItem.payload.detailTemplate as
+                        | 'login'
+                        | 'credit_card'
+                        | 'bank_account'
+                    )!.fields.map((f) => {
+                      const raw = selectedItem.payload.detailFields?.[f.key] ?? '';
+                      return (
+                        <div
+                          key={f.key}
+                          style={{
+                            marginBottom: '0.5rem',
+                            display: 'grid',
+                            gridTemplateColumns: 'minmax(8rem, 30%) 1fr',
+                            gap: '0.5rem',
+                            alignItems: 'start',
+                          }}
+                        >
+                          <dt style={{ fontWeight: 600, fontSize: '0.875rem' }}>{f.label}</dt>
+                          <dd style={{ margin: 0, wordBreak: 'break-all' }}>
+                            {f.input === 'password' ? (
+                              <input
+                                type="password"
+                                readOnly
+                                value={raw}
+                                style={{
+                                  width: '100%',
+                                  padding: '0.25rem 0.5rem',
+                                  fontFamily: 'inherit',
+                                  border: '1px solid #ddd',
+                                  borderRadius: 4,
+                                }}
+                              />
+                            ) : (
+                              <span style={{ whiteSpace: 'pre-wrap' }}>{raw || '—'}</span>
+                            )}
+                          </dd>
+                        </div>
+                      );
+                    })}
+                  </dl>
+                )}
+              {(!selectedItem.payload.detailTemplate ||
+                selectedItem.payload.detailTemplate === 'generic' ||
+                !selectedItem.payload.detailFields) && (
+                <p style={{ marginBottom: '0.5rem' }}>
+                  値:
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      marginLeft: 4,
+                      padding: '0.25rem 0.5rem',
+                      background: '#f5f5f5',
+                      wordBreak: 'break-all',
+                      whiteSpace: 'pre-wrap',
+                    }}
+                  >
+                    {selectedItem.payload.value}
+                  </span>
+                </p>
+              )}
+              {selectedItem.payload.note && (
+                <p style={{ whiteSpace: 'pre-wrap' }}>補足: {selectedItem.payload.note}</p>
+              )}
+              <p style={{ marginTop: '0.75rem' }}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setEditForm(itemPayloadToEditFormState(selectedItem.payload))}
+                >
+                  編集
+                </Button>
+              </p>
+            </>
+          )}
+          {editForm && (
+            <form onSubmit={submitEditItem}>
+              <h3 style={{ marginTop: 0, marginBottom: '0.5rem' }}>アイテムを編集</h3>
+              <div style={{ marginBottom: '0.5rem' }}>
+                <label>
+                  タイトル
+                  <input
+                    type="text"
+                    value={editForm.title}
+                    onChange={(e) =>
+                      setEditForm((prev) => (prev ? { ...prev, title: e.target.value } : prev))
+                    }
+                    required
+                    style={{ display: 'block', width: '100%', padding: 0.5, marginTop: '0.25rem' }}
+                  />
+                </label>
+              </div>
+              {editForm.mode === 'structured' && (
+                <>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--muted, #666)' }}>
+                    テンプレート:{' '}
+                    <strong>
+                      {getTemplateDefinition(editForm.detailTemplate)?.label ??
+                        editForm.detailTemplate}
+                    </strong>
+                    （変更不可）
+                  </p>
+                  {getTemplateDefinition(editForm.detailTemplate)?.fields.map((f) => (
+                    <div key={f.key} style={{ marginBottom: '0.5rem' }}>
+                      <label style={{ display: 'block' }}>
+                        {f.label}
+                        {f.input === 'textarea' ? (
+                          <textarea
+                            value={editForm.detailFields[f.key] ?? ''}
+                            onChange={(e) =>
+                              setEditForm((prev) =>
+                                prev && prev.mode === 'structured'
+                                  ? {
+                                      ...prev,
+                                      detailFields: {
+                                        ...prev.detailFields,
+                                        [f.key]: e.target.value,
+                                      },
+                                    }
+                                  : prev
+                              )
+                            }
+                            rows={3}
                             style={{
+                              display: 'block',
                               width: '100%',
-                              padding: '0.25rem 0.5rem',
-                              fontFamily: 'inherit',
-                              border: '1px solid #ddd',
-                              borderRadius: 4,
+                              padding: 0.5,
+                              marginTop: '0.25rem',
                             }}
                           />
                         ) : (
-                          <span style={{ whiteSpace: 'pre-wrap' }}>{raw || '—'}</span>
+                          <input
+                            type={f.input === 'password' ? 'password' : 'text'}
+                            value={editForm.detailFields[f.key] ?? ''}
+                            onChange={(e) =>
+                              setEditForm((prev) =>
+                                prev && prev.mode === 'structured'
+                                  ? {
+                                      ...prev,
+                                      detailFields: {
+                                        ...prev.detailFields,
+                                        [f.key]: e.target.value,
+                                      },
+                                    }
+                                  : prev
+                              )
+                            }
+                            autoComplete="off"
+                            style={{
+                              display: 'block',
+                              width: '100%',
+                              padding: 0.5,
+                              marginTop: '0.25rem',
+                            }}
+                          />
                         )}
-                      </dd>
+                      </label>
                     </div>
-                  );
-                })}
-              </dl>
-            )}
-          {(!selectedItem.payload.detailTemplate ||
-            selectedItem.payload.detailTemplate === 'generic' ||
-            !selectedItem.payload.detailFields) && (
-            <p style={{ marginBottom: '0.5rem' }}>
-              値:
-              <span
-                style={{
-                  display: 'inline-block',
-                  marginLeft: 4,
-                  padding: '0.25rem 0.5rem',
-                  background: '#f5f5f5',
-                  wordBreak: 'break-all',
-                  whiteSpace: 'pre-wrap',
-                }}
-              >
-                {selectedItem.payload.value}
-              </span>
-            </p>
-          )}
-          {selectedItem.payload.note && (
-            <p style={{ whiteSpace: 'pre-wrap' }}>補足: {selectedItem.payload.note}</p>
+                  ))}
+                </>
+              )}
+              {editForm.mode === 'generic' && (
+                <>
+                  <div style={{ marginBottom: '0.5rem' }}>
+                    <label>
+                      種別
+                      <select
+                        value={editForm.type}
+                        onChange={(e) =>
+                          setEditForm((prev) =>
+                            prev && prev.mode === 'generic'
+                              ? {
+                                  ...prev,
+                                  type: e.target.value as ItemType,
+                                }
+                              : prev
+                          )
+                        }
+                        style={{ display: 'block', padding: 0.5, marginTop: '0.25rem' }}
+                      >
+                        <option value="password">パスワード</option>
+                        <option value="note">メモ</option>
+                        <option value="key">キー</option>
+                        <option value="other">その他</option>
+                      </select>
+                    </label>
+                  </div>
+                  <div style={{ marginBottom: '0.5rem' }}>
+                    <label>
+                      内容
+                      <textarea
+                        value={editForm.value}
+                        onChange={(e) =>
+                          setEditForm((prev) =>
+                            prev && prev.mode === 'generic'
+                              ? { ...prev, value: e.target.value }
+                              : prev
+                          )
+                        }
+                        required
+                        rows={4}
+                        style={{
+                          display: 'block',
+                          width: '100%',
+                          padding: 0.5,
+                          marginTop: '0.25rem',
+                        }}
+                      />
+                    </label>
+                  </div>
+                </>
+              )}
+              <div style={{ marginBottom: '0.5rem' }}>
+                <label>
+                  補足メモ（任意）
+                  <textarea
+                    value={editForm.note}
+                    onChange={(e) =>
+                      setEditForm((prev) => (prev ? { ...prev, note: e.target.value } : prev))
+                    }
+                    rows={3}
+                    style={{ display: 'block', width: '100%', padding: 0.5, marginTop: '0.25rem' }}
+                  />
+                </label>
+              </div>
+              <Button type="submit" variant="primary" style={{ marginRight: '0.5rem' }}>
+                保存
+              </Button>
+              <Button type="button" variant="secondary" onClick={() => setEditForm(null)}>
+                キャンセル
+              </Button>
+            </form>
           )}
         </section>
       )}
