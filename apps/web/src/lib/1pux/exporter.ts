@@ -4,7 +4,7 @@
  * アイテムデータを1Password 1PUX形式（JSON）に変換します。
  */
 
-import { ItemPayload, ItemType } from '../items/types';
+import { ItemPayload } from '../items/types';
 import type { OnePuxDocument, OnePuxVault, OnePuxItem, OnePuxField } from './parser';
 
 /**

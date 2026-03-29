@@ -4,7 +4,7 @@
  * アイテムデータを1Password CSV形式に変換します。
  */
 
-import { ItemPayload, ItemType } from '../items/types';
+import { ItemPayload } from '../items/types';
 
 export interface OnePasswordCSVRow {
   Title: string;
@@ -24,29 +24,48 @@ export function convertToCSVRow(item: ItemPayload): OnePasswordCSVRow {
   let password = '';
   let notes = item.note || '';
 
-  // passwordタイプの場合はvalueをJSONとしてパース
-  if (item.type === 'password') {
+  if (item.detailTemplate === 'login' && item.detailFields) {
+    website = item.detailFields.website ?? '';
+    username = item.detailFields.username ?? '';
+    password = item.detailFields.password ?? '';
+  } else if (item.type === 'password') {
     try {
-      const passwordData = JSON.parse(item.value);
+      const passwordData = JSON.parse(item.value) as {
+        website?: string;
+        username?: string;
+        password?: string;
+      };
       website = passwordData.website || '';
       username = passwordData.username || '';
       password = passwordData.password || '';
-      // Notesにはnoteフィールドの内容を追加
       if (item.note) {
         notes = item.note;
       }
     } catch {
-      // JSONパースに失敗した場合はvalueをそのまま使用
       password = item.value;
     }
   } else {
-    // password以外のタイプはvalueをNotesに
     notes = item.value || item.note || '';
   }
 
-  // Typeを1Password形式に変換
   let type = 'Secure Note';
-  if (item.type === 'password') {
+  if (item.detailTemplate === 'credit_card') {
+    type = 'Credit Card';
+    if (item.detailFields && Object.keys(item.detailFields).length > 0) {
+      const lines = Object.entries(item.detailFields)
+        .filter(([, v]) => v?.trim())
+        .map(([k, v]) => `${k}: ${v}`);
+      notes = [notes, ...lines].filter(Boolean).join('\n');
+    }
+  } else if (item.detailTemplate === 'bank_account') {
+    type = 'Bank Account';
+    if (item.detailFields && Object.keys(item.detailFields).length > 0) {
+      const lines = Object.entries(item.detailFields)
+        .filter(([, v]) => v?.trim())
+        .map(([k, v]) => `${k}: ${v}`);
+      notes = [notes, ...lines].filter(Boolean).join('\n');
+    }
+  } else if (item.type === 'password') {
     type = 'Login';
   } else if (item.type === 'key') {
     type = 'SSH Key';

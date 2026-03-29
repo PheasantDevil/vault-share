@@ -5,7 +5,7 @@
  * 1PUX形式: { version: 1, vaults: [{ uuid, name, items: [...] }] }
  */
 
-import { ItemPayload, ItemType } from '../items/types';
+import type { DetailTemplateId, ItemType } from '../items/types';
 
 export interface OnePuxField {
   id: string;
@@ -46,6 +46,8 @@ export interface ParsedItem {
   type: ItemType;
   value: string;
   note?: string;
+  detailTemplate?: DetailTemplateId;
+  detailFields?: Record<string, string>;
 }
 
 /**
@@ -83,31 +85,98 @@ export function convert1PuxItemToPayload(item: OnePuxItem): ParsedItem {
     type = 'key';
   }
 
-  // fieldsから値を抽出
   const fieldsMap = new Map<string, string>();
-  for (const field of item.fields) {
-    if (field.value) {
-      fieldsMap.set(field.label.toLowerCase(), field.value);
-    }
+  function ingestField(field: OnePuxField) {
+    if (!field.value) return;
+    const label = field.label.toLowerCase();
+    fieldsMap.set(label, field.value);
+    const p = (field.purpose || '').toUpperCase();
+    if (p === 'USERNAME') fieldsMap.set('username', field.value);
+    if (p === 'PASSWORD') fieldsMap.set('password', field.value);
+    if (p === 'URL' || p === 'WEBSITE') fieldsMap.set('website', field.value);
   }
-
-  // sectionsからも値を抽出
+  for (const field of item.fields) {
+    ingestField(field);
+  }
   if (item.sections) {
     for (const section of item.sections) {
       for (const field of section.fields) {
-        if (field.value) {
-          fieldsMap.set(field.label.toLowerCase(), field.value);
-        }
+        ingestField(field);
       }
     }
   }
 
-  // valueを構築
+  const notePlain = item.notesPlain || '';
+
+  if (category === 'login' || category === 'password') {
+    const website = fieldsMap.get('website') || fieldsMap.get('url') || '';
+    const username = fieldsMap.get('username') || fieldsMap.get('email') || '';
+    const password = fieldsMap.get('password') || '';
+    if (website || username || password) {
+      return {
+        title,
+        type: 'password' as const,
+        value: '',
+        note: notePlain || undefined,
+        detailTemplate: 'login' as const,
+        detailFields: {
+          website,
+          username,
+          password,
+        },
+      };
+    }
+  }
+
+  if (category.includes('credit')) {
+    const detailFields = {
+      cardholder:
+        fieldsMap.get('cardholder') || fieldsMap.get('name on card') || fieldsMap.get('name') || '',
+      card_type: fieldsMap.get('type') || fieldsMap.get('card type') || '',
+      number: fieldsMap.get('number') || fieldsMap.get('ccnum') || '',
+      verification_code: fieldsMap.get('cvv') || fieldsMap.get('verification code') || '',
+      expiry: fieldsMap.get('expiry') || '',
+      valid_from: fieldsMap.get('valid from year') || fieldsMap.get('valid from') || '',
+    };
+    if (Object.values(detailFields).some((v) => v.trim())) {
+      return {
+        title,
+        type: 'other',
+        value: '',
+        note: notePlain || undefined,
+        detailTemplate: 'credit_card' as const,
+        detailFields,
+      };
+    }
+  }
+
+  if (category.includes('bank')) {
+    const detailFields = {
+      bank_name: fieldsMap.get('bank name') || '',
+      account_holder: fieldsMap.get('account holder') || fieldsMap.get('owner') || '',
+      account_type: fieldsMap.get('type') || fieldsMap.get('account type') || '',
+      branch_code: fieldsMap.get('branch code') || fieldsMap.get('routing') || '',
+      account_number: fieldsMap.get('account number') || fieldsMap.get('account no') || '',
+      swift: fieldsMap.get('swift') || fieldsMap.get('swift code') || '',
+      iban: fieldsMap.get('iban') || '',
+      pin: fieldsMap.get('pin') || fieldsMap.get('pin code') || '',
+    };
+    if (Object.values(detailFields).some((v) => v.trim())) {
+      return {
+        title,
+        type: 'other',
+        value: '',
+        note: notePlain || undefined,
+        detailTemplate: 'bank_account' as const,
+        detailFields,
+      };
+    }
+  }
+
   let value = '';
-  let note = item.notesPlain || '';
+  let note = notePlain;
 
   if (type === 'password') {
-    // passwordタイプの場合はJSON形式で保存
     const passwordData: Record<string, string> = {};
     const website = fieldsMap.get('website') || fieldsMap.get('url') || '';
     const username = fieldsMap.get('username') || fieldsMap.get('email') || '';
@@ -118,12 +187,7 @@ export function convert1PuxItemToPayload(item: OnePuxItem): ParsedItem {
     if (password) passwordData.password = password;
 
     value = JSON.stringify(passwordData);
-    // noteにはnotesPlainとその他のフィールドを追加
-    if (note) {
-      note = note;
-    }
   } else {
-    // password以外のタイプはvalueにnotesPlainまたは最初のフィールドの値を設定
     value = item.notesPlain || fieldsMap.get('notes') || '';
     note = '';
   }

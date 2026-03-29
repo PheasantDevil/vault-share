@@ -5,7 +5,7 @@
  * 標準的な列: Title, Website, Username, Password, Notes, Type 等
  */
 
-import { ItemPayload, ItemType } from '../items/types';
+import type { DetailTemplateId, ItemType } from '../items/types';
 
 export interface OnePasswordCSVRow {
   Title: string;
@@ -22,6 +22,8 @@ export interface ParsedItem {
   type: ItemType;
   value: string;
   note?: string;
+  detailTemplate?: DetailTemplateId;
+  detailFields?: Record<string, string>;
 }
 
 /**
@@ -102,9 +104,31 @@ function parseCSVLine(line: string): string[] {
 export function convertToItemPayload(row: OnePasswordCSVRow): ParsedItem {
   const title = row.Title || 'Untitled';
 
-  // Typeに基づいてItemTypeを決定
-  let type: ItemType = 'other';
   const rowType = (row.Type || '').toLowerCase();
+  const hasLoginColumns = Boolean(row.Website || row.Username || row.Password);
+  const looksLikeLogin =
+    rowType.includes('login') ||
+    rowType.includes('password') ||
+    (hasLoginColumns && !rowType.includes('credit') && !rowType.includes('card'));
+
+  // Login 行はテンプレートで保存（1Password 連携しやすい）
+  if (looksLikeLogin && hasLoginColumns) {
+    const note = (row.Notes || '').trim() || undefined;
+    return {
+      title,
+      type: 'password',
+      value: '',
+      note,
+      detailTemplate: 'login',
+      detailFields: {
+        website: (row.Website || '').trim(),
+        username: (row.Username || '').trim(),
+        password: (row.Password || '').trim(),
+      },
+    };
+  }
+
+  let type: ItemType = 'other';
   if (rowType.includes('password') || rowType.includes('login')) {
     type = 'password';
   } else if (rowType.includes('note') || rowType.includes('secure note')) {
@@ -112,11 +136,9 @@ export function convertToItemPayload(row: OnePasswordCSVRow): ParsedItem {
   } else if (rowType.includes('key') || rowType.includes('ssh')) {
     type = 'key';
   } else if (row.Website || row.Username || row.Password) {
-    // Website/Username/Passwordがある場合はpasswordタイプとみなす
     type = 'password';
   }
 
-  // valueを構築（passwordタイプの場合はJSON形式、それ以外はNotes）
   let value = '';
   if (type === 'password') {
     const passwordData: Record<string, string> = {};
@@ -128,7 +150,6 @@ export function convertToItemPayload(row: OnePasswordCSVRow): ParsedItem {
     value = row.Notes || '';
   }
 
-  // noteを構築（passwordタイプの場合はNotesをnoteに、それ以外は空）
   const note = type === 'password' ? row.Notes || '' : '';
 
   return {

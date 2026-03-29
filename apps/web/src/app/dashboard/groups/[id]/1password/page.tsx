@@ -11,6 +11,7 @@ import { useOnePasswordConnectionStatus } from '@/lib/swr/hooks';
 import { ItemImportFilters } from './ItemImportFilters';
 import { ItemImportList } from './ItemImportList';
 import { filterImportItems } from './filter-items';
+import { mapConnectItemToCreateBody } from '@/lib/1password/map-connect-item-to-body';
 
 type OnePasswordVault = {
   id: string;
@@ -23,6 +24,22 @@ type OnePasswordItem = {
   title: string;
   vault: { id: string };
   category: string;
+};
+
+/** Connect 取得アイテムから補足ノート文字列を組み立てる（mapConnectItemToCreateBody と併用） */
+type ConnectApiField = {
+  type?: string;
+  purpose?: string;
+  label?: string;
+  value?: string;
+};
+type ConnectApiSection = {
+  label?: string;
+  fields?: ConnectApiField[];
+};
+type ConnectApiItemForNotes = {
+  fields?: ConnectApiField[];
+  sections?: ConnectApiSection[];
 };
 
 export default function OnePasswordImportPage() {
@@ -166,16 +183,17 @@ function OnePasswordImportContent() {
         }
 
         const item = itemData.item;
-        // アイテムを当サービスの形式に変換して登録
-        const title = item.title || 'Untitled';
-        const type = mapCategoryToType(item.category);
-        const value = extractItemValue(item);
-        const note = extractItemNote(item);
+        const body = mapConnectItemToCreateBody(item);
+        const supplemental = extractItemNote(item);
+        if (supplemental) {
+          const base = typeof body.note === 'string' ? body.note : '';
+          body.note = [base, supplemental].filter(Boolean).join('\n\n');
+        }
 
         const importRes = await fetch(`/api/groups/${groupId}/items`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, type, value, note }),
+          body: JSON.stringify(body),
         });
 
         if (!importRes.ok) {
@@ -193,46 +211,10 @@ function OnePasswordImportContent() {
     }
   }
 
-  function mapCategoryToType(category: string): 'password' | 'note' | 'key' | 'other' {
-    switch (category.toLowerCase()) {
-      case 'login':
-      case 'password':
-        return 'password';
-      case 'secure note':
-      case 'note':
-        return 'note';
-      case 'api credential':
-      case 'api key':
-        return 'key';
-      default:
-        return 'other';
-    }
-  }
-
-  function extractItemValue(item: any): string {
-    // 1Passwordアイテムから主要な値を抽出
-    if (item.fields) {
-      const passwordField = item.fields.find(
-        (f: any) => f.purpose === 'PASSWORD' || f.label?.toLowerCase() === 'password'
-      );
-      if (passwordField?.value) return passwordField.value;
-
-      const usernameField = item.fields.find(
-        (f: any) => f.purpose === 'USERNAME' || f.label?.toLowerCase() === 'username'
-      );
-      if (usernameField?.value) return usernameField.value;
-
-      // 最初のフィールドの値を返す
-      const firstField = item.fields.find((f: any) => f.value);
-      if (firstField?.value) return firstField.value;
-    }
-    return '';
-  }
-
-  function extractItemNote(item: any): string {
+  function extractItemNote(item: ConnectApiItemForNotes): string {
     const notes: string[] = [];
     if (item.fields) {
-      item.fields.forEach((f: any) => {
+      item.fields.forEach((f) => {
         if (f.type === 'STRING' && f.purpose !== 'PASSWORD' && f.purpose !== 'USERNAME') {
           if (f.label && f.value) {
             notes.push(`${f.label}: ${f.value}`);
@@ -241,10 +223,10 @@ function OnePasswordImportContent() {
       });
     }
     if (item.sections) {
-      item.sections.forEach((section: any) => {
+      item.sections.forEach((section) => {
         if (section.label) notes.push(`\n${section.label}:`);
         if (section.fields) {
-          section.fields.forEach((f: any) => {
+          section.fields.forEach((f) => {
             if (f.label && f.value) {
               notes.push(`  ${f.label}: ${f.value}`);
             }
@@ -279,7 +261,8 @@ function OnePasswordImportContent() {
         backLink={{ href: `/dashboard/groups/${groupId}`, label: 'グループ詳細' }}
       >
         <Alert type="error">
-          1Password Connect の利用可否を確認できませんでした。ネットワークを確認するか、しばらくしてから再度お試しください。
+          1Password Connect
+          の利用可否を確認できませんでした。ネットワークを確認するか、しばらくしてから再度お試しください。
         </Alert>
         <CsvImportGuidance groupId={groupId} />
         <p style={{ marginTop: '1rem' }}>
@@ -298,7 +281,8 @@ function OnePasswordImportContent() {
         backLink={{ href: `/dashboard/groups/${groupId}`, label: 'グループ詳細' }}
       >
         <Alert type="info">
-          この環境では 1Password Connect が設定されていません。1Password から CSV をエクスポートし、グループ詳細の「CSVからインポート」で取り込んでください。
+          この環境では 1Password Connect が設定されていません。1Password から CSV
+          をエクスポートし、グループ詳細の「CSVからインポート」で取り込んでください。
         </Alert>
         <CsvImportGuidance groupId={groupId} showAdminHints />
         <p style={{ marginTop: '1rem' }}>

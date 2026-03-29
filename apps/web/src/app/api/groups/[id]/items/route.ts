@@ -9,6 +9,7 @@ import { writeAuditLog } from '@/lib/audit/log';
 import { createErrorResponse, ErrorCode } from '@/lib/api/error-response';
 import { getGroupMembership } from '@/lib/groups/get-group-membership';
 import { getItemSnapshotsByGroupId } from '@/lib/items/query-items-by-group';
+import { getItemListSubtitle, getSearchableBlob } from '@/lib/items/payload-summary';
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSessionFromRequest(request);
@@ -45,6 +46,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       type: string;
       updatedAt: string;
       createdAt: string;
+      searchBlob: string;
+      subtitle: string;
     };
 
     const rows: Row[] = itemsSnap.docs
@@ -53,13 +56,19 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       .map(({ id, data }) => {
         let title = '';
         let type = 'other';
+        let searchBlob = '';
+        let subtitle = '';
         try {
           const payload = decryptItemPayload({ ciphertext: data.ciphertext, iv: data.iv });
           title = payload.title;
           type = payload.type;
+          searchBlob = getSearchableBlob(payload);
+          subtitle = getItemListSubtitle(payload);
         } catch {
           title = '(復号エラー)';
           type = 'other';
+          searchBlob = '';
+          subtitle = '';
         }
         return {
           id,
@@ -67,6 +76,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           type,
           updatedAt: data.updatedAt,
           createdAt: data.createdAt,
+          searchBlob,
+          subtitle,
         };
       });
 
@@ -75,7 +86,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     let filtered = rows;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      filtered = filtered.filter((item) => item.title.toLowerCase().includes(q));
+      filtered = filtered.filter(
+        (item) => item.title.toLowerCase().includes(q) || item.searchBlob.includes(q)
+      );
     }
     if (typeFilter && typeFilter !== 'all') {
       filtered = filtered.filter((item) => item.type === typeFilter);
@@ -87,6 +100,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       title: row.title,
       type: row.type,
       updatedAt: row.updatedAt,
+      subtitle: row.subtitle || undefined,
     }));
 
     return NextResponse.json(

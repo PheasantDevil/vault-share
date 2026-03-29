@@ -58,9 +58,10 @@ export const STRUCTURED_TEMPLATES: TemplateDefinition[] = [
   },
 ];
 
-const TEMPLATE_BY_ID = Object.fromEntries(
-  STRUCTURED_TEMPLATES.map((t) => [t.id, t])
-) as Record<TemplateDefinition['id'], TemplateDefinition>;
+const TEMPLATE_BY_ID = Object.fromEntries(STRUCTURED_TEMPLATES.map((t) => [t.id, t])) as Record<
+  TemplateDefinition['id'],
+  TemplateDefinition
+>;
 
 export function getTemplateDefinition(
   id: TemplateDefinition['id']
