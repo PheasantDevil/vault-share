@@ -3,7 +3,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb, COLLECTIONS } from '@vault-share/db';
-import type { AuditLogDoc } from '@vault-share/db';
+import type { AuditLogDoc, GroupMemberDoc } from '@vault-share/db';
 import { getSessionFromRequest } from '@/lib/auth/get-session';
 import { createErrorResponse, ErrorCode } from '@/lib/api/error-response';
 import type { Query } from 'firebase-admin/firestore';
@@ -28,15 +28,28 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get('sortBy') || 'createdAt';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
 
-    // ユーザーがアクセス可能なグループのみフィルタ
+    // オーナーとして管理できるグループのログのみ（メンバー権限では閲覧不可）
     const db = getDb();
     const membersSnap = await db
       .collection(COLLECTIONS.groupMembers)
       .where('userId', '==', session.uid)
       .get();
-    const accessibleGroupIds = membersSnap.docs.map((d) => d.data().groupId);
+    const ownedGroupIds = membersSnap.docs
+      .map((d) => d.data() as GroupMemberDoc)
+      .filter((m) => m.role === 'owner')
+      .map((m) => m.groupId);
 
-    if (accessibleGroupIds.length === 0) {
+    if (groupId && !ownedGroupIds.includes(groupId)) {
+      return NextResponse.json(
+        createErrorResponse(
+          ErrorCode.FORBIDDEN,
+          'このグループの監査ログを閲覧する権限がありません'
+        ),
+        { status: 403 }
+      );
+    }
+
+    if (ownedGroupIds.length === 0) {
       return NextResponse.json({
         logs: [],
         pagination: {
@@ -51,27 +64,16 @@ export async function GET(request: NextRequest) {
     // クエリ構築
     // グループIDでフィルタ（指定されている場合）
     let query: Query = db.collection(COLLECTIONS.auditLogs);
-    if (groupId && accessibleGroupIds.includes(groupId)) {
+    if (groupId && ownedGroupIds.includes(groupId)) {
       query = query.where('groupId', '==', groupId);
-    } else if (accessibleGroupIds.length > 0) {
-      // アクセス可能なグループが10件以下の場合のみ'in'を使用
-      if (accessibleGroupIds.length <= 10) {
-        query = query.where('groupId', 'in', accessibleGroupIds);
+    } else {
+      // オーナーグループが10件以下の場合のみ'in'を使用
+      if (ownedGroupIds.length <= 10) {
+        query = query.where('groupId', 'in', ownedGroupIds);
       } else {
         // 10件を超える場合は、最初の10件のみフィルタ（簡略化）
-        query = query.where('groupId', 'in', accessibleGroupIds.slice(0, 10));
+        query = query.where('groupId', 'in', ownedGroupIds.slice(0, 10));
       }
-    } else {
-      // アクセス可能なグループがない場合は空の結果を返す
-      return NextResponse.json({
-        logs: [],
-        pagination: {
-          total: 0,
-          limit,
-          offset,
-          hasMore: false,
-        },
-      });
     }
 
     // ユーザーIDでフィルタ

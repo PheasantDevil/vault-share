@@ -20,9 +20,9 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     return NextResponse.json({ error: 'グループが見つかりません' }, { status: 404 });
   }
   const member = await getGroupMembership(params.id, session.uid);
-  if (!member) {
+  if (!member || member.role !== 'owner') {
     return NextResponse.json(
-      { error: 'このグループに招待を発行する権限がありません' },
+      { error: '招待リンクを発行できるのはグループのオーナーのみです' },
       { status: 403 }
     );
   }

@@ -28,7 +28,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     );
   }
   return NextResponse.json(
-    { id: groupSnap.id, ...groupSnap.data() },
+    { id: groupSnap.id, ...groupSnap.data(), myRole: member.role },
     {
       headers: {
         'Cache-Control': 'private, max-age=60, stale-while-revalidate=300',

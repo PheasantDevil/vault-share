@@ -58,6 +58,13 @@ export default function AuditLogsPage() {
       params.append('sortOrder', 'desc');
 
       const response = await fetch(`/api/audit-logs?${params.toString()}`);
+      if (response.status === 403) {
+        const body = await response.json().catch(() => ({}));
+        const msg =
+          body?.error?.message ??
+          '監査ログを閲覧する権限がありません（グループのオーナーのみ閲覧できます）';
+        throw new Error(msg);
+      }
       if (!response.ok) {
         throw new Error('監査ログの取得に失敗しました');
       }
@@ -89,6 +96,13 @@ export default function AuditLogsPage() {
 
       const response = await fetch(`/api/audit-logs/export?${params.toString()}`);
       if (!response.ok) {
+        const ct = response.headers.get('content-type');
+        if (ct?.includes('application/json')) {
+          const body = await response.json().catch(() => ({}));
+          throw new Error(
+            body?.error?.message ?? 'エクスポートに失敗しました（権限を確認してください）'
+          );
+        }
         throw new Error('エクスポートに失敗しました');
       }
 

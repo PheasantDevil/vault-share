@@ -3,7 +3,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb, COLLECTIONS } from '@vault-share/db';
-import type { AuditLogDoc } from '@vault-share/db';
+import type { AuditLogDoc, GroupMemberDoc } from '@vault-share/db';
 import { getSessionFromRequest } from '@/lib/auth/get-session';
 import { createErrorResponse, ErrorCode } from '@/lib/api/error-response';
 import type { Query } from 'firebase-admin/firestore';
@@ -68,15 +68,27 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get('startDate') || undefined;
     const endDate = searchParams.get('endDate') || undefined;
 
-    // ユーザーがアクセス可能なグループのみフィルタ
     const db = getDb();
     const membersSnap = await db
       .collection(COLLECTIONS.groupMembers)
       .where('userId', '==', session.uid)
       .get();
-    const accessibleGroupIds = membersSnap.docs.map((d) => d.data().groupId);
+    const ownedGroupIds = membersSnap.docs
+      .map((d) => d.data() as GroupMemberDoc)
+      .filter((m) => m.role === 'owner')
+      .map((m) => m.groupId);
 
-    if (accessibleGroupIds.length === 0) {
+    if (groupId && !ownedGroupIds.includes(groupId)) {
+      return NextResponse.json(
+        createErrorResponse(
+          ErrorCode.FORBIDDEN,
+          'このグループの監査ログをエクスポートする権限がありません'
+        ),
+        { status: 403 }
+      );
+    }
+
+    if (ownedGroupIds.length === 0) {
       return new NextResponse('', {
         status: 200,
         headers: {
@@ -87,12 +99,14 @@ export async function GET(request: NextRequest) {
     }
 
     // クエリ構築（エクスポートは最大1000件まで）
-    let query: Query = db
-      .collection(COLLECTIONS.auditLogs)
-      .where('groupId', 'in', accessibleGroupIds.slice(0, 10));
+    let query: Query = db.collection(COLLECTIONS.auditLogs);
 
-    if (groupId && accessibleGroupIds.includes(groupId)) {
+    if (groupId && ownedGroupIds.includes(groupId)) {
       query = query.where('groupId', '==', groupId);
+    } else if (ownedGroupIds.length <= 10) {
+      query = query.where('groupId', 'in', ownedGroupIds);
+    } else {
+      query = query.where('groupId', 'in', ownedGroupIds.slice(0, 10));
     }
     if (actorUid) {
       query = query.where('actorUid', '==', actorUid);
