@@ -7,7 +7,6 @@ import { PageLayout } from '@/components/ui/PageLayout';
 import { FormField } from '@/components/ui/FormField';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
-import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Pagination } from '@/components/ui/Pagination';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { useToast } from '@/components/ui/Toast';
@@ -322,11 +321,12 @@ export default function GroupDetailPage() {
   if (loading) {
     return (
       <PageLayout
-        title="読み込み中..."
-        maxWidth={720}
+        title="グループ"
+        description="読み込み中です。"
+        maxWidth={960}
         backLink={{ href: '/dashboard', label: 'ダッシュボード' }}
       >
-        <p>読み込み中...</p>
+        <SkeletonLoader rows={8} height="2.5rem" />
       </PageLayout>
     );
   }
@@ -334,7 +334,7 @@ export default function GroupDetailPage() {
     return (
       <PageLayout
         title="エラー"
-        maxWidth={720}
+        maxWidth={960}
         backLink={{ href: '/dashboard', label: 'ダッシュボード' }}
       >
         <Alert type="error">{error ?? 'グループが見つかりません'}</Alert>
@@ -347,822 +347,741 @@ export default function GroupDetailPage() {
   return (
     <PageLayout
       title={group.name}
-      maxWidth={720}
+      description={
+        isOwner
+          ? 'オーナーとしてグループ名の編集・メンバー管理・招待ができます。'
+          : 'メンバーとして共有アイテムの閲覧・編集ができます。'
+      }
+      maxWidth={960}
       backLink={{ href: '/dashboard', label: 'ダッシュボード' }}
     >
       {error && <Alert type="error">{error}</Alert>}
-      {isOwner &&
-        (editing ? (
-          <form onSubmit={updateGroup} style={{ marginBottom: '1rem' }}>
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-              <FormField
-                label="グループ名"
-                id="group-name"
-                type="text"
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                required
-                style={{ flex: 1, marginBottom: 0 }}
-              />
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
-                <Button type="submit" variant="primary">
-                  保存
+
+      <div className="audit-page group-detail-page">
+        <section className="audit-panel" aria-labelledby="group-overview-heading">
+          <h2 id="group-overview-heading" className="audit-panel__title">
+            グループ
+          </h2>
+          <div className="group-meta">
+            <span
+              className={`group-role-badge ${isOwner ? 'group-role-badge--owner' : 'group-role-badge--member'}`}
+            >
+              {isOwner ? 'オーナー' : 'メンバー'}
+            </span>
+            {isOwner && !editing && (
+              <div className="group-actions">
+                <Button type="button" onClick={() => setEditing(true)} variant="secondary">
+                  編集
                 </Button>
-                <Button type="button" onClick={() => setEditing(false)} variant="secondary">
-                  キャンセル
+                <Button type="button" onClick={deleteGroup} variant="danger">
+                  削除
                 </Button>
               </div>
-            </div>
-          </form>
-        ) : (
-          <div style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
-            <Button type="button" onClick={() => setEditing(true)} variant="secondary">
-              編集
-            </Button>
-            <Button type="button" onClick={deleteGroup} variant="danger">
-              削除
-            </Button>
+            )}
           </div>
-        ))}
-      <SectionHeader title="メンバー" />
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {members.map((m) => (
-          <li key={m.userId} style={{ marginBottom: '0.25rem' }}>
-            <span>
-              {m.displayName || m.email || m.userId}{' '}
-              {m.role === 'owner' ? '(オーナー)' : '(メンバー)'}
-            </span>
-            {isOwner ? (
-              <span style={{ marginLeft: '0.5rem' }}>
-                {m.role === 'owner' ? (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      try {
-                        const res = await fetch(`/api/groups/${id}/members`, {
-                          method: 'PATCH',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ userId: m.userId, role: 'member' }),
-                        });
-                        const data = await res.json().catch(() => ({}));
-                        if (!res.ok) {
-                          throw new Error(data.error ?? 'ロールの更新に失敗しました');
+          {isOwner && editing && (
+            <form onSubmit={updateGroup} className="group-form-stack" style={{ marginTop: 0 }}>
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                <FormField
+                  label="グループ名"
+                  id="group-name"
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  required
+                  style={{ flex: '1 1 12rem', marginBottom: 0, minWidth: 0 }}
+                />
+                <div className="group-form-actions" style={{ marginTop: '1.5rem' }}>
+                  <Button type="submit" variant="primary">
+                    保存
+                  </Button>
+                  <Button type="button" onClick={() => setEditing(false)} variant="secondary">
+                    キャンセル
+                  </Button>
+                </div>
+              </div>
+            </form>
+          )}
+        </section>
+
+        <section className="audit-panel" aria-labelledby="group-members-heading">
+          <h2 id="group-members-heading" className="audit-panel__title">
+            メンバー
+          </h2>
+          <ul className="group-member-list">
+            {members.map((m) => (
+              <li key={m.userId} className="group-member-row">
+                <div className="group-member-row__main">
+                  <div className="group-member-row__name">
+                    {m.displayName || m.email || m.userId}
+                  </div>
+                  <div className="group-member-row__role">
+                    {m.role === 'owner' ? 'オーナー' : 'メンバー'}
+                  </div>
+                </div>
+                {isOwner ? (
+                  <div className="group-member-actions">
+                    {m.role === 'owner' ? (
+                      <button
+                        type="button"
+                        className="app-btn app-btn--secondary"
+                        onClick={async () => {
+                          try {
+                            const res = await fetch(`/api/groups/${id}/members`, {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ userId: m.userId, role: 'member' }),
+                            });
+                            const data = await res.json().catch(() => ({}));
+                            if (!res.ok) {
+                              throw new Error(data.error ?? 'ロールの更新に失敗しました');
+                            }
+                            setMembers((prev) =>
+                              prev.map((x) => (x.userId === m.userId ? { ...x, role: 'member' } : x))
+                            );
+                            await refreshGroupFromApi();
+                          } catch (err) {
+                            setError(err instanceof Error ? err.message : 'エラー');
+                          }
+                        }}
+                      >
+                        メンバーにする
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="app-btn app-btn--secondary"
+                        onClick={async () => {
+                          try {
+                            const res = await fetch(`/api/groups/${id}/members`, {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ userId: m.userId, role: 'owner' }),
+                            });
+                            const data = await res.json().catch(() => ({}));
+                            if (!res.ok) {
+                              throw new Error(data.error ?? 'ロールの更新に失敗しました');
+                            }
+                            setMembers((prev) =>
+                              prev.map((x) => (x.userId === m.userId ? { ...x, role: 'owner' } : x))
+                            );
+                            await refreshGroupFromApi();
+                          } catch (err) {
+                            setError(err instanceof Error ? err.message : 'エラー');
+                          }
+                        }}
+                      >
+                        オーナーにする
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="app-btn app-btn--secondary"
+                      onClick={async () => {
+                        if (!confirm('このメンバーをグループから削除しますか？')) return;
+                        try {
+                          const res = await fetch(`/api/groups/${id}/members`, {
+                            method: 'DELETE',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ userId: m.userId }),
+                          });
+                          const data = await res.json().catch(() => ({}));
+                          if (!res.ok) {
+                            throw new Error(data.error ?? 'メンバーの削除に失敗しました');
+                          }
+                          setMembers((prev) => prev.filter((x) => x.userId !== m.userId));
+                          await refreshGroupFromApi();
+                        } catch (err) {
+                          setError(err instanceof Error ? err.message : 'エラー');
                         }
-                        setMembers((prev) =>
-                          prev.map((x) => (x.userId === m.userId ? { ...x, role: 'member' } : x))
-                        );
-                        await refreshGroupFromApi();
-                      } catch (err) {
-                        setError(err instanceof Error ? err.message : 'エラー');
-                      }
-                    }}
-                    style={{ marginRight: 4 }}
-                  >
-                    メンバーにする
-                  </button>
-                ) : (
-                  <button
+                      }}
+                    >
+                      削除
+                    </button>
+                  </div>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {isOwner ? (
+          <section className="audit-panel" aria-labelledby="group-invite-heading">
+            <h2 id="group-invite-heading" className="audit-panel__title">
+              招待
+            </h2>
+            {inviteLink ? (
+              <div className="group-invite-box">
+                <p style={{ margin: '0 0 var(--spacing-sm)', fontSize: 'var(--font-size-sm)' }}>
+                  招待リンク
+                </p>
+                <a href={inviteLink}>{inviteLink}</a>
+                <div style={{ marginTop: 'var(--spacing-sm)' }}>
+                  <Button
                     type="button"
-                    onClick={async () => {
-                      try {
-                        const res = await fetch(`/api/groups/${id}/members`, {
-                          method: 'PATCH',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ userId: m.userId, role: 'owner' }),
-                        });
-                        const data = await res.json().catch(() => ({}));
-                        if (!res.ok) {
-                          throw new Error(data.error ?? 'ロールの更新に失敗しました');
-                        }
-                        setMembers((prev) =>
-                          prev.map((x) => (x.userId === m.userId ? { ...x, role: 'owner' } : x))
-                        );
-                      } catch (err) {
-                        setError(err instanceof Error ? err.message : 'エラー');
-                      }
-                    }}
-                    style={{ marginRight: 4 }}
+                    variant="secondary"
+                    onClick={() => navigator.clipboard.writeText(inviteLink)}
                   >
-                    オーナーにする
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (!confirm('このメンバーをグループから削除しますか？')) return;
+                    コピー
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button type="button" variant="primary" onClick={createInvite}>
+                招待リンクを発行
+              </Button>
+            )}
+          </section>
+        ) : null}
+
+        <section className="audit-panel" aria-labelledby="group-items-heading">
+          <h2 id="group-items-heading" className="audit-panel__title">
+            アイテム
+          </h2>
+          {!connectHintLoading && connectAvailable === false && (
+            <p className="group-hint audit-panel__hint">
+              この環境では 1Password Connect が未設定のため、Connect
+              経由の取り込みはできません。1Passwordからインポートを開くと CSV への案内があります。
+            </p>
+          )}
+          <div className="group-impex" id="csv-import">
+            <span className="group-impex__label">取り込み・書き出し</span>
+            <div className="group-impex__actions">
+              <Link href={`/dashboard/groups/${id}/import/1password`}>1Passwordからインポート</Link>
+              <span className="group-impex__sep" aria-hidden>|</span>
+              <label>
+                <input
+                  type="file"
+                  accept=".csv"
+                  style={{ display: 'none' }}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
                     try {
-                      const res = await fetch(`/api/groups/${id}/members`, {
-                        method: 'DELETE',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ userId: m.userId }),
+                      setError(null);
+                      const formData = new FormData();
+                      formData.append('file', file);
+                      const res = await fetch(`/api/groups/${id}/import`, {
+                        method: 'POST',
+                        body: formData,
                       });
-                      const data = await res.json().catch(() => ({}));
+                      const data = await res.json();
                       if (!res.ok) {
-                        throw new Error(data.error ?? 'メンバーの削除に失敗しました');
+                        throw new Error(data.error ?? 'CSVインポートに失敗しました');
                       }
-                      setMembers((prev) => prev.filter((x) => x.userId !== m.userId));
-                      await refreshGroupFromApi();
+                      await reloadItems();
+                      alert(`${data.count}件のアイテムをインポートしました`);
+                      e.target.value = '';
                     } catch (err) {
                       setError(err instanceof Error ? err.message : 'エラー');
                     }
                   }}
-                >
-                  削除
-                </button>
-              </span>
-            ) : null}
-          </li>
-        ))}
-      </ul>
-      {isOwner ? (
-        <>
-          <h2 style={{ marginTop: '1.5rem', marginBottom: 0.5 }}>招待</h2>
-          {inviteLink ? (
-            <p>
-              招待リンク: <a href={inviteLink}>{inviteLink}</a>
+                />
+                <span className="group-impex-file">CSVからインポート</span>
+              </label>
+              <span className="group-impex__sep" aria-hidden>|</span>
+              <label>
+                <input
+                  type="file"
+                  accept=".1pux,application/json"
+                  style={{ display: 'none' }}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    try {
+                      setError(null);
+                      const formData = new FormData();
+                      formData.append('file', file);
+                      const res = await fetch(`/api/groups/${id}/import-1pux`, {
+                        method: 'POST',
+                        body: formData,
+                      });
+                      const data = await res.json();
+                      if (!res.ok) {
+                        throw new Error(data.error ?? '1PUXインポートに失敗しました');
+                      }
+                      await reloadItems();
+                      alert(`${data.count}件のアイテムをインポートしました`);
+                      e.target.value = '';
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : 'エラー');
+                    }
+                  }}
+                />
+                <span className="group-impex-file">1PUXからインポート</span>
+              </label>
+              <span className="group-impex__sep" aria-hidden>|</span>
               <button
                 type="button"
-                onClick={() => navigator.clipboard.writeText(inviteLink)}
-                style={{ marginLeft: 0.5 }}
+                className="app-btn app-btn--ghost"
+                onClick={async () => {
+                  try {
+                    setError(null);
+                    const res = await fetch(`/api/groups/${id}/export`);
+                    if (!res.ok) {
+                      const data = await res.json();
+                      throw new Error(data.error ?? 'CSVエクスポートに失敗しました');
+                    }
+                    const blob = await res.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `vault-share-export-${id}-${new Date().toISOString().split('T')[0]}.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : 'エラー');
+                  }
+                }}
               >
-                コピー
+                CSVにエクスポート
               </button>
+              <span className="group-impex__sep" aria-hidden>|</span>
+              <button
+                type="button"
+                className="app-btn app-btn--ghost"
+                onClick={async () => {
+                  try {
+                    setError(null);
+                    const res = await fetch(`/api/groups/${id}/export-1pux`);
+                    if (!res.ok) {
+                      const data = await res.json();
+                      throw new Error(data.error ?? '1PUXエクスポートに失敗しました');
+                    }
+                    const blob = await res.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `vault-share-export-${id}-${new Date().toISOString().split('T')[0]}.1pux`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : 'エラー');
+                  }
+                }}
+              >
+                1PUXにエクスポート
+              </button>
+            </div>
+          </div>
+          <div className="group-filter-bar">
+            <div className="audit-field">
+              <label htmlFor="group-item-search">検索</label>
+              <input
+                id="group-item-search"
+                type="text"
+                value={itemSearchQuery}
+                onChange={(e) => setItemSearchQuery(e.target.value)}
+                placeholder="タイトル・内容で検索"
+                autoComplete="off"
+              />
+            </div>
+            <div className="audit-field">
+              <label htmlFor="group-item-filter">フィルタ</label>
+              <select
+                id="group-item-filter"
+                value={itemFilter}
+                onChange={(e) =>
+                  setItemFilter(e.target.value as 'all' | 'password' | 'note' | 'key' | 'other')
+                }
+              >
+                <option value="all">すべて</option>
+                <option value="password">パスワード</option>
+                <option value="note">メモ</option>
+                <option value="key">キー</option>
+                <option value="other">その他</option>
+              </select>
+            </div>
+            <div
+              className="audit-field"
+              style={{ flex: '0 0 auto', minWidth: 'auto', alignSelf: 'flex-end' }}
+            >
+              <Button type="button" variant="secondary" onClick={() => setItemFormOpen((v) => !v)}>
+                {itemFormOpen ? '作成フォームを閉じる' : '新しいアイテムを追加'}
+              </Button>
+            </div>
+          </div>
+          {itemFormOpen && (
+            <form onSubmit={submitItem} className="group-form-stack">
+              <div>
+                <label htmlFor="new-item-title">タイトル</label>
+                <input
+                  id="new-item-title"
+                  type="text"
+                  value={itemTitle}
+                  onChange={(e) => setItemTitle(e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="new-item-template">テンプレート</label>
+                <select
+                  id="new-item-template"
+                  value={itemDetailTemplate}
+                  onChange={(e) => handleItemTemplateChange(e.target.value as DetailTemplateId)}
+                >
+                  {STRUCTURED_TEMPLATES.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.label}
+                    </option>
+                  ))}
+                  <option value="generic">汎用（従来どおり）</option>
+                </select>
+                <p className="audit-panel__hint" style={{ marginTop: 'var(--spacing-xs)' }}>
+                  1Password
+                  のログイン・カード・口座などに近い入力欄です。汎用では従来の「種別＋内容」です。
+                </p>
+              </div>
+              {itemDetailTemplate !== 'generic' &&
+                getTemplateDefinition(
+                  itemDetailTemplate as 'login' | 'credit_card' | 'bank_account'
+                )?.fields.map((f) => (
+                  <div key={f.key}>
+                    <label htmlFor={`new-item-field-${f.key}`}>{f.label}</label>
+                    {f.input === 'textarea' ? (
+                      <textarea
+                        id={`new-item-field-${f.key}`}
+                        value={itemDetailFields[f.key] ?? ''}
+                        onChange={(e) =>
+                          setItemDetailFields((prev) => ({ ...prev, [f.key]: e.target.value }))
+                        }
+                        rows={3}
+                      />
+                    ) : (
+                      <input
+                        id={`new-item-field-${f.key}`}
+                        type={f.input === 'password' ? 'password' : 'text'}
+                        value={itemDetailFields[f.key] ?? ''}
+                        onChange={(e) =>
+                          setItemDetailFields((prev) => ({ ...prev, [f.key]: e.target.value }))
+                        }
+                        autoComplete="off"
+                      />
+                    )}
+                  </div>
+                ))}
+              {itemDetailTemplate === 'generic' && (
+                <>
+                  <div>
+                    <label htmlFor="new-item-type">種別</label>
+                    <select
+                      id="new-item-type"
+                      value={itemType}
+                      onChange={(e) =>
+                        setItemType(e.target.value as 'password' | 'note' | 'key' | 'other')
+                      }
+                    >
+                      <option value="password">パスワード</option>
+                      <option value="note">メモ</option>
+                      <option value="key">キー</option>
+                      <option value="other">その他</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="new-item-value">内容</label>
+                    <textarea
+                      id="new-item-value"
+                      value={itemValue}
+                      onChange={(e) => setItemValue(e.target.value)}
+                      required
+                      rows={4}
+                    />
+                  </div>
+                </>
+              )}
+              <div>
+                <label htmlFor="new-item-note">補足メモ（任意）</label>
+                <textarea
+                  id="new-item-note"
+                  value={itemNote}
+                  onChange={(e) => setItemNote(e.target.value)}
+                  rows={3}
+                />
+              </div>
+              <div className="group-form-actions">
+                <Button type="submit" variant="primary">
+                  保存
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    setItemFormOpen(false);
+                    resetItemForm();
+                  }}
+                >
+                  キャンセル
+                </Button>
+              </div>
+            </form>
+          )}
+          {itemsLoading ? (
+            <SkeletonLoader rows={5} height="2rem" />
+          ) : items.length === 0 ? (
+            <p className="audit-empty">
+              {totalItems === 0
+                ? 'まだアイテムはありません。'
+                : '検索条件・フィルタに一致するアイテムがありません。'}
             </p>
           ) : (
-            <button type="button" onClick={createInvite}>
-              招待リンクを発行
-            </button>
-          )}
-        </>
-      ) : null}
-      <h2 style={{ marginTop: '1.5rem', marginBottom: 0.5 }}>アイテム</h2>
-      {!connectHintLoading && connectAvailable === false && (
-        <p
-          style={{
-            fontSize: '0.875rem',
-            color: 'var(--muted, #666)',
-            marginBottom: '0.5rem',
-            lineHeight: 1.5,
-          }}
-        >
-          この環境では 1Password Connect が未設定のため、Connect
-          経由の取り込みはできません。1Passwordからインポートを開くと CSV への案内があります。
-        </p>
-      )}
-      <div
-        id="csv-import"
-        style={{
-          marginBottom: '0.5rem',
-          display: 'flex',
-          gap: '0.5rem',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-        }}
-      >
-        <Link href={`/dashboard/groups/${id}/import/1password`}>1Passwordからインポート</Link>
-        <span>|</span>
-        <label style={{ cursor: 'pointer' }}>
-          <input
-            type="file"
-            accept=".csv"
-            style={{ display: 'none' }}
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              try {
-                setError(null);
-                const formData = new FormData();
-                formData.append('file', file);
-                const res = await fetch(`/api/groups/${id}/import`, {
-                  method: 'POST',
-                  body: formData,
-                });
-                const data = await res.json();
-                if (!res.ok) {
-                  throw new Error(data.error ?? 'CSVインポートに失敗しました');
-                }
-                await reloadItems();
-                alert(`${data.count}件のアイテムをインポートしました`);
-                // ファイル入力のリセット
-                e.target.value = '';
-              } catch (err) {
-                setError(err instanceof Error ? err.message : 'エラー');
-              }
-            }}
-          />
-          <span style={{ textDecoration: 'underline', color: 'blue' }}>CSVからインポート</span>
-        </label>
-        <span>|</span>
-        <label style={{ cursor: 'pointer' }}>
-          <input
-            type="file"
-            accept=".1pux,application/json"
-            style={{ display: 'none' }}
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              try {
-                setError(null);
-                const formData = new FormData();
-                formData.append('file', file);
-                const res = await fetch(`/api/groups/${id}/import-1pux`, {
-                  method: 'POST',
-                  body: formData,
-                });
-                const data = await res.json();
-                if (!res.ok) {
-                  throw new Error(data.error ?? '1PUXインポートに失敗しました');
-                }
-                await reloadItems();
-                alert(`${data.count}件のアイテムをインポートしました`);
-                // ファイル入力のリセット
-                e.target.value = '';
-              } catch (err) {
-                setError(err instanceof Error ? err.message : 'エラー');
-              }
-            }}
-          />
-          <span style={{ textDecoration: 'underline', color: 'blue' }}>1PUXからインポート</span>
-        </label>
-        <span>|</span>
-        <button
-          type="button"
-          onClick={async () => {
-            try {
-              setError(null);
-              const res = await fetch(`/api/groups/${id}/export`);
-              if (!res.ok) {
-                const data = await res.json();
-                throw new Error(data.error ?? 'CSVエクスポートに失敗しました');
-              }
-              const blob = await res.blob();
-              const url = window.URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = `vault-share-export-${id}-${new Date().toISOString().split('T')[0]}.csv`;
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-              window.URL.revokeObjectURL(url);
-            } catch (err) {
-              setError(err instanceof Error ? err.message : 'エラー');
-            }
-          }}
-          style={{
-            background: 'none',
-            border: 'none',
-            textDecoration: 'underline',
-            color: 'blue',
-            cursor: 'pointer',
-            padding: 0,
-          }}
-        >
-          CSVにエクスポート
-        </button>
-        <span>|</span>
-        <button
-          type="button"
-          onClick={async () => {
-            try {
-              setError(null);
-              const res = await fetch(`/api/groups/${id}/export-1pux`);
-              if (!res.ok) {
-                const data = await res.json();
-                throw new Error(data.error ?? '1PUXエクスポートに失敗しました');
-              }
-              const blob = await res.blob();
-              const url = window.URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = `vault-share-export-${id}-${new Date().toISOString().split('T')[0]}.1pux`;
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-              window.URL.revokeObjectURL(url);
-            } catch (err) {
-              setError(err instanceof Error ? err.message : 'エラー');
-            }
-          }}
-          style={{
-            background: 'none',
-            border: 'none',
-            textDecoration: 'underline',
-            color: 'blue',
-            cursor: 'pointer',
-            padding: 0,
-          }}
-        >
-          1PUXにエクスポート
-        </button>
-      </div>
-      <div
-        style={{
-          marginBottom: '0.5rem',
-          display: 'flex',
-          gap: '0.5rem',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-        }}
-      >
-        <label>
-          検索:
-          <input
-            type="text"
-            value={itemSearchQuery}
-            onChange={(e) => setItemSearchQuery(e.target.value)}
-            placeholder="タイトル・内容で検索"
-            style={{ marginLeft: '0.25rem', padding: '0.25rem', width: '200px' }}
-          />
-        </label>
-        <label>
-          フィルタ:
-          <select
-            value={itemFilter}
-            onChange={(e) =>
-              setItemFilter(e.target.value as 'all' | 'password' | 'note' | 'key' | 'other')
-            }
-            style={{ marginLeft: '0.25rem', padding: '0.25rem' }}
-          >
-            <option value="all">すべて</option>
-            <option value="password">パスワード</option>
-            <option value="note">メモ</option>
-            <option value="key">キー</option>
-            <option value="other">その他</option>
-          </select>
-        </label>
-        <button type="button" onClick={() => setItemFormOpen((v) => !v)}>
-          {itemFormOpen ? 'アイテム作成フォームを閉じる' : '新しいアイテムを追加'}
-        </button>
-      </div>
-      {itemFormOpen && (
-        <form onSubmit={submitItem} style={{ marginBottom: '1rem' }}>
-          <div style={{ marginBottom: '0.5rem' }}>
-            <label>
-              タイトル
-              <input
-                type="text"
-                value={itemTitle}
-                onChange={(e) => setItemTitle(e.target.value)}
-                required
-                style={{ display: 'block', width: '100%', padding: 0.5 }}
-              />
-            </label>
-          </div>
-          <div style={{ marginBottom: '0.5rem' }}>
-            <label>
-              テンプレート
-              <select
-                value={itemDetailTemplate}
-                onChange={(e) => handleItemTemplateChange(e.target.value as DetailTemplateId)}
-                style={{ display: 'block', padding: 0.5, marginTop: '0.25rem' }}
-              >
-                {STRUCTURED_TEMPLATES.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.label}
-                  </option>
-                ))}
-                <option value="generic">汎用（従来どおり）</option>
-              </select>
-            </label>
-            <p
-              style={{
-                fontSize: '0.875rem',
-                color: 'var(--muted, #666)',
-                marginTop: '0.25rem',
-                marginBottom: 0,
-              }}
-            >
-              1Password
-              のログイン・カード・口座などに近い入力欄です。汎用では従来の「種別＋内容」です。
-            </p>
-          </div>
-          {itemDetailTemplate !== 'generic' &&
-            getTemplateDefinition(
-              itemDetailTemplate as 'login' | 'credit_card' | 'bank_account'
-            )?.fields.map((f) => (
-              <div key={f.key} style={{ marginBottom: '0.5rem' }}>
-                <label style={{ display: 'block' }}>
-                  {f.label}
-                  {f.input === 'textarea' ? (
-                    <textarea
-                      value={itemDetailFields[f.key] ?? ''}
-                      onChange={(e) =>
-                        setItemDetailFields((prev) => ({ ...prev, [f.key]: e.target.value }))
-                      }
-                      rows={3}
-                      style={{
-                        display: 'block',
-                        width: '100%',
-                        padding: 0.5,
-                        marginTop: '0.25rem',
-                      }}
-                    />
-                  ) : (
-                    <input
-                      type={f.input === 'password' ? 'password' : 'text'}
-                      value={itemDetailFields[f.key] ?? ''}
-                      onChange={(e) =>
-                        setItemDetailFields((prev) => ({ ...prev, [f.key]: e.target.value }))
-                      }
-                      autoComplete="off"
-                      style={{
-                        display: 'block',
-                        width: '100%',
-                        padding: 0.5,
-                        marginTop: '0.25rem',
-                      }}
-                    />
-                  )}
-                </label>
-              </div>
-            ))}
-          {itemDetailTemplate === 'generic' && (
             <>
-              <div style={{ marginBottom: '0.5rem' }}>
-                <label>
-                  種別
-                  <select
-                    value={itemType}
-                    onChange={(e) =>
-                      setItemType(e.target.value as 'password' | 'note' | 'key' | 'other')
-                    }
-                    style={{ display: 'block', padding: 0.5, marginTop: '0.25rem' }}
-                  >
-                    <option value="password">パスワード</option>
-                    <option value="note">メモ</option>
-                    <option value="key">キー</option>
-                    <option value="other">その他</option>
-                  </select>
-                </label>
-              </div>
-              <div style={{ marginBottom: '0.5rem' }}>
-                <label>
-                  内容
-                  <textarea
-                    value={itemValue}
-                    onChange={(e) => setItemValue(e.target.value)}
-                    required
-                    rows={4}
-                    style={{ display: 'block', width: '100%', padding: 0.5, marginTop: '0.25rem' }}
-                  />
-                </label>
+              <ul className="group-item-list" aria-label="アイテム一覧">
+                {items.map((it) => (
+                  <li key={it.id}>
+                    <button
+                      type="button"
+                      className="group-item-card"
+                      onClick={() => loadItemDetail(it.id)}
+                    >
+                      <div className="group-item-card__row">
+                        <span className="group-item-card__title">{it.title}</span>
+                        <span className="group-item-card__type">({it.type})</span>
+                      </div>
+                      {it.subtitle ? (
+                        <div className="group-item-card__subtitle">{it.subtitle}</div>
+                      ) : null}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <div className="audit-pagination-wrap">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={Math.ceil(totalItems / itemsPerPage)}
+                  onPageChange={(page) => {
+                    setCurrentPage(page);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  totalItems={totalItems}
+                  itemsPerPage={itemsPerPage}
+                />
               </div>
             </>
           )}
-          <div style={{ marginBottom: '0.5rem' }}>
-            <label>
-              補足メモ（任意）
-              <textarea
-                value={itemNote}
-                onChange={(e) => setItemNote(e.target.value)}
-                rows={3}
-                style={{ display: 'block', width: '100%', padding: 0.5, marginTop: '0.25rem' }}
-              />
-            </label>
-          </div>
-          <button type="submit" style={{ marginRight: 0.5 }}>
-            保存
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setItemFormOpen(false);
-              resetItemForm();
-            }}
-            style={{ marginLeft: 0.5 }}
-          >
-            キャンセル
-          </button>
-        </form>
-      )}
-      {itemsLoading ? (
-        <SkeletonLoader rows={5} height="2rem" />
-      ) : items.length === 0 ? (
-        <p>
-          {totalItems === 0
-            ? 'まだアイテムはありません。'
-            : '検索条件・フィルタに一致するアイテムがありません。'}
-        </p>
-      ) : (
-        <>
-          <ul style={{ listStyle: 'none', padding: 0, marginBottom: '1rem' }}>
-            {items.map((it) => (
-              <li key={it.id} style={{ marginBottom: '0.25rem' }}>
-                <button
-                  type="button"
-                  onClick={() => loadItemDetail(it.id)}
-                  style={{ textAlign: 'left', width: '100%', padding: 0.5 }}
-                >
-                  <strong>{it.title}</strong> <span style={{ marginLeft: 4 }}>({it.type})</span>
-                  {it.subtitle ? (
-                    <span
-                      style={{
-                        marginLeft: 8,
-                        fontSize: '0.875rem',
-                        color: 'var(--muted, #666)',
-                        fontWeight: 'normal',
-                      }}
-                    >
-                      {it.subtitle}
-                    </span>
-                  ) : null}
-                </button>
-              </li>
-            ))}
-          </ul>
-          <Pagination
-            currentPage={currentPage}
-            totalPages={Math.ceil(totalItems / itemsPerPage)}
-            onPageChange={(page) => {
-              setCurrentPage(page);
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            totalItems={totalItems}
-            itemsPerPage={itemsPerPage}
-          />
-        </>
-      )}
-      {itemLoading && <p>アイテムを読み込み中...</p>}
-      {selectedItem && (
-        <section
-          aria-label="選択中のアイテム"
-          style={{
-            padding: '0.75rem',
-            border: '1px solid #ddd',
-            borderRadius: 4,
-            marginBottom: '1rem',
-          }}
-        >
-          {!editForm && (
-            <>
-              <h3 style={{ marginTop: 0, marginBottom: '0.5rem' }}>{selectedItem.payload.title}</h3>
-              <p style={{ marginBottom: '0.5rem' }}>
-                種別: <code>{selectedItem.payload.type}</code>
-                {selectedItem.payload.detailTemplate &&
-                  selectedItem.payload.detailTemplate !== 'generic' && (
-                    <>
-                      {' '}
-                      · テンプレート:{' '}
-                      <code>
+          {itemLoading && (
+            <p className="audit-panel__hint" style={{ marginTop: 'var(--spacing-md)' }}>
+              アイテムを読み込み中…
+            </p>
+          )}
+          {selectedItem && (
+            <div className="group-item-detail" role="region" aria-label="選択中のアイテム">
+              {!editForm && (
+                <>
+                  <h3>{selectedItem.payload.title}</h3>
+                  <p style={{ marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)' }}>
+                    種別: <code>{selectedItem.payload.type}</code>
+                    {selectedItem.payload.detailTemplate &&
+                      selectedItem.payload.detailTemplate !== 'generic' && (
+                        <>
+                          {' '}
+                          · テンプレート:{' '}
+                          <code>
+                            {getTemplateDefinition(
+                              selectedItem.payload.detailTemplate as
+                                | 'login'
+                                | 'credit_card'
+                                | 'bank_account'
+                            )?.label ?? selectedItem.payload.detailTemplate}
+                          </code>
+                        </>
+                      )}
+                  </p>
+                  {selectedItem.payload.detailTemplate &&
+                    selectedItem.payload.detailTemplate !== 'generic' &&
+                    selectedItem.payload.detailFields &&
+                    getTemplateDefinition(
+                      selectedItem.payload.detailTemplate as 'login' | 'credit_card' | 'bank_account'
+                    ) && (
+                      <dl className="group-dl">
                         {getTemplateDefinition(
                           selectedItem.payload.detailTemplate as
                             | 'login'
                             | 'credit_card'
                             | 'bank_account'
-                        )?.label ?? selectedItem.payload.detailTemplate}
-                      </code>
+                        )!.fields.map((f) => {
+                          const raw = selectedItem.payload.detailFields?.[f.key] ?? '';
+                          return (
+                            <div key={f.key} className="group-dl__row">
+                              <dt>{f.label}</dt>
+                              <dd>
+                                {f.input === 'password' ? (
+                                  <input type="password" readOnly value={raw} />
+                                ) : (
+                                  <span style={{ whiteSpace: 'pre-wrap' }}>{raw || '—'}</span>
+                                )}
+                              </dd>
+                            </div>
+                          );
+                        })}
+                      </dl>
+                    )}
+                  {(!selectedItem.payload.detailTemplate ||
+                    selectedItem.payload.detailTemplate === 'generic' ||
+                    !selectedItem.payload.detailFields) && (
+                    <p style={{ marginBottom: 'var(--spacing-md)' }}>
+                      値:
+                      <span className="group-value-readonly">{selectedItem.payload.value}</span>
+                    </p>
+                  )}
+                  {selectedItem.payload.note && (
+                    <p style={{ whiteSpace: 'pre-wrap', marginBottom: 'var(--spacing-md)' }}>
+                      補足: {selectedItem.payload.note}
+                    </p>
+                  )}
+                  <div className="group-form-actions">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => setEditForm(itemPayloadToEditFormState(selectedItem.payload))}
+                    >
+                      編集
+                    </Button>
+                  </div>
+                </>
+              )}
+              {editForm && (
+                <form onSubmit={submitEditItem} className="group-form-stack">
+                  <h3 style={{ marginTop: 0, marginBottom: 'var(--spacing-md)' }}>アイテムを編集</h3>
+                  <div>
+                    <label htmlFor="edit-item-title">タイトル</label>
+                    <input
+                      id="edit-item-title"
+                      type="text"
+                      value={editForm.title}
+                      onChange={(e) =>
+                        setEditForm((prev) => (prev ? { ...prev, title: e.target.value } : prev))
+                      }
+                      required
+                    />
+                  </div>
+                  {editForm.mode === 'structured' && (
+                    <>
+                      <p className="audit-panel__hint">
+                        テンプレート:{' '}
+                        <strong>
+                          {getTemplateDefinition(editForm.detailTemplate)?.label ??
+                            editForm.detailTemplate}
+                        </strong>
+                        （変更不可）
+                      </p>
+                      {getTemplateDefinition(editForm.detailTemplate)?.fields.map((f) => (
+                        <div key={f.key}>
+                          <label htmlFor={`edit-item-field-${f.key}`}>{f.label}</label>
+                          {f.input === 'textarea' ? (
+                            <textarea
+                              id={`edit-item-field-${f.key}`}
+                              value={editForm.detailFields[f.key] ?? ''}
+                              onChange={(e) =>
+                                setEditForm((prev) =>
+                                  prev && prev.mode === 'structured'
+                                    ? {
+                                        ...prev,
+                                        detailFields: {
+                                          ...prev.detailFields,
+                                          [f.key]: e.target.value,
+                                        },
+                                      }
+                                    : prev
+                                )
+                              }
+                              rows={3}
+                            />
+                          ) : (
+                            <input
+                              id={`edit-item-field-${f.key}`}
+                              type={f.input === 'password' ? 'password' : 'text'}
+                              value={editForm.detailFields[f.key] ?? ''}
+                              onChange={(e) =>
+                                setEditForm((prev) =>
+                                  prev && prev.mode === 'structured'
+                                    ? {
+                                        ...prev,
+                                        detailFields: {
+                                          ...prev.detailFields,
+                                          [f.key]: e.target.value,
+                                        },
+                                      }
+                                    : prev
+                                )
+                              }
+                              autoComplete="off"
+                            />
+                          )}
+                        </div>
+                      ))}
                     </>
                   )}
-              </p>
-              {selectedItem.payload.detailTemplate &&
-                selectedItem.payload.detailTemplate !== 'generic' &&
-                selectedItem.payload.detailFields &&
-                getTemplateDefinition(
-                  selectedItem.payload.detailTemplate as 'login' | 'credit_card' | 'bank_account'
-                ) && (
-                  <dl
-                    style={{
-                      marginBottom: '0.75rem',
-                      padding: '0.5rem',
-                      background: '#f9f9f9',
-                      borderRadius: 4,
-                    }}
-                  >
-                    {getTemplateDefinition(
-                      selectedItem.payload.detailTemplate as
-                        | 'login'
-                        | 'credit_card'
-                        | 'bank_account'
-                    )!.fields.map((f) => {
-                      const raw = selectedItem.payload.detailFields?.[f.key] ?? '';
-                      return (
-                        <div
-                          key={f.key}
-                          style={{
-                            marginBottom: '0.5rem',
-                            display: 'grid',
-                            gridTemplateColumns: 'minmax(8rem, 30%) 1fr',
-                            gap: '0.5rem',
-                            alignItems: 'start',
-                          }}
+                  {editForm.mode === 'generic' && (
+                    <>
+                      <div>
+                        <label htmlFor="edit-item-type">種別</label>
+                        <select
+                          id="edit-item-type"
+                          value={editForm.type}
+                          onChange={(e) =>
+                            setEditForm((prev) =>
+                              prev && prev.mode === 'generic'
+                                ? {
+                                    ...prev,
+                                    type: e.target.value as ItemType,
+                                  }
+                                : prev
+                            )
+                          }
                         >
-                          <dt style={{ fontWeight: 600, fontSize: '0.875rem' }}>{f.label}</dt>
-                          <dd style={{ margin: 0, wordBreak: 'break-all' }}>
-                            {f.input === 'password' ? (
-                              <input
-                                type="password"
-                                readOnly
-                                value={raw}
-                                style={{
-                                  width: '100%',
-                                  padding: '0.25rem 0.5rem',
-                                  fontFamily: 'inherit',
-                                  border: '1px solid #ddd',
-                                  borderRadius: 4,
-                                }}
-                              />
-                            ) : (
-                              <span style={{ whiteSpace: 'pre-wrap' }}>{raw || '—'}</span>
-                            )}
-                          </dd>
-                        </div>
-                      );
-                    })}
-                  </dl>
-                )}
-              {(!selectedItem.payload.detailTemplate ||
-                selectedItem.payload.detailTemplate === 'generic' ||
-                !selectedItem.payload.detailFields) && (
-                <p style={{ marginBottom: '0.5rem' }}>
-                  値:
-                  <span
-                    style={{
-                      display: 'inline-block',
-                      marginLeft: 4,
-                      padding: '0.25rem 0.5rem',
-                      background: '#f5f5f5',
-                      wordBreak: 'break-all',
-                      whiteSpace: 'pre-wrap',
-                    }}
-                  >
-                    {selectedItem.payload.value}
-                  </span>
-                </p>
-              )}
-              {selectedItem.payload.note && (
-                <p style={{ whiteSpace: 'pre-wrap' }}>補足: {selectedItem.payload.note}</p>
-              )}
-              <p style={{ marginTop: '0.75rem' }}>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setEditForm(itemPayloadToEditFormState(selectedItem.payload))}
-                >
-                  編集
-                </Button>
-              </p>
-            </>
-          )}
-          {editForm && (
-            <form onSubmit={submitEditItem}>
-              <h3 style={{ marginTop: 0, marginBottom: '0.5rem' }}>アイテムを編集</h3>
-              <div style={{ marginBottom: '0.5rem' }}>
-                <label>
-                  タイトル
-                  <input
-                    type="text"
-                    value={editForm.title}
-                    onChange={(e) =>
-                      setEditForm((prev) => (prev ? { ...prev, title: e.target.value } : prev))
-                    }
-                    required
-                    style={{ display: 'block', width: '100%', padding: 0.5, marginTop: '0.25rem' }}
-                  />
-                </label>
-              </div>
-              {editForm.mode === 'structured' && (
-                <>
-                  <p style={{ fontSize: '0.875rem', color: 'var(--muted, #666)' }}>
-                    テンプレート:{' '}
-                    <strong>
-                      {getTemplateDefinition(editForm.detailTemplate)?.label ??
-                        editForm.detailTemplate}
-                    </strong>
-                    （変更不可）
-                  </p>
-                  {getTemplateDefinition(editForm.detailTemplate)?.fields.map((f) => (
-                    <div key={f.key} style={{ marginBottom: '0.5rem' }}>
-                      <label style={{ display: 'block' }}>
-                        {f.label}
-                        {f.input === 'textarea' ? (
-                          <textarea
-                            value={editForm.detailFields[f.key] ?? ''}
-                            onChange={(e) =>
-                              setEditForm((prev) =>
-                                prev && prev.mode === 'structured'
-                                  ? {
-                                      ...prev,
-                                      detailFields: {
-                                        ...prev.detailFields,
-                                        [f.key]: e.target.value,
-                                      },
-                                    }
-                                  : prev
-                              )
-                            }
-                            rows={3}
-                            style={{
-                              display: 'block',
-                              width: '100%',
-                              padding: 0.5,
-                              marginTop: '0.25rem',
-                            }}
-                          />
-                        ) : (
-                          <input
-                            type={f.input === 'password' ? 'password' : 'text'}
-                            value={editForm.detailFields[f.key] ?? ''}
-                            onChange={(e) =>
-                              setEditForm((prev) =>
-                                prev && prev.mode === 'structured'
-                                  ? {
-                                      ...prev,
-                                      detailFields: {
-                                        ...prev.detailFields,
-                                        [f.key]: e.target.value,
-                                      },
-                                    }
-                                  : prev
-                              )
-                            }
-                            autoComplete="off"
-                            style={{
-                              display: 'block',
-                              width: '100%',
-                              padding: 0.5,
-                              marginTop: '0.25rem',
-                            }}
-                          />
-                        )}
-                      </label>
-                    </div>
-                  ))}
-                </>
-              )}
-              {editForm.mode === 'generic' && (
-                <>
-                  <div style={{ marginBottom: '0.5rem' }}>
-                    <label>
-                      種別
-                      <select
-                        value={editForm.type}
-                        onChange={(e) =>
-                          setEditForm((prev) =>
-                            prev && prev.mode === 'generic'
-                              ? {
-                                  ...prev,
-                                  type: e.target.value as ItemType,
-                                }
-                              : prev
-                          )
-                        }
-                        style={{ display: 'block', padding: 0.5, marginTop: '0.25rem' }}
-                      >
-                        <option value="password">パスワード</option>
-                        <option value="note">メモ</option>
-                        <option value="key">キー</option>
-                        <option value="other">その他</option>
-                      </select>
-                    </label>
+                          <option value="password">パスワード</option>
+                          <option value="note">メモ</option>
+                          <option value="key">キー</option>
+                          <option value="other">その他</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label htmlFor="edit-item-value">内容</label>
+                        <textarea
+                          id="edit-item-value"
+                          value={editForm.value}
+                          onChange={(e) =>
+                            setEditForm((prev) =>
+                              prev && prev.mode === 'generic'
+                                ? { ...prev, value: e.target.value }
+                                : prev
+                            )
+                          }
+                          required
+                          rows={4}
+                        />
+                      </div>
+                    </>
+                  )}
+                  <div>
+                    <label htmlFor="edit-item-note">補足メモ（任意）</label>
+                    <textarea
+                      id="edit-item-note"
+                      value={editForm.note}
+                      onChange={(e) =>
+                        setEditForm((prev) => (prev ? { ...prev, note: e.target.value } : prev))
+                      }
+                      rows={3}
+                    />
                   </div>
-                  <div style={{ marginBottom: '0.5rem' }}>
-                    <label>
-                      内容
-                      <textarea
-                        value={editForm.value}
-                        onChange={(e) =>
-                          setEditForm((prev) =>
-                            prev && prev.mode === 'generic'
-                              ? { ...prev, value: e.target.value }
-                              : prev
-                          )
-                        }
-                        required
-                        rows={4}
-                        style={{
-                          display: 'block',
-                          width: '100%',
-                          padding: 0.5,
-                          marginTop: '0.25rem',
-                        }}
-                      />
-                    </label>
+                  <div className="group-form-actions">
+                    <Button type="submit" variant="primary">
+                      保存
+                    </Button>
+                    <Button type="button" variant="secondary" onClick={() => setEditForm(null)}>
+                      キャンセル
+                    </Button>
                   </div>
-                </>
+                </form>
               )}
-              <div style={{ marginBottom: '0.5rem' }}>
-                <label>
-                  補足メモ（任意）
-                  <textarea
-                    value={editForm.note}
-                    onChange={(e) =>
-                      setEditForm((prev) => (prev ? { ...prev, note: e.target.value } : prev))
-                    }
-                    rows={3}
-                    style={{ display: 'block', width: '100%', padding: 0.5, marginTop: '0.25rem' }}
-                  />
-                </label>
-              </div>
-              <Button type="submit" variant="primary" style={{ marginRight: '0.5rem' }}>
-                保存
-              </Button>
-              <Button type="button" variant="secondary" onClick={() => setEditForm(null)}>
-                キャンセル
-              </Button>
-            </form>
+            </div>
           )}
         </section>
-      )}
+      </div>
     </PageLayout>
   );
 }
