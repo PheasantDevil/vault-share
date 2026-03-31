@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb, COLLECTIONS } from '@vault-share/db';
 import type { UserDoc } from '@vault-share/db';
 import { getAdminAuth } from '@/lib/firebase/admin';
-import { isEmailAllowed } from '@/lib/auth/allowed-emails';
+import { isUserBlocked } from '@/lib/auth/blocked-users';
 import {
   createSessionToken,
   getSessionCookieName,
@@ -44,8 +44,12 @@ export async function POST(request: NextRequest) {
     const email = (decoded.email ?? '').trim().toLowerCase();
     const uid = decoded.uid;
 
-    if (!email || !isEmailAllowed(email)) {
+    if (!email) {
       return NextResponse.json({ error: 'このメールアドレスは利用できません。' }, { status: 403 });
+    }
+
+    if (await isUserBlocked(email)) {
+      return NextResponse.json({ error: 'このアカウントは利用できません。' }, { status: 403 });
     }
 
     // MFA状態を取得

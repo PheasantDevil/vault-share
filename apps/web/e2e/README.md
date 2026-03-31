@@ -42,7 +42,6 @@ pnpm test:e2e:ui
 
 CI（`.github/workflows/test-e2e.yml`）と同様に、少なくとも次を設定してください。
 
-- `ALLOWED_EMAILS` — シードユーザー `test@example.com` を含める（例: `test@example.com`）
 - `ITEM_ENCRYPTION_KEY` — 32 バイトの base64（統合テストと同じ固定値でも可）
 - `FIRESTORE_EMULATOR_HOST` / `FIREBASE_AUTH_EMULATOR_HOST` — エミュレータ利用時
 - `SESSION_SECRET` — 16 文字以上
