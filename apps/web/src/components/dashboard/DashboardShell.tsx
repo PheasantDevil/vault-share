@@ -43,16 +43,24 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   }, [error, router]);
 
   const navItems = useMemo((): SidebarNavItem[] => {
-    const base: SidebarNavItem[] = [
+    const isOwner = Boolean(data?.isOwnerOfAnyGroup);
+    /** オーナー判定前は誤タップ防止のためオーナー専用項目を無効表示 */
+    const ownerOnlyDisabled = isLoading || !isOwner;
+    return [
       { href: '/dashboard', label: 'ダッシュボード' },
-      { href: '/dashboard/groups/new', label: 'グループを作成' },
+      {
+        href: '/dashboard/groups/new',
+        label: 'グループを作成',
+        disabled: ownerOnlyDisabled,
+      },
       { href: '/dashboard/settings', label: 'アカウント設定' },
+      {
+        href: '/dashboard/audit-logs',
+        label: '監査ログ',
+        disabled: ownerOnlyDisabled,
+      },
     ];
-    if (data?.isOwnerOfAnyGroup) {
-      base.push({ href: '/dashboard/audit-logs', label: '監査ログ' });
-    }
-    return base;
-  }, [data?.isOwnerOfAnyGroup]);
+  }, [data?.isOwnerOfAnyGroup, isLoading]);
 
   const userLabel =
     data?.user.displayName?.trim() ||

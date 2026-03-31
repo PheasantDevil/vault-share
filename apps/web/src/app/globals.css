@@ -605,6 +605,17 @@ body {
   font-weight: var(--font-weight-medium);
 }
 
+.app-dashboard-sidebar__link--disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.75;
+  user-select: none;
+}
+
+.app-dashboard-sidebar__link--disabled:hover {
+  background: transparent;
+}
+
 .app-dashboard-shell__main {
   flex: 1;
   min-width: 0;
