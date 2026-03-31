@@ -13,6 +13,8 @@ export const COLLECTIONS = {
   invitations: 'invitations',
   items: 'items',
   auditLogs: 'auditLogs',
+  /** ログイン拒否リスト（ドキュメント ID = メール正規化） */
+  blockedUsers: 'blockedUsers',
 } as const;
 
 let _db: Firestore | null = null;
@@ -40,4 +42,5 @@ export type {
   InvitationDoc,
   ItemDoc,
   AuditLogDoc,
+  BlockedUserDoc,
 } from './schema';

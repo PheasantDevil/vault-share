@@ -18,8 +18,6 @@ jobs:
   e2e-test:
     runs-on: ubuntu-latest
     env:
-      # ログイン許可（未設定だと isEmailAllowed が常に false）
-      ALLOWED_EMAILS: test@example.com
       # アイテム API の暗号化（32 バイト base64）
       ITEM_ENCRYPTION_KEY: QkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkI=
       # セッション API は IP あたり 1 分 5 回 — E2E の複数ログイン + リトライで 429 になるため CI のみ無効化

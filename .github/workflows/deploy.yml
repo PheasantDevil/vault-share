@@ -165,9 +165,9 @@ jobs:
             echo "::error::NEXT_PUBLIC_FIREBASE_API_KEY is not set in GitHub Secrets"
             exit 1
           fi
-          if [ -n "${{ secrets.ALLOWED_EMAILS }}" ]; then
-            # YAML形式でエスケープ（特殊文字を含む可能性があるため）
-            echo "ALLOWED_EMAILS: \"${{ secrets.ALLOWED_EMAILS }}\"" >> "$ENV_VARS_FILE"
+          # ブロックリスト管理 API 用（任意・カンマ区切りメール）
+          if [ -n "${{ secrets.ADMIN_EMAILS }}" ]; then
+            echo "ADMIN_EMAILS: \"${{ secrets.ADMIN_EMAILS }}\"" >> "$ENV_VARS_FILE"
           fi
 
           # 1Password Connect（任意）: Secret または Variable の ONEPASSWORD_CONNECT_URL が空でないときだけ有効化

@@ -53,6 +53,16 @@ export interface ItemDoc {
   keyVersion?: number;
 }
 
+/** 利用停止（ブラックリスト）。ドキュメント ID は正規化済みメールと同一 */
+export interface BlockedUserDoc {
+  email: string;
+  /** 停止理由（任意） */
+  reason?: string;
+  blockedAt: string;
+  /** 登録した管理者の UID（任意） */
+  blockedByUid?: string;
+}
+
 export interface AuditLogDoc {
   id: string;
   groupId: string;

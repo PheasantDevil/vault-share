@@ -72,7 +72,7 @@ Cloud Run で「1Passwordからインポート」を使う場合のみ、次の 
 デプロイワークフローは以下の順序で環境変数を設定します：
 
 1. **固定値**: `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `GOOGLE_CLOUD_PROJECT` は自動設定
-2. **GitHub Secrets**: `NEXT_PUBLIC_FIREBASE_API_KEY`, `ALLOWED_EMAILS` が設定されている場合は自動設定
+2. **GitHub Secrets**: `NEXT_PUBLIC_FIREBASE_API_KEY` は必須。任意で `ADMIN_EMAILS`（ブロックリスト管理 API 用・カンマ区切りメール）
 3. **Secret Manager**: `vault-share-session-secret` を `SESSION_SECRET` として参照（必須）
 4. **任意**: `ONEPASSWORD_CONNECT_URL`（Secret または Variable）が設定されているとき、`vault-share-onepassword-connect-token` を `ONEPASSWORD_CONNECT_TOKEN` として参照（[`05-onepassword-connect-cloud-run.md`](./05-onepassword-connect-cloud-run.md)）
 
@@ -82,7 +82,7 @@ Cloud Run で「1Passwordからインポート」を使う場合のみ、次の 
    - GitHub の **Settings** → **Secrets and variables** → **Actions** → **Secrets**
    - 以下のシークレットを追加:
      - `NEXT_PUBLIC_FIREBASE_API_KEY`: Firebase API Key
-     - `ALLOWED_EMAILS`: 許可するメールアドレス（カンマ区切り）
+     - `ADMIN_EMAILS`（任意）: ブロックリスト API（`/api/admin/blocked-users`）を使う管理者メール（カンマ区切り）。ログイン拒否は Firestore `blockedUsers` で管理。
 
 2. **Secret Manager の設定**（推奨）
 
@@ -121,7 +121,7 @@ Cloud Run で「1Passwordからインポート」を使う場合のみ、次の 
 gcloud run services update vault-share-web \
   --region=asia-northeast1 \
   --project=vault-share-dev \
-  --set-env-vars="NEXT_PUBLIC_FIREBASE_API_KEY=xxx,NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=vault-share-dev.firebaseapp.com,NEXT_PUBLIC_FIREBASE_PROJECT_ID=vault-share-dev,ALLOWED_EMAILS=admin@example.com,SESSION_SECRET=YOUR_SESSION_SECRET,GOOGLE_CLOUD_PROJECT=vault-share-dev"
+  --set-env-vars="NEXT_PUBLIC_FIREBASE_API_KEY=xxx,NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=vault-share-dev.firebaseapp.com,NEXT_PUBLIC_FIREBASE_PROJECT_ID=vault-share-dev,ADMIN_EMAILS=ops@example.com,SESSION_SECRET=YOUR_SESSION_SECRET,GOOGLE_CLOUD_PROJECT=vault-share-dev"
 ```
 
 **方法 B: コンソールから設定**
@@ -132,14 +132,14 @@ gcloud run services update vault-share-web \
 4. 編集画面で **「コンテナ」** タブを開き、**「変数とシークレット」**セクションを開く
 5. **「変数を追加」**で、以下の名前と値を追加
 
-| 名前                               | 値（例・参照元）                                                                         |
-| ---------------------------------- | ---------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_FIREBASE_API_KEY`     | `.env.local` の同項目の値                                                                |
-| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | `vault-share-dev.firebaseapp.com`                                                        |
-| `NEXT_PUBLIC_FIREBASE_PROJECT_ID`  | `vault-share-dev`                                                                        |
-| `ALLOWED_EMAILS`                   | `.env.local` の同項目の値（例: `user1@example.com,user2@example.com,admin@example.com`） |
-| `SESSION_SECRET`                   | `.env.local` の同項目の値（シングルクォートは含めない）                                  |
-| `GOOGLE_CLOUD_PROJECT`             | `vault-share-dev`                                                                        |
+| 名前                               | 値（例・参照元）                                        |
+| ---------------------------------- | ------------------------------------------------------- |
+| `NEXT_PUBLIC_FIREBASE_API_KEY`     | `.env.local` の同項目の値                               |
+| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | `vault-share-dev.firebaseapp.com`                       |
+| `NEXT_PUBLIC_FIREBASE_PROJECT_ID`  | `vault-share-dev`                                       |
+| `ADMIN_EMAILS`（任意）             | ブロックリスト管理 API 用の管理者メール（カンマ区切り） |
+| `SESSION_SECRET`                   | `.env.local` の同項目の値（シングルクォートは含めない） |
+| `GOOGLE_CLOUD_PROJECT`             | `vault-share-dev`                                       |
 
 **注意**: デプロイワークフローが自動設定する環境変数と手動設定が競合する場合は、デプロイワークフローの設定が優先されます。
 
@@ -199,7 +199,7 @@ gcloud services enable iamcredentials.googleapis.com --project=vault-share-dev
 
 | 順番 | 作業                         | 内容                                                                                                                                                                                                                                                                      |
 | ---- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1    | **動作確認**                 | 本番 URL でサインアップ・ログインができるか確認する（ALLOWED_EMAILS に含まれるメールで）。                                                                                                                                                                                |
+| 1    | **動作確認**                 | 本番 URL でサインアップ・ログインができるか確認する（`blockedUsers` に未登録のメールで）。                                                                                                                                                                                |
 | 2    | **SESSION_SECRET の確認**    | 環境変数で `SESSION_SECRET` を直接設定した場合、値が「実際の秘密文字列」になっているか確認する。`--set-secrets=...` のような gcloud のオプション文字列がそのまま値に入っていないこと。Secret Manager を使う場合はコンソールの「シークレットを追加」でリソースを指定する。 |
 | 3    | **（任意）カスタムドメイン** | 必要なら Cloud Run にカスタムドメインをマッピングし、Firebase の承認済みドメインにそのドメインを追加する。                                                                                                                                                                |
 | 4    | **（任意）監視・アラート**   | Cloud Monitoring でアラートやダッシュボードを設定する。                                                                                                                                                                                                                   |
@@ -240,9 +240,9 @@ curl -s "$(gcloud run services describe vault-share-web --region=asia-northeast1
 
 **実行ログ（記録用）**
 
-| 日付       | 実行内容          | 結果                                                                                                               |
-| ---------- | ----------------- | ------------------------------------------------------------------------------------------------------------------ |
-| 2026-03-09 | サービス URL 取得 | `https://vault-share-web-qat52jyzfa-an.a.run.app`                                                                  |
-| 2026-03-09 | 環境変数確認      | NODE*ENV, NEXT_PUBLIC_FIREBASE*\*, ALLOWED_EMAILS, SESSION_SECRET, GOOGLE_CLOUD_PROJECT が設定されていることを確認 |
-| 2026-03-09 | トップページ curl | HTTP 200                                                                                                           |
-| 2026-03-09 | リビジョン一覧    | vault-share-web-00007-rth (True), 00006, 00005                                                                     |
+| 日付       | 実行内容          | 結果                                                                                                                     |
+| ---------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| 2026-03-09 | サービス URL 取得 | `https://vault-share-web-qat52jyzfa-an.a.run.app`                                                                        |
+| 2026-03-09 | 環境変数確認      | NODE*ENV, NEXT_PUBLIC_FIREBASE*\*, SESSION_SECRET, GOOGLE_CLOUD_PROJECT が設定されていることを確認（任意: ADMIN_EMAILS） |
+| 2026-03-09 | トップページ curl | HTTP 200                                                                                                                 |
+| 2026-03-09 | リビジョン一覧    | vault-share-web-00007-rth (True), 00006, 00005                                                                           |

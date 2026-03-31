@@ -381,7 +381,14 @@ export default function GroupDetailPage() {
           </div>
           {isOwner && editing && (
             <form onSubmit={updateGroup} className="group-form-stack" style={{ marginTop: 0 }}>
-              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '0.75rem',
+                  alignItems: 'flex-start',
+                  flexWrap: 'wrap',
+                }}
+              >
                 <FormField
                   label="グループ名"
                   id="group-name"
@@ -437,7 +444,9 @@ export default function GroupDetailPage() {
                               throw new Error(data.error ?? 'ロールの更新に失敗しました');
                             }
                             setMembers((prev) =>
-                              prev.map((x) => (x.userId === m.userId ? { ...x, role: 'member' } : x))
+                              prev.map((x) =>
+                                x.userId === m.userId ? { ...x, role: 'member' } : x
+                              )
                             );
                             await refreshGroupFromApi();
                           } catch (err) {
@@ -548,7 +557,9 @@ export default function GroupDetailPage() {
             <span className="group-impex__label">取り込み・書き出し</span>
             <div className="group-impex__actions">
               <Link href={`/dashboard/groups/${id}/import/1password`}>1Passwordからインポート</Link>
-              <span className="group-impex__sep" aria-hidden>|</span>
+              <span className="group-impex__sep" aria-hidden>
+                |
+              </span>
               <label>
                 <input
                   type="file"
@@ -579,7 +590,9 @@ export default function GroupDetailPage() {
                 />
                 <span className="group-impex-file">CSVからインポート</span>
               </label>
-              <span className="group-impex__sep" aria-hidden>|</span>
+              <span className="group-impex__sep" aria-hidden>
+                |
+              </span>
               <label>
                 <input
                   type="file"
@@ -610,7 +623,9 @@ export default function GroupDetailPage() {
                 />
                 <span className="group-impex-file">1PUXからインポート</span>
               </label>
-              <span className="group-impex__sep" aria-hidden>|</span>
+              <span className="group-impex__sep" aria-hidden>
+                |
+              </span>
               <button
                 type="button"
                 className="app-btn app-btn--ghost"
@@ -638,7 +653,9 @@ export default function GroupDetailPage() {
               >
                 CSVにエクスポート
               </button>
-              <span className="group-impex__sep" aria-hidden>|</span>
+              <span className="group-impex__sep" aria-hidden>
+                |
+              </span>
               <button
                 type="button"
                 className="app-btn app-btn--ghost"
@@ -894,7 +911,10 @@ export default function GroupDetailPage() {
                     selectedItem.payload.detailTemplate !== 'generic' &&
                     selectedItem.payload.detailFields &&
                     getTemplateDefinition(
-                      selectedItem.payload.detailTemplate as 'login' | 'credit_card' | 'bank_account'
+                      selectedItem.payload.detailTemplate as
+                        | 'login'
+                        | 'credit_card'
+                        | 'bank_account'
                     ) && (
                       <dl className="group-dl">
                         {getTemplateDefinition(
@@ -945,7 +965,9 @@ export default function GroupDetailPage() {
               )}
               {editForm && (
                 <form onSubmit={submitEditItem} className="group-form-stack">
-                  <h3 style={{ marginTop: 0, marginBottom: 'var(--spacing-md)' }}>アイテムを編集</h3>
+                  <h3 style={{ marginTop: 0, marginBottom: 'var(--spacing-md)' }}>
+                    アイテムを編集
+                  </h3>
                   <div>
                     <label htmlFor="edit-item-title">タイトル</label>
                     <input
