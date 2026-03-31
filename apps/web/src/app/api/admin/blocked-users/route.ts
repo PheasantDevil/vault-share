@@ -59,11 +59,17 @@ export async function POST(request: NextRequest) {
   const emailRaw = typeof body.email === 'string' ? body.email : '';
   const normalized = normalizeEmailForBlocklist(emailRaw);
   if (!normalized || !normalized.includes('@')) {
-    return NextResponse.json({ error: '有効なメールアドレスを指定してください。' }, { status: 400 });
+    return NextResponse.json(
+      { error: '有効なメールアドレスを指定してください。' },
+      { status: 400 }
+    );
   }
 
   if (normalized === normalizeEmailForBlocklist(session.email ?? '')) {
-    return NextResponse.json({ error: '自分自身をブロックリストに追加できません。' }, { status: 400 });
+    return NextResponse.json(
+      { error: '自分自身をブロックリストに追加できません。' },
+      { status: 400 }
+    );
   }
 
   const reason = typeof body.reason === 'string' ? body.reason.trim() : '';

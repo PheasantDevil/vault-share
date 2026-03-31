@@ -132,14 +132,14 @@ gcloud run services update vault-share-web \
 4. 編集画面で **「コンテナ」** タブを開き、**「変数とシークレット」**セクションを開く
 5. **「変数を追加」**で、以下の名前と値を追加
 
-| 名前                               | 値（例・参照元）                                                                         |
-| ---------------------------------- | ---------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_FIREBASE_API_KEY`     | `.env.local` の同項目の値                                                                |
-| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | `vault-share-dev.firebaseapp.com`                                                        |
-| `NEXT_PUBLIC_FIREBASE_PROJECT_ID`  | `vault-share-dev`                                                                        |
-| `ADMIN_EMAILS`（任意）             | ブロックリスト管理 API 用の管理者メール（カンマ区切り）                                |
-| `SESSION_SECRET`                   | `.env.local` の同項目の値（シングルクォートは含めない）                                  |
-| `GOOGLE_CLOUD_PROJECT`             | `vault-share-dev`                                                                        |
+| 名前                               | 値（例・参照元）                                        |
+| ---------------------------------- | ------------------------------------------------------- |
+| `NEXT_PUBLIC_FIREBASE_API_KEY`     | `.env.local` の同項目の値                               |
+| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | `vault-share-dev.firebaseapp.com`                       |
+| `NEXT_PUBLIC_FIREBASE_PROJECT_ID`  | `vault-share-dev`                                       |
+| `ADMIN_EMAILS`（任意）             | ブロックリスト管理 API 用の管理者メール（カンマ区切り） |
+| `SESSION_SECRET`                   | `.env.local` の同項目の値（シングルクォートは含めない） |
+| `GOOGLE_CLOUD_PROJECT`             | `vault-share-dev`                                       |
 
 **注意**: デプロイワークフローが自動設定する環境変数と手動設定が競合する場合は、デプロイワークフローの設定が優先されます。
 
@@ -240,9 +240,9 @@ curl -s "$(gcloud run services describe vault-share-web --region=asia-northeast1
 
 **実行ログ（記録用）**
 
-| 日付       | 実行内容          | 結果                                                                                                               |
-| ---------- | ----------------- | ------------------------------------------------------------------------------------------------------------------ |
-| 2026-03-09 | サービス URL 取得 | `https://vault-share-web-qat52jyzfa-an.a.run.app`                                                                  |
+| 日付       | 実行内容          | 結果                                                                                                                     |
+| ---------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| 2026-03-09 | サービス URL 取得 | `https://vault-share-web-qat52jyzfa-an.a.run.app`                                                                        |
 | 2026-03-09 | 環境変数確認      | NODE*ENV, NEXT_PUBLIC_FIREBASE*\*, SESSION_SECRET, GOOGLE_CLOUD_PROJECT が設定されていることを確認（任意: ADMIN_EMAILS） |
-| 2026-03-09 | トップページ curl | HTTP 200                                                                                                           |
-| 2026-03-09 | リビジョン一覧    | vault-share-web-00007-rth (True), 00006, 00005                                                                     |
+| 2026-03-09 | トップページ curl | HTTP 200                                                                                                                 |
+| 2026-03-09 | リビジョン一覧    | vault-share-web-00007-rth (True), 00006, 00005                                                                           |
