@@ -10,6 +10,8 @@ export type SessionPayload = {
   uid: string;
   email: string | null;
   exp: number;
+  /** JWT発行時刻（秒）。ミドルウェアでセッションアイドル時間の判定に使用 */
+  iat?: number;
 };
 
 export function getSessionSecret(): Uint8Array {
@@ -20,13 +22,16 @@ export function getSessionSecret(): Uint8Array {
   return new TextEncoder().encode(secret);
 }
 
-export async function createSessionToken(payload: Omit<SessionPayload, 'exp'>): Promise<string> {
+export async function createSessionToken(
+  payload: Pick<SessionPayload, 'uid' | 'email'>
+): Promise<string> {
   const secret = getSessionSecret();
   return await new jose.SignJWT({
     uid: payload.uid,
     email: payload.email ?? null,
   })
     .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
     .setExpirationTime(EXPIRY)
     .sign(secret);
 }
@@ -38,7 +43,9 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
     const uid = payload.uid as string;
     const email = (payload.email as string | null) ?? null;
     if (!uid) return null;
-    return { uid, email, exp: (payload.exp ?? 0) as number };
+    const iatRaw = payload.iat;
+    const iat = typeof iatRaw === 'number' ? iatRaw : undefined;
+    return { uid, email, exp: (payload.exp ?? 0) as number, ...(iat !== undefined ? { iat } : {}) };
   } catch (_err) {
     return null;
   }

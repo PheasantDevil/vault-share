@@ -1,7 +1,7 @@
 /**
  * レート制限ユーティリティ（Firestoreベース）
  */
-import { getDb, COLLECTIONS } from '@vault-share/db';
+import { getDb } from '@vault-share/db';
 import type { NextRequest } from 'next/server';
 import { getIpAddress } from '@/lib/audit/request-info';
 
@@ -19,6 +19,12 @@ interface RateLimitDoc {
 }
 
 const RATE_LIMIT_COLLECTION = 'rateLimits';
+
+/** E2E / CI では同一 IP で制限に引っかかりやすい API 用 */
+export function shouldSkipRateLimitForE2E(): boolean {
+  const v = (process.env.E2E_SKIP_RATE_LIMIT ?? '').toLowerCase();
+  return v === '1' || v === 'true';
+}
 
 /**
  * デフォルトのキー生成関数（IPアドレスベース）

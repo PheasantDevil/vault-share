@@ -27,10 +27,15 @@ export async function middleware(request: NextRequest) {
     return res;
   }
 
-  // セッションタイムアウトチェック
+  // セッション最大アイドル時間（発行から30分）。新トークンは JWT の iat を使用。旧トークン（iat なし）は以前どおり exp から推定
   const now = Date.now();
-  const sessionAge = now - (payload.exp * 1000 - 7 * 24 * 60 * 60 * 1000); // セッション作成時刻を推定
-  if (sessionAge > SESSION_TIMEOUT_MS) {
+  let sessionStartMs: number | undefined;
+  if (payload.iat != null) {
+    sessionStartMs = payload.iat * 1000;
+  } else {
+    sessionStartMs = payload.exp * 1000 - 7 * 24 * 60 * 60 * 1000;
+  }
+  if (now - sessionStartMs > SESSION_TIMEOUT_MS) {
     const res = NextResponse.redirect(new URL('/login', request.url));
     res.cookies.set(cookieName, '', { path: '/', maxAge: 0, httpOnly: true, sameSite: 'lax' });
     return res;

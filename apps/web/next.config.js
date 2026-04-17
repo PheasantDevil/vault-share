@@ -45,6 +45,8 @@ const nextConfig = {
                   : "connect-src 'self' https:";
               return [
                 "default-src 'self'",
+                "base-uri 'self'",
+                "form-action 'self'",
                 "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
                 "style-src 'self' 'unsafe-inline'",
                 "img-src 'self' data: https:",
