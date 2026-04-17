@@ -2,10 +2,30 @@
  * POST: パスワードリセットメールを送信
  */
 import { NextRequest, NextResponse } from 'next/server';
+import { getIpAddress } from '@/lib/audit/request-info';
 import { getAdminAuth } from '@/lib/firebase/admin';
+import {
+  checkRateLimit,
+  createRateLimitResponse,
+  shouldSkipRateLimitForE2E,
+} from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
+    if (!shouldSkipRateLimitForE2E()) {
+      const rateLimitResult = await checkRateLimit(request, {
+        windowMs: 60 * 1000,
+        maxRequests: 5,
+        keyGenerator: (req) => {
+          const ip = getIpAddress(req) || 'unknown';
+          return `pwreset:ip:${ip}`;
+        },
+      });
+      if (!rateLimitResult.allowed) {
+        return createRateLimitResponse(rateLimitResult.resetAt);
+      }
+    }
+
     const body = await request.json();
     const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
     if (!email) {

@@ -50,7 +50,9 @@ function MFALoginContent() {
           const auth = await getFirebaseAuthAsync();
           const resolver = getMultiFactorResolver(auth, mfaError);
           const hint = resolver.hints[0];
-          if (hint?.factorId === 'phone') {
+          if (hint?.factorId === 'totp') {
+            setMfaType('totp');
+          } else if (hint?.factorId === 'phone') {
             setMfaType('phone');
             const phoneHint = hint as PhoneMultiFactorInfo;
             setPhoneNumber(phoneHint.phoneNumber || null);
@@ -215,9 +217,11 @@ function MFALoginContent() {
     <PageLayout
       title="多要素認証"
       description={
-        mfaType === 'phone' && phoneNumber
-          ? `登録済みの電話番号（${phoneNumber}）にSMSコードを送信しました。コードを入力してください。`
-          : '認証コードを入力してください。'
+        mfaType === 'totp'
+          ? '認証アプリに表示される6桁のコードを入力してください。'
+          : mfaType === 'phone' && phoneNumber
+            ? `登録済みの電話番号（${phoneNumber}）へ SMS でコードを送ります。画面の案内に従って入力してください。`
+            : '認証コードを入力してください。'
       }
     >
       <form onSubmit={handleSubmit}>
